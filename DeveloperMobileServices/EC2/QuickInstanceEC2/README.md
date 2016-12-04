@@ -14,13 +14,13 @@ Launch a vanilla Amazon Linux ec2 instance without bootstrapping it:
 Launch Ubuntu ec2 instance with Apache Tomcat7 configured:
 
 ```bash
-./qi.py ubuntu --bootstrap "wget https://github.com/awslabs/aws-support-tools/DeveloperMobileServices/EC2/QuickInstanceEC2/DeployScripts/tomcat7_java8_ubuntu14.04_install.sh?raw=1 -O /tmp/install.sh && chmod +x /tmp/install.sh && /tmp/install.sh"
+./qi.py ubuntu --bootstrap "wget https://github.com/awslabs/aws-support-tools/DeveloperMobileServices/EC2/QuickInstanceEC2/DeployScripts/tomcat7_ubuntu14.04_install.sh?raw=1 -O /tmp/install.sh && chmod +x /tmp/install.sh && /tmp/install.sh"
 ```
 
 Launch Ubuntu ec2 instance with Apache (wsgi) and deploy a sample Python Flask application:
 
 ```bash
-./qi.py ubuntu --bootstrap "wget https://github.com/awslabs/aws-support-tools/DeveloperMobileServices/EC2/QuickInstanceEC2/DeployScripts/flask_deploy.sh?raw=1 -O /tmp/install.sh && chmod +x /tmp/install.sh && /tmp/install.sh example_app https://github.com/deis/example-python-flask/archive/master.zip"
+./qi.py ubuntu --bootstrap "wget https://github.com/awslabs/aws-support-tools/DeveloperMobileServices/EC2/QuickInstanceEC2/DeployScripts/flask_deploy.sh?raw=1 -O /tmp/install.sh && chmod +x /tmp/install.sh && /tmp/install.sh example_app https://github.com/saidalisamed/tools/raw/master/PythonFlask/example-python-flask/archive/master.zip"
 ```
 
 Launch Amazon Linux with LAMP stack configured:

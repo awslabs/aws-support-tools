@@ -17,16 +17,8 @@ if [ "$(id -u)" != "0" ]; then
    exit 1
 fi
 
-# install oracle java8
-apt-add-repository ppa:webupd8team/java -y
-apt-get update
-echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
-echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections
-apt-get install -y oracle-java8-installer
-
 # install and configure tomcat7
 apt-get install -y tomcat7
-echo "JAVA_HOME=/usr/lib/jvm/java-8-oracle" >> /etc/default/tomcat7
 service tomcat7 restart
 
 # make tomcat available on port 80
