@@ -6,7 +6,7 @@ This function demonstrates how to use S3 put event to trigger a Lambda function 
 Usage:
 ------
 1. Deploy this function with timeout setting of 5 minutes. Make sure the lambda Role has
-   S3 **read/write** permissions to the bucket and SNS publish permission.
+   S3 **read/write** permissions to the bucket and SNS publish permission. Configure Lambda environment variables e.g `REGION=us-east-1`, `THREADS=1000`, `LOG_TIME=1`
 2. Create a S3 bucket and set up events for **PUT** to trigger this lambda function.
 3. In the S3 events configuration, set the event suffix to `.gz`.
 4. Create a payloads file i.e `endpoint_list_14032016.json` with contents in the below json format.

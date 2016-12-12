@@ -29,14 +29,25 @@ apt-get install -y hhvm
 sed -i s/index.html/index.php/g /etc/nginx/sites-enabled/default
 mkdir /var/lib/php5
 chown -R www-data:www-data /var/lib/php5
-echo '<?php phpinfo(); ?>' > /usr/share/nginx/html/phpinfo.php
 /etc/init.d/nginx restart
 update-rc.d hhvm defaults
 
+# Install CRM
+apt-get install -y unzip
+wget -O /tmp/crm.zip  http://downloads.sourceforge.net/project/suitecrm/suitecrm-7.2.1.zip
+mkdir /tmp/crm
+unzip /tmp/crm.zip -d /tmp/crm/
+shopt -s dotglob nullglob
+mv /tmp/crm/*/* /usr/share/nginx/html/
+chown -R www-data:www-data /usr/share/nginx/html/
+
 # Install MySQL server
-debconf-set-selections <<< 'mysql-server mysql-server/root_password password Passw0rd'
-debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password Passw0rd'
+pass=$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-32};echo;)
+debconf-set-selections <<< "mysql-server mysql-server/root_password password $pass"
+debconf-set-selections <<< "mysql-server mysql-server/root_password_again password $pass"
+echo $pass > /root/mysql_pass.txt && chmod 400 /root/mysql_pass.txt
 apt-get -y install mysql-server
 update-rc.d mysql defaults
+/etc/init.d/mysql restart
 
 echo "Installation is complete."

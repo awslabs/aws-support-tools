@@ -14,14 +14,16 @@
 from __future__ import print_function
 
 import json
+import os
+
 import boto3
 import botocore
 
 __author__ = 'Said Ali Samed'
 
-# Configurable options
-region = 'us-east-1'
-topic = 'arn:aws:sns:us-east-1:1111122222:MyTopic'
+# Get Lambda environment variables
+region = os.environ['REGION']
+topic = os.environ['TOPIC']
 
 # Global variables
 sns = boto3.client('sns', region_name=region)

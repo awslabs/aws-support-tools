@@ -8,14 +8,16 @@
 # or in the "license" file accompanying this file. This file is distributed on an "AS IS"
 # BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under the License.
+import os
 
 import boto3
 
 __author__ = 'Said Ali Samed'
 
-region = 'us-west-2'
-alert_threshold = 80
-sns_topic_arn = 'arn:aws:sns:us-west-2:1111122222:MyTopic'
+# Get Lambda environment variables
+region = os.environ['REGION']
+alert_threshold = os.environ['ALERT_THRESHOLD']
+sns_topic_arn = os.environ['TOPIC']
 
 
 def publish_notification(topic_arn, message, subject):

@@ -9,7 +9,7 @@ SES Mailer uses lambda to send mass email. It is invoked by S3 PUT event when a 
 Usage
 -----
 1. Deploy `ses_mailer.py` on AWS Lambda with a timeout setting of 5 minutes. Make sure the lambda Role has
-   S3 read/write permissions to the bucket and `ses:SendRawEmail` permission.
+   S3 read/write permissions to the bucket and `ses:SendRawEmail` permission. Configure Lambda environment variables e.g `REGION=us-east-1`, `MAX_THREADS=10`, `TEXT_MESSAGE_FILE=email_body.txt`, `HTML_MESSAGE_FILE=email_body.html`
 2. Create a S3 bucket and set `put` event to trigger this lambda function.
 3. In the S3 events configuration, set the event suffix to `.gz`.
 4. Write your html formatted email in file **html_message.html** and upload to S3 bucket.
@@ -24,5 +24,5 @@ Usage
 8. Upload the gzipped file **mailing_list_14032016.csv.gz** to the S3 bucket and it will trigger this lambda function.
 9. This function will start sending email to all addresses in the csv file and log failures in `<FILENAME>_error.log`.
 
-**Tip:** Send even faster by splitting email list into multiple smaller csv files when the number of addresses exceed over a few 100,000s or increase `max_threads` variable value to something higher.
+**Tip:** You can send even faster by splitting email list into multiple smaller csv files when the number of addresses exceed over a few 100,000s or increase `MAX_THREADS` environment variable value to something higher depending on your SES TPS limit.
     

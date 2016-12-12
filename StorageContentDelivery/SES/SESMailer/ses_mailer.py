@@ -14,6 +14,7 @@ from __future__ import print_function
 import StringIO
 import csv
 import json
+import os
 import urllib
 import zlib
 
@@ -29,11 +30,11 @@ __author__ = 'Said Ali Samed'
 __date__ = '10/04/2016'
 __version__ = '1.0'
 
-# ** Configurable settings **
-region = 'us-east-1'
-max_threads = 10
-text_message_file = 'text_message.txt'
-html_message_file = 'html_message.html'
+# Get Lambda environment variables
+region = os.environ['REGION']
+max_threads = os.environ['MAX_THREADS']
+text_message_file = os.environ['TEXT_MESSAGE_FILE']
+html_message_file = os.environ['HTML_MESSAGE_FILE']
 
 # Initialize clients
 s3 = boto3.client('s3', region_name=region)

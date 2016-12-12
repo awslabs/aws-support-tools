@@ -20,6 +20,7 @@
 from __future__ import print_function
 
 import json
+import os
 import urllib
 import zlib
 
@@ -37,10 +38,10 @@ __date__ = '14/03/2016'
 __version__ = '1.2'
 __updated__ = '02/06/2016'
 
-# ** Configurable settings **
-region = 'us-east-1'
-max_threads = 1000
-log_time = True
+# Get Lambda environment variables
+region = os.environ['REGION']
+max_threads = os.environ['THREADS']
+log_time = os.environ['LOG_TIME']
 
 # Initialize clients
 s3 = boto3.client('s3', region_name=region)
