@@ -14,7 +14,7 @@ Launch a vanilla Amazon Linux ec2 instance without bootstrapping it:
 Launch Ubuntu ec2 instance with Apache Tomcat7 configured:
 
 ```bash
-./qi.py ubuntu --bootstrap "wget https://github.com/awslabs/aws-support-tools/EC2/QuickInstanceEC2/DeployScripts/tomcat7_ubuntu14.04_install.sh?raw=1 -O /tmp/install.sh && chmod +x /tmp/install.sh && /tmp/install.sh"
+./qi.py ubuntu --bootstrap "wget https://raw.githubusercontent.com/awslabs/aws-support-tools/master/EC2/QuickInstanceEC2/DeployScripts/tomcat7_ubuntu14.04_install.sh -O /tmp/install.sh && chmod +x /tmp/install.sh && /tmp/install.sh"
 ```
 
 Launch Amazon Linux with LAMP stack configured:
@@ -47,11 +47,11 @@ Installation:
 Installation on Linux and Mac OSX:
 
 ```bash
-curl -o qi.py https://github.com/awslabs/aws-support-tools/EC2/QuickInstanceEC2/qi.py?raw=1
+curl -o qi.py https://raw.githubusercontent.com/awslabs/aws-support-tools/master/EC2/QuickInstanceEC2/qi.py
 chmod +x qi.py
 ```
 
-For installation on Windows, save [this](https://github.com/awslabs/aws-support-tools/EC2/QuickInstanceEC2/qi.py?raw=1).
+For installation on Windows, save [this](https://raw.githubusercontent.com/awslabs/aws-support-tools/master/EC2/QuickInstanceEC2/qi.py).
 
 To install boto3 on Windows and launching an ec2 instance:
 
