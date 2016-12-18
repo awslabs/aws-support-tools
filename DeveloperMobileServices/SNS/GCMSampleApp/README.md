@@ -247,7 +247,7 @@ Publishing Notification using CURL
 
     ```json
     {
-        "to": "ddW-zstyaWY:APA91bEcgwEq-PI8PgH3FWUZv-9K2wTNdgZ9PyZOJIOXaJRlmSPtCVyL1VL-N1kGIJRsXBK_sKL8x7vciOO5T8vTTlhPtyce1NSszkJf9hOizvpZ7X5fU2NClRuTE8QSUAvY1JL44uJa", 
+        "to": "<DEVICE REGISTRATION TOKEN HERE>", 
         "data": {
             "message":"Test message from curl.", 
             "title":"GCMSampleApp"
