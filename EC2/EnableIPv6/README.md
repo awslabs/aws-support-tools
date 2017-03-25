@@ -17,4 +17,5 @@ What this script does not do is add subnets with new IPv6 address space (you mus
 
 # Relevant Documentation #
 
-Assigning an IPv6 Address to Your EC2 Instances: [http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#assign-ipv6-address](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#assign-ipv6-address)
+Assigning an IPv6 Address to Your EC2 Instances: 
+[http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#assign-ipv6-address](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#assign-ipv6-address)
