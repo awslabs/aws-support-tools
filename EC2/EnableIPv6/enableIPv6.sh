@@ -68,8 +68,8 @@ for REGION in "${REGIONLIST[@]}"; do
     # The following updates all Security Groups in the VPC to allow IPv6 traffic outbound. This occurs on every Security Group, so it may not fit everyone's use case. 
     # Disable if you don't want some Security Groups to allow access to the Internet for IPv6 traffic. Generally we do, so it is enabled by default.
     for SECURITYGROUP in `aws ec2 describe-security-groups --output json --region ${REGION} | grep -A 3 "${VPCID}" | grep -oh "\w*sg-\w*"`; do
-      printf "%s\n" "Updating ${SECURITYGROUP} to allow IPv6 traffic. $(aws ec2 describe-security-groups --output json --region ${REGION} --group-id "${SECURITYGROUP}" | grep GroupName)"
-      aws ec2 authorize-security-group-ingress --output json --region ${REGION} --group-id ${SECURITYGROUP} --ip-permissions '[{"Ipv6Ranges":[{"CidrIpv6":"::/0"}], "IpProtocol":"-1"}]'
+      printf "%s\n" "Updating ${SECURITYGROUP} to allow outbound IPv6 traffic. $(aws ec2 describe-security-groups --output json --region ${REGION} --group-id "${SECURITYGROUP}" | grep GroupName)"
+      aws ec2 authorize-security-group-egress --output json --region ${REGION} --group-id ${SECURITYGROUP} --ip-permissions '[{"Ipv6Ranges":[{"CidrIpv6":"::/0"}], "IpProtocol":"-1"}]'
     done
 
     # Verify that the VPC got an IPv6 assignment.
