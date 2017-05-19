@@ -1,11 +1,7 @@
 # Amazon - AWS Simple Email Service | SES | Reports
-TODO: This is a lambda-function that generate reports of Bounce and Complaint and save on S3 Bucket.
-</br>
-</br>
+This is a lambda-function that generate reports of Bounce and Complaint and save on S3 Bucket in a web-format, like a dashboard that allows searchs (message-id, recipient email, etc)
 However, the logic to control the Bounce and Complaints notifications is ready to be customized.
-<br />
 The reports looks like:[NotificationType;destination;subtype(ifExist);DiagnosticCode(IfExist);TimeStamp]
-<br />
  ```
 Type	Subtype	Detail	Email	Error	Date	MessageID
 Bounce	Permanent	General	bounce@simulator.amazonses.com	smtp; 550 5.1.1 user unknown	2017-03-08T13:30:11.000Z	0102015aae1cde78-2b30806b-7932-425f-bfa3-ac0eca7eebda-000000
@@ -35,35 +31,42 @@ I'd like to encourage you to use the Mailbox Simulator provided by SES when depl
 *	Create an Amazon SQS Standard Queue [2]. Only changing: Default Visibility Timeout to 5m. 
 *	Subscribe the queue to SNS Topic previously created [3].
 *	Create an Amazon S3 Bucket.
-*	Create an IAM policy(Create your Own Policy) with the following permission (changing the Queue ARN for yours and the BucketName) [4].
+*	Create an IAM policy(Create your Own Policy) with the following permission (changing the YourRecipient@yourDomain.com example for your recipient address, Queue ARN for yours and the BucketName) [4].
 
  ```
 {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "Stmt1487170767000",
+            "Sid": "AllowSendEmail",
             "Effect": "Allow",
             "Action": [
                 "ses:SendEmail"
             ],
+            "Condition": {
+                "ForAllValues:StringLike": {
+                    "ses:Recipients": [
+                        "YourRecipient@yourDomain.com"
+                    ]
+                }
+            },
             "Resource": [
                 "*"
             ]
         },
-         {
+        {
             "Sid": "s3allow",
             "Effect": "Allow",
             "Action": [
-                 "s3:PutObject",
-                 "s3:PutObjectAcl"
+                "s3:PutObject",
+                "s3:PutObjectAcl"
             ],
             "Resource": [
                 "arn:aws:s3:::YourBucketName/*"
             ]
         },
         {
-            "Sid": "Stmt1487170835000",
+            "Sid": "AllowQueuePermissions",
             "Effect": "Allow",
             "Action": [
                 "sqs:ChangeMessageVisibility",
@@ -77,11 +80,28 @@ I'd like to encourage you to use the Mailbox Simulator provided by SES when depl
             "Resource": [
                 "arn:aws:sqs:REGION:ACCOUNT-ID:QueueName"
             ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams"
+            ],
+            "Resource": [
+                "arn:aws:logs:*:*:*"
+            ]
         }
     ]
-}
-
+} 
  ```
+## If you want to restric a specific log-group permission on the IAM role, you can use the following ARN instead of "arn:aws:logs:*:*:*" :
+```
+arn:aws:logs:[REGION]:[ACCOUNT-ID]:log-group:[NAME LOG GROUP]:* 
+arn:aws:logs:eu-west-1:421396931353:log-group:/aws/lambda/yourLambda:* 
+
+```
 *	Create an IAM Role and attach the policy just created (You will use this Role for lambda execution) [5].
 *	Create an Amazon lambda-function following the steps below.
 
