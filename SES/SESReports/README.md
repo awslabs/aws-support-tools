@@ -99,7 +99,7 @@ I'd like to encourage you to use the Mailbox Simulator provided by SES when depl
 ## If you want to restric a specific log-group permission on the IAM role, you can use the following ARN instead of "arn:aws:logs:*:*:*" :
 ```
 arn:aws:logs:[REGION]:[ACCOUNT-ID]:log-group:[NAME LOG GROUP]:* 
-arn:aws:logs:eu-west-1:421396931353:log-group:/aws/lambda/yourLambda:* 
+arn:aws:logs:eu-west-1:123456789123:log-group:/aws/lambda/yourLambda:* 
 
 ```
 *	Create an IAM Role and attach the policy just created (You will use this Role for lambda execution) [5].
