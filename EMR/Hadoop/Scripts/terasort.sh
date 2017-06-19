@@ -12,10 +12,11 @@
 # License for the specific language governing permissions and limitations under the License.
 #
 # Usage: 
-# A script that runs Terasort MapReduce application to stress test a Hadoop cluster
-# By default, this script runs Terasort job 50 times on with each iteration on 10TB of data. You can optionally provide the number of runs as a parameter to the script. 
+# A script that runs Terasort MapReduce application to stress test a Hadoop cluster.
+# By default, this script runs Terasort job 50 times on with each iteration on 10TB (100000000000 bytes) of data. 
+# Please make sure that you have enough HDFS space on your cluster for this script to work. 
+# You can optionally change the number of runs or input size based on your cluster size.
 # Reference - http://hadoop.apache.org/docs/r2.7.3/api/org/apache/hadoop/examples/terasort/package-summary.html
-
 
 runs=$1
 
