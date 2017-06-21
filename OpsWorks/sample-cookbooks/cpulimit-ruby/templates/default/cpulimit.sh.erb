@@ -1,0 +1,18 @@
+#!/bin/bash
+maxcpu="<%= node['cpulimit']['cpu-limit'] %>"
+
+while [ 1 ]
+do
+  for pid in `ps axf | grep ruby | grep -v grep | awk '{print $1}'`
+  do
+    cpuutilization="$(ps -eo pid,%cpu | grep $pid | grep -v grep |  awk '{print $2}')"
+
+    if [ $cpuutilization > $maxcpu".0" ]
+    then
+      cpulimit="$(which cpulimit)"
+      resp="$($cpulimit -l $maxcpu -p $pid)"
+    fi
+  done
+
+  sleep 1
+done
