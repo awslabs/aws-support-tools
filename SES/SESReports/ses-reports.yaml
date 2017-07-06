@@ -1,0 +1,420 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  Create the SES-Report Solution.
+
+Parameters:
+  BucketName:
+    Type: "String"
+    Description: "Bucket that will be created to save the reports (Must be a new one)"
+  BucketPrefix:
+    Type: "String"
+    Description: "[OPTIONAL] The S3 Bucket Key Prefix, Example: Prefix/"
+  SourceEmail:
+    Type: "String"
+    Description: Email address that will be used as FROM address (Must be SES Verified) -> "yourRecipient@yourDomain.com"
+  DestinationEmail:
+    Type: "String"
+    Description: The recipient that will receive the reports URL , example -> "yourDestination@Domain.com"
+  Identity:
+    Type: "String"
+    Description: "The identity for which the Amazon SNS topic will be set. You can specify an identity by using its name or by using its Amazon Resource Name (ARN). Examples: user@example.com, example.com, arn:aws:ses:us-east-1:123456789012:identity/example.com"
+  Frequency:
+    Type: String
+    Default: "cron(00 23 * * ? *)"
+    AllowedValues: 
+      - "cron(00 23 * * ? *)"
+    Description: "cron(00 23 * * ? *) = Once a day at 23h00" 
+  
+Resources:
+  #ExecutionRole
+  CreateNestedExecutePermission:
+    Type: "AWS::Lambda::Permission"
+    DependsOn: "LambdaFunction"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      Principal: "*"
+      FunctionName:
+        Fn::GetAtt:
+          - "LambdaFunction"
+          - "Arn"
+
+  #LambdaRole
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - 
+          PolicyName: SQSPermissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Action:
+                  - "sqs:ChangeMessageVisibility"
+                  - "sqs:ChangeMessageVisibilityBatch"
+                  - "sqs:DeleteMessage"
+                  - "sqs:DeleteMessageBatch"
+                  - "sqs:GetQueueAttributes"
+                  - "sqs:GetQueueUrl"
+                  - "sqs:ReceiveMessage"
+                Resource:
+                  Fn::GetAtt:
+                    - "MyQueue"
+                    - "Arn"
+                Effect: Allow
+        - 
+          PolicyName: S3Permissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Action:
+                  - "s3:PutObject"
+                  - "s3:PutObjectAcl"
+                Resource: 
+                  Fn::Join: [ "", [ "arn:aws:s3:::", !Ref BucketName ,"/*" ] ]
+                Effect: "Allow"
+        - 
+          PolicyName: SESPermissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Action:
+                  - "ses:SendEmail"
+                Resource: "*"
+                Effect: "Allow"
+        - 
+          PolicyName: CWLogsPermissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                  - "logs:DescribeLogStreams"
+                Resource: "arn:aws:logs:*:*:*"
+                Effect: "Allow"
+
+  #Lambda Function
+  LambdaFunction:
+    Type: "AWS::Lambda::Function"
+    DependsOn: RunLambdaCodeSource
+    Properties:
+      Handler: "index.handler"
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+          - "LambdaExecutionRole"
+          - "Arn"
+      Code:
+        S3Bucket: !Ref MyS3Bucket
+        S3Key: "sesreport.zip"
+      Runtime: "nodejs4.3"
+      Timeout: "300"
+      Environment:
+        Variables:
+          Key: Value
+          Region: !Ref "AWS::Region"
+          QueueURL: !Ref "MyQueue" 
+          ToAddr: !Ref "DestinationEmail"
+          SrcAddr: !Ref "SourceEmail"
+          BucketName: !Ref "BucketName"
+          BucketPrefix: !Ref "BucketPrefix"
+
+  #SQS Queue
+  MyQueue:
+    Type: "AWS::SQS::Queue"
+    DependsOn: "MySNSTopic"
+    Properties:
+      QueueName: "SESReportQueue"
+      VisibilityTimeout: "300"
+
+  #SQS Queue Policy
+  MyQueuePolicy:
+    DependsOn: MyQueue
+    Type: "AWS::SQS::QueuePolicy"
+    Properties:
+      Queues:
+        - !Ref MyQueue 
+      PolicyDocument:
+        Id: MyQueuePolicy
+        Statement:
+          - Resource:
+              !GetAtt MyQueue.Arn
+            Effect: Allow
+            Sid: "Allow-SNS-Send-Message"
+            Principal: "*"
+            Action: 
+              - "sqs:SendMessage"
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref MySNSTopic
+
+  # SNS TOPIC
+  MySNSTopic:
+    Type: "AWS::SNS::Topic"
+    Properties:
+      TopicName: "SESReportSNSTopic"
+
+  #MyTopicSubscription
+  MySubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint:
+        Fn::GetAtt:
+          - "MyQueue"
+          - "Arn"
+      Protocol: "sqs"
+      TopicArn: !Ref "MySNSTopic"
+  #My S3 Bucket
+  MyS3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref BucketName
+
+  #ExecutionRole for CustomResource
+  CustomResourceExecutePermission:
+    Type: 'AWS::Lambda::Permission'
+    DependsOn: 'CustomResourceLambdaFunction'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      Principal: '*'
+      FunctionName:
+        Fn::GetAtt:
+          - "CustomResourceLambdaFunction"
+          - "Arn"
+
+
+  #LambdaRole for CustomResource
+  CustomResourceLambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: SetSESIdentityNotificationTopic
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              Action:
+                - 'ses:SetIdentityNotificationTopic'
+                - 'logs:*'
+                - 's3:PutObject*'
+              Resource: '*'
+              Effect: Allow
+        - PolicyName: AllowPurgeSQSQueue
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              Action:
+              - "sqs:PurgeQueue"
+              Effect: Allow
+              Resource: !GetAtt MyQueue.Arn
+
+  #Custom resourceLambda Function
+  CustomResourceLambdaFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Handler: "index.handler"
+      Role:
+        Fn::GetAtt:
+          - "CustomResourceLambdaExecutionRole"
+          - "Arn"
+      Code:
+        ZipFile: >
+          var AWS = require('aws-sdk');
+
+          var response = require('cfn-response');
+          
+          var ses = new AWS.SES();
+
+          var sqs = new AWS.SQS();
+
+          exports.handler = (event, context, callback) => {
+            
+            var identity = event.ResourceProperties.Identity;
+            var snsTopic = event.ResourceProperties.MySNSTopic;
+            var NotificationType = event.ResourceProperties.NotificationType;
+            var MyQueue = event.ResourceProperties.MyQueue;
+            var responseData = {};
+
+              function purgeQueue(MyQueue){
+                var params = {
+                  QueueUrl: MyQueue
+                };
+                sqs.purgeQueue(params, function(err, data) {
+                  if (err) console.log(err, err.stack); // an error occurred
+                  else     console.log(data);           // successful response
+                });
+              };
+              //When CloudFormation's Stack is deleted
+              if (event.RequestType == 'Delete') {
+                response.send(event, context, response.SUCCESS);
+                return;
+              }
+              //When CloudFormation's Stack is Updated
+              if (event.RequestType == 'Update') {
+                response.send(event, context, response.SUCCESS);
+                return;
+              }
+
+            var params = {
+              Identity: identity, 
+              NotificationType: NotificationType,
+              SnsTopic: snsTopic
+            };
+
+            ses.setIdentityNotificationTopic(params, function(err, data) {
+                if (err) {
+                    console.log(err, err.stack); // an error occurred
+                    responseData = {Error: 'setIdentifyNotificationTopic failed'};
+                    response.send(event, context, response.FAILED, responseData);
+                } else {
+                    purgeQueue(MyQueue);
+                    response.send(event, context, response.SUCCESS, responseData);
+                    console.log(data);  // successful response
+                }
+            });
+          }; 
+      Runtime: "nodejs4.3"
+      Timeout: "25"
+  
+  #Execute Lambda Custom Resource
+  RunLambdaBounce:
+    Type: "Custom::RunLambdaFunction"
+    DependsOn: 
+      - "CustomResourceLambdaFunction"
+      - "MySNSTopic"
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - "CustomResourceLambdaFunction"
+          - "Arn"
+      MySNSTopic: !Ref "MySNSTopic"
+      Identity: !Ref "Identity"
+      NotificationType: "Bounce"
+      MyQueue: !Ref MyQueue      
+  
+  #Execute Lambda Custom Resource
+  RunLambdaComplaint:
+    Type: "Custom::RunLambdaFunction"
+    DependsOn: 
+      - "CustomResourceLambdaFunction"
+      - "MySNSTopic"
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - "CustomResourceLambdaFunction"
+          - "Arn"
+      MySNSTopic: !Ref "MySNSTopic"
+      Identity: !Ref "Identity"
+      NotificationType: "Complaint"
+      MyQueue: !Ref MyQueue
+
+  #CronJob as EventRule to invoke SESReport Lambda Function
+  CronjobEvent:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: CloudWatch Event that triggers SESReport Lambda Function
+      ScheduleExpression: !Ref Frequency
+      State: ENABLED
+      Targets:
+        -
+          Arn: !GetAtt LambdaFunction.Arn
+          Id: SESReportCronjob
+        
+  #Permission to CWEvents invoke the SESReport Lambda Function
+  PermissionForEventsToInvokeLambda:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt CronjobEvent.Arn
+
+  #Execute Lambda Custom Resource
+  RunLambdaCodeSource:
+    Type: "Custom::RunLambdaFunctionCode"
+    DependsOn: 
+      - CustomResourceLambdaExecutionRole
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - "CustomResourceLambdaFunctionDownloadCode"
+          - "Arn"
+      Bucket: !Ref MyS3Bucket
+
+#Custom resourceLambda Function
+  CustomResourceLambdaFunctionDownloadCode:
+    Type: "AWS::Lambda::Function"
+    DependsOn: 
+      - CustomResourceLambdaExecutionRole
+      - MyS3Bucket
+    Properties:
+      Handler: "index.lambda_handler"
+      Role:
+        Fn::GetAtt:
+          - "CustomResourceLambdaExecutionRole"
+          - "Arn"
+      Code:
+        ZipFile: >
+          import cfnresponse
+
+          import boto3
+
+          import urllib
+
+          import os
+
+          Bucket = os.environ['Bucket']
+
+
+          def lambda_handler(event, context):
+              try:
+                  url = "https://raw.githubusercontent.com/awslabs/aws-support-tools/master/SES/SESReports/sesreport.zip"
+                  download = urllib.URLopener()
+                  download.retrieve(url, '/tmp/sesreport.zip')
+                  rdata = {}
+                  client = boto3.client('s3')
+                  response = client.put_object(
+                      Bucket=Bucket,
+                      ACL='public-read',
+                      Key='sesreport.zip',
+                      Body=open('/tmp/sesreport.zip', 'rb')
+                  )
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, rdata)
+              except Exception as e:
+                  print 'Exception occured :' + str(e)
+                  rdata = {"failed"}
+                  cfnresponse.send(event, context, cfnresponse.FAILED, rdata)
+                  raise e
+              return
+      Runtime: "python2.7"
+      Timeout: "60"
+      Environment:
+        Variables:
+          Bucket: !Ref "BucketName"

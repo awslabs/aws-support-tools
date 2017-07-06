@@ -25,8 +25,10 @@ I'd like to encourage you to use the Mailbox Simulator provided by SES when depl
 *	Lambda – Will Process the queue, create the Report, save to S3 and send the report URL via Email using SES
 *	CloudWatch – Will trigger the lambda-function using “Scheduled Events"
 
+## CloudFormation:
+* Use ses-reports.yaml stack and just fill up the variables. 
 
-## Installation:
+## Manual Installation:
 *	Create an Amazon SNS topic [1].
 *	Create an Amazon SQS Standard Queue [2]. Only changing: Default Visibility Timeout to 5m. 
 *	Subscribe the queue to SNS Topic previously created [3].
