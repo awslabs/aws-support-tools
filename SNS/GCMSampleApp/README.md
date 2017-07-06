@@ -17,13 +17,13 @@ Create Android Project
 4. In project level **build.gradle** under **dependencies {..}** include the following classpath:
     
     ```json    
-    classpath 'com.google.gms:google-services:1.5.0-beta2'
+    classpath 'com.google.gms:google-services:3.0.0'
     ```
     
 5. In application level **build.gradle** add the following under **dependencies {..}**:
 
     ```json
-    compile 'com.google.android.gms:play-services-gcm:8.3.0'
+    compile 'com.google.android.gms:play-services-gcm:9.6.1'
     ```
     
 6. Also, in application level **build.gradle** add the following at the end of the file:
