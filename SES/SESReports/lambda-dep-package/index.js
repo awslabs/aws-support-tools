@@ -16,8 +16,8 @@ var queueParams = {AttributeNames: ["ApproximateNumberOfMessages"], QueueUrl: qu
 
 
 exports.handler = (event, context, callback) => {
-    var date = (new Date()).toString().split(' ').splice(1, 4).join('-');
-    var url = null;
+	var date = (new Date()).toString().split(' ').splice(1, 4).join('-').replace(/:/g, '-');
+	var url = null;
 
     function s3upload() {
         if (prefix == undefined) {
