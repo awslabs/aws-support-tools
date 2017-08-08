@@ -21,7 +21,7 @@ This sample program is to test against the below activiest:
  
   - Set up your testing aim
   - Set up the test resource
-  You need to setup your test resources eg - memcached or DynamoDB in your VPC environment. As this is not the aim of this tutorial, Please refer to "Setup Test Resources.md" in the repo. For testing aim: 6/7, you don't need to do any extra steps.
+  You need to setup your test resources eg - memcached/Redis or RDS in your VPC environment. As this is not the aim of this tutorial, Please refer to "Setup Test Resources.md" in the repo. For testing aim: 6/7, you don't need to do any extra steps.
   - Package the test deployment.
   	In this tutorial, we will use Python/virtualenv as our test step. 
   	- create the testing virtual env 
