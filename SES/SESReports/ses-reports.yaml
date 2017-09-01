@@ -34,7 +34,7 @@ Resources:
     DependsOn: "LambdaFunction"
     Properties:
       Action: "lambda:InvokeFunction"
-      Principal: "*"
+      Principal: events.amazonaws.com
       FunctionName:
         Fn::GetAtt:
           - "LambdaFunction"
@@ -194,7 +194,7 @@ Resources:
     DependsOn: 'CustomResourceLambdaFunction'
     Properties:
       Action: 'lambda:InvokeFunction'
-      Principal: '*'
+      Principal: cloudformation.amazonaws.com
       FunctionName:
         Fn::GetAtt:
           - "CustomResourceLambdaFunction"
