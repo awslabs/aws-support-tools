@@ -1,6 +1,7 @@
 {
   "objects": [
     {
+      "myComment" : "Activity to copy from intermediate staging S3 path to target table",
       "output": {
         "ref": "DestRedshiftTable"
       },
@@ -19,6 +20,7 @@
       "insertMode": "#{myInsertMode}"
     },
     {
+      "myComment" : "Activity to copy from source RDS to intermediate staging S3 path",
       "output": {
         "ref": "S3StagingDataNode"
       },
@@ -33,12 +35,14 @@
       "type": "CopyActivity"
     },
     {
+      "myComment" : "S3 path used for intermediate staging",
       "directoryPath": "#{myS3StagingLoc}/#{format(@scheduledStartTime, 'YYYY-MM-dd-HH-mm-ss')}",
       "name": "S3StagingDataNode",
       "id": "S3StagingDataNode",
       "type": "S3DataNode"
     },
     {
+      "myComment" : "Your Redshift DB details",
       "connectionString": "#{myRedshiftJdbcConnectStr}",
       "*password": "#{*myRedshiftPassword}",
       "name": "RedshiftCluster",
@@ -47,13 +51,14 @@
       "username": "#{myRedshiftUsername}"
     },
     {
+      "myComment" : "Activity that creates target table in Redshift Database. Please refer to shell script hosted in your S3 bucket",
       "output": {
         "ref": "DestRedshiftTable"
       },
       "input": {
         "ref": "SrcRDSTable"
       },
-      "scriptUri": "s3://testbucket/scripts/dbconv_unixcopy_psqlRDStoRedshift.sh",
+      "scriptUri": "s3://testbucket/scripts/dbconv_psqlRDStoRedshift.sh",
       "dependsOn": {
         "ref": "RDSToS3CopyActivity"
       },
@@ -79,6 +84,7 @@
       "type": "ShellCommandActivity"
     },
     {
+      "myComment" : "Cleanup intermediate staging S3 after other activities are completed",
       "input": {
         "ref": "S3StagingDataNode"
       },
@@ -95,6 +101,7 @@
       "command": "(sudo yum -y update aws-cli) && (aws s3 rm #{input.directoryPath} --recursive)"
     },
     {
+      "myComment" : "Your Ec2 resource to run your pipeline activities. keyPair,subnetId and securityGroupIds are optional, if used please refer yours",
       "subnetId": "subnet-7b3a9f46",
       "securityGroupIds": [
         "sg-f3973b95",
@@ -108,6 +115,7 @@
       "terminateAfter": "2 Hours"
     },
     {
+      "myComment" : "Your source RDS DB details",
       "connectionString": "#{myRDSJdbcConnectStr}",
       "*password": "#{*myRDSPassword}",
       "name": "rds_postygresql",
@@ -121,16 +129,18 @@
       "username": "#{myRDSUsername}"
     },
     {
+      "myComment" : "Your target Redshift table details, please provide your table primary keys",
       "database": {
         "ref": "RedshiftCluster"
       },
-      "primaryKeys": "name",
+      "primaryKeys": "#{myRedshiftTablePrimaryKey}",
       "name": "DestRedshiftTable",
       "id": "DestRedshiftTable",
       "type": "RedshiftDataNode",
       "tableName": "#{myRedshiftTableName}"
     },
     {
+      "myComment" : "Default Pipeline object that defines IAM roles, pipeline log bucket path and Schedule",
       "failureAndRerunMode": "CASCADE",
       "resourceRole": "DataPipelineDefaultResourceRole",
       "role": "DataPipelineDefaultRole",
@@ -140,6 +150,7 @@
       "id": "Default"
     },
     {
+      "myComment" : "Your source RDS table details",
       "database": {
         "ref": "rds_mysql"
       },
@@ -243,16 +254,17 @@
     }
   ],
   "values": {
-    "myRedshiftUsername": "tester",
-    "myRDSUsername": "tester",
-    "myS3StagingLoc": "s3://testbucket/temp/dp/",
-    "myRedshiftJdbcConnectStr": "jdbc:redshift://myrshiftcluster.cnue6b02ndqt.us-east-1.redshift.amazonaws.com:5439/testrsdb?tcpKeepAlive=true",
-    "*myRedshiftPassword": "Abcd1234",
-    "myInsertMode": "OVERWRITE_EXISTING",
-    "myRDSJdbcConnectStr": "jdbc:postgresql://myrdspostgresqldb.chqgitoif30b.us-east-1.rds.amazonaws.com:5432/testdevdb",
-    "myRDSRedshiftSecurityGrps": "default",
-    "*myRDSPassword": "abcd1234",
-    "myRedshiftTableName": "nameid2",
-    "myRDSTableName": "nameid2"
+    "myRedshiftUsername": "",
+    "myRDSUsername": "",
+    "myS3StagingLoc": "",
+    "myRedshiftJdbcConnectStr": "",
+    "*myRedshiftPassword": "",
+    "myInsertMode": "",
+    "myRDSJdbcConnectStr": "",
+    "myRDSRedshiftSecurityGrps": "",
+    "*myRDSPassword": "",
+    "myRedshiftTableName": "",
+    "myRDSTableName": "",
+    "myRedshiftTablePrimaryKey": ""
   }
 }
