@@ -1,6 +1,7 @@
 {
   "objects": [
     {
+      "myComment" : "Activity that syncs the S3 CSV files copied from RDS to the local directory of EC2 resource",
       "input": {
         "ref": "S3StagingDataNode"
       },
@@ -17,12 +18,14 @@
       "command": "(sudo yum -y update aws-cli) && (aws s3 sync #{input.directoryPath}/ /home/ec2-user/)"
     },
     {
+       "myComment" : "S3 path used for intermediate staging",
       "directoryPath": "#{myS3StagingLoc}/#{format(@scheduledStartTime, 'YYYY-MM-dd-HH-mm-ss')}",
       "name": "S3StagingDataNode",
       "id": "S3StagingDataNode",
       "type": "S3DataNode"
     },
     {
+      "myComment" : "Activity that creates target table in Postgresql Database. Please refer to shell script hosted in your S3 bucket",
       "output": {
         "ref": "DestJdbcTable"
       },
@@ -54,6 +57,7 @@
       "type": "ShellCommandActivity"
     },
     {
+      "myComment" : "Your target Postgresql Database",
       "database": {
         "ref": "JdbcCluster"
       },
@@ -65,6 +69,7 @@
       "selectQuery": "select * from #{table}"
     },
     {
+      "myComment" : "Your source Mysql RDS Database",
       "databaseName": "#{myRDSDatabaseName}",
       "*password": "#{*myRDSPassword}",
       "name": "rds_mysql",
@@ -75,6 +80,7 @@
       "username": "#{myRDSUsername}"
     },
     {
+      "myComment" : "Your Ec2 resource to run your pipeline activities. keyPair,subnetId and securityGroupIds are optional, if used please refer yours",
       "subnetId": "subnet-7b3a9f46",
       "securityGroupIds": [
         "sg-f3973b95",
@@ -88,6 +94,7 @@
       "terminateAfter": "2 Hours"
     },
     {
+      "myComment" : "Your Postgresql details",
       "connectionString": "#{myJdbcConnectStr}",
       "*password": "#{*myJdbcPassword}",
       "name": "JdbcCluster",
@@ -98,6 +105,7 @@
       "username": "#{myJdbcUsername}"
     },
     {
+      "myComment" : "Activity that copies your source RDS table to intermediate S3 staging location",
       "output": {
         "ref": "S3StagingDataNode"
       },
@@ -112,6 +120,7 @@
       "type": "CopyActivity"
     },
     {
+      "myComment" : "Default Pipeline object that defines IAM roles, pipeline log bucket path and Schedule",
       "failureAndRerunMode": "CASCADE",
       "resourceRole": "DataPipelineDefaultResourceRole",
       "role": "DataPipelineDefaultRole",
@@ -121,6 +130,7 @@
       "id": "Default"
     },
     {
+      "myComment" : "Your Mysql RDS table details",
       "database": {
         "ref": "rds_mysql"
       },
@@ -131,6 +141,7 @@
       "selectQuery": "select * from #{table}"
     },
     {
+      "myComment" : "Cleanup S3 staging path after other pipeline activities are completed",
       "input": {
         "ref": "S3StagingDataNode"
       },
@@ -232,18 +243,18 @@
     }
   ],
   "values": {
-    "myS3StagingLoc": "s3://testbucket/temp/",
-    "*myJdbcPassword": "abcd1234",
-    "myRDSJdbcConnectStr": "jdbc:mysql://myrdstestins.chqgitoif30b.us-east-1.rds.amazonaws.com:3306/myrdstestdb",
-    "myJdbcConnectStr": "jdbc:postgresql://abcpostgresqldb.chqgitoif30b.us-east-1.rds.amazonaws.com:5432/dev",
-    "myJdbcTableName": "nameid2",
-    "myRDSUsername": "abctest",
-    "myRDSinstanceid": "myrdstestins",
-    "myRDSJdbcSecurityGrps": "default",
-    "myJdbcUsername": "abctest",
-    "myRDSDatabaseName": "myrdstestdb",
-    "*myRDSPassword": "abcd1234",
-    "myRDSTableName": "nameid2",
-    "myJdbcTableInsertSql": "INSERT INTO #{table}(name, id) VALUES (?,?);"
+    "myS3StagingLoc": "",
+    "*myJdbcPassword": "",
+    "myRDSJdbcConnectStr": "",
+    "myJdbcConnectStr": "",
+    "myJdbcTableName": "",
+    "myRDSUsername": "",
+    "myRDSinstanceid": "",
+    "myRDSJdbcSecurityGrps": "",
+    "myJdbcUsername": "",
+    "myRDSDatabaseName": "",
+    "*myRDSPassword": "",
+    "myRDSTableName": "",
+    "myJdbcTableInsertSql": ""
   }
 }

@@ -1,7 +1,15 @@
-
 #!/bin/bash
-#Example Invocation
-#./dbconv.sh --rds_jdbc=jdbc:mysql://dbtest.cob91vaba6fq.us-east-1.rds.amazonaws.com:3306/sakila
+
+#  Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+#  Licensed under the Amazon Software License (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
+#
+#      http://aws.amazon.com/asl/
+#
+#    or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+# Example Invocation
+#./dbconv-mysqlRDS-to-postgresqlRDS.sh --rds_jdbc=jdbc:mysql://dbtest.cob91vaba6fq.us-east-1.rds.amazonaws.com:3306/sakila
 # --rds_tbl=customer --rds_pwd=testpassword --rds_usr=admin
 # --red_jdbc=jdbc:postgresql://eudb3.cvprvckckqrm.eu-west-1.redshift.amazonaws.com:5439/dbtest?tcpKeepAlive=true
 # --red_usr=admin --red_pwd=test123E —red_tbl=RedTub
@@ -73,14 +81,14 @@ echo "RDS Usr: $RDSUsr"
 #echo "RDS Pwd: $RDSPwd"
 echo "RDS Tbl: $RDSTbl"
 
-echo "REDShift Jdbc: $REDJdbc"
-echo "RED Usr: $REDUsr"
-#echo "RED Pwd: $REDPwd"
-echo "(Optional) REDShift Generated Tbl: $REDTbl"
-echo "(Optional) REDShift Distribution Key: $REDDist"
-echo "(Optional) REDShift Sort Key(s): $REDSort"
-echo "(Optional) REDShift Default Translation Override Map: $REDMap"
-echo "(Optional) REDShift Data Insert Mode: $REDIns"
+echo "Postgresql Jdbc: $REDJdbc"
+echo "Postgresql Usr: $REDUsr"
+#echo "Postgresql Pwd: $REDPwd"
+echo "(Optional) Postgresql Generated Tbl: $REDTbl"
+echo "(Optional) Postgresql Distribution Key: $REDDist"
+echo "(Optional) Postgresql Sort Key(s): $REDSort"
+echo "(Optional) Postgresql Default Translation Override Map: $REDMap"
+echo "(Optional) Postgresql Data Insert Mode: $REDIns"
 
 # exit script on error
 set -e
@@ -96,14 +104,14 @@ echo "RDS Port: $RDSPort"
 MySQLDb=`echo $RDSJdbc | awk -F: '{print $4}' | awk -F/ '{print $2}'`
 echo "RDS MySQLDB: $MySQLDb"
 
-#4. Parse Redshift Jdbc Connect String
+#4. Parse Postgresql Jdbc Connect String
 #"jdbc:postgresql://eudb3.cvprvckckqrm.eu-west-1.redshift.amazonaws.com:5439/dbtest?tcpKeepAlive=true"
 REDHost=`echo $REDJdbc | awk -F: '{print $3}' | sed 's/\///g'`
-echo "REDShift Host: $REDHost"
+echo "Postgresql Host: $REDHost"
 REDPort=`echo $REDJdbc | awk -F: '{print $4}' | awk -F/ '{print $1}'`
-echo "REDShift Port: $REDPort"
+echo "Postgresql Port: $REDPort"
 REDDb=`echo $REDJdbc | awk -F: '{print $4}' | awk -F/ '{print $2}' | awk -F? '{print $1}'`
-echo "REDShift DB: $REDDb"
+echo "Postgresqlt DB: $REDDb"
 
 #5. Dump MySQL Table definition
 MySQLFile=rdsmy$(date +%m%d%H%M%S).sql
@@ -119,7 +127,7 @@ RedFile=red$(date +%m%d%H%M%S).psql
 echo "created $RedFile file for writing"
 echo "calling python script to generate schema file"
 python mysql_to_redshift.py --input_file=$MySQLFile --output_file=$RedFile --table_name=$REDTbl  --dist_key=$REDDist --sort_keys=$REDSort --map_types=$REDMap --insert_mode=$REDIns
-echo "Generated Redshift file: $RedFile"
+echo "Generated Postgresql file: $RedFile"
 
 #8. Import it into Postgresql RDS and create the table
 export PGPASSWORD=$REDPwd

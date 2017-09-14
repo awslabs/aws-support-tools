@@ -1,7 +1,15 @@
 #!/bin/bash
 
-#Example Invocation
-#./dbconv.sh --rds_jdbc=jdbc:mysql://dbtest.cob91vaba6fq.us-east-1.rds.amazonaws.com:3306/sakila
+#  Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+#  Licensed under the Amazon Software License (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
+#
+#      http://aws.amazon.com/asl/
+#
+#    or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+# Example Invocation
+#./dbconv_psqlRDStoRedshift.sh --rds_jdbc=jdbc:mysql://dbtest.cob91vaba6fq.us-east-1.rds.amazonaws.com:3306/sakila
 # --rds_tbl=customer --rds_pwd=testpassword --rds_usr=admin
 # --red_jdbc=jdbc:postgresql://eudb3.cvprvckckqrm.eu-west-1.redshift.amazonaws.com:5439/dbtest?tcpKeepAlive=true
 # --red_usr=admin --red_pwd=test123E —red_tbl=RedTub
@@ -85,14 +93,11 @@ echo "(Optional) REDShift Data Insert Mode: $REDIns"
 # exit script on error
 set -e
 
-#1. Install MySQL client including mysqldump
-sudo yum install mysql -y
-
-#2. Install PSQL client that matches the version of your Redshift
-sudo yum install postgresql93 -y
+#1. Install PSQL client that matches the version of your Postgresql Source and target Redshift
+sudo yum install mysql postgresql93 -y
 
 
-#3. Parse RDS Jdbc Connect String
+#2. Parse RDS Jdbc Connect String
 RDSHost=`echo $RDSJdbc | awk -F: '{print $3}' | sed 's/\///g'`
 echo "RDS Host: $RDSHost"
 RDSPort=`echo $RDSJdbc | awk -F: '{print $4}' | awk -F/ '{print $1}'`
@@ -100,7 +105,7 @@ echo "RDS Port: $RDSPort"
 MySQLDb=`echo $RDSJdbc | awk -F: '{print $4}' | awk -F/ '{print $2}'`
 echo "RDS MySQLDB: $MySQLDb"
 
-#4. Parse Redshift Jdbc Connect String
+#3. Parse Redshift Jdbc Connect String
 #"jdbc:postgresql://eudb3.cvprvckckqrm.eu-west-1.redshift.amazonaws.com:5439/dbtest?tcpKeepAlive=true"
 REDHost=`echo $REDJdbc | awk -F: '{print $3}' | sed 's/\///g'`
 echo "REDShift Host: $REDHost"
@@ -109,13 +114,13 @@ echo "REDShift Port: $REDPort"
 REDDb=`echo $REDJdbc | awk -F: '{print $4}' | awk -F/ '{print $2}' | awk -F? '{print $1}'`
 echo "REDShift DB: $REDDb"
 
-#5. Dump Postgresql Table definition
+#4. Dump Postgresql Table definition
 MyPostgresqlFile=rdsmy$(date +%m%d%H%M%S).sql
 echo "My RDS dump file: $MyPostgresqlFile"
 `PGPASSWORD=$RDSPwd pg_dump -h $RDSHost --port=$RDSPort -U $RDSUsr -w -F p -s -E UTF8 -f $MyPostgresqlFile -t $RDSTbl $MySQLDb`
 echo "$MyPostgresqlFile created with pg_dump command"
 
-#6. Import it into Redshift, no translation required between schemas
+#5. Import it into Redshift, no translation required between schemas
 export PGPASSWORD=$REDPwd
 psql -h $REDHost -p $REDPort -U $REDUsr -d $REDDb -f $MyPostgresqlFile
 echo "Redshift table created with psql command"
