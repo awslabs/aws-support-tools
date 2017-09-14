@@ -1,0 +1,260 @@
+{
+  "objects": [
+    {
+      "myComment" : "Activity that syncs the S3 CSV files copied from RDS to the local directory of EC2 resource",
+      "input": {
+        "ref": "S3StagingDataNode"
+      },
+      "stage": "false",
+      "dependsOn": {
+        "ref": "RDSToS3CopyActivity"
+      },
+      "name": "SyncS3CsvToEc2",
+      "runsOn": {
+        "ref": "Ec2Instance"
+      },
+      "id": "SyncS3CsvToEc2",
+      "type": "ShellCommandActivity",
+      "command": "(sudo yum -y update aws-cli) && (aws s3 sync #{input.directoryPath}/ /home/ec2-user/)"
+    },
+    {
+       "myComment" : "S3 path used for intermediate staging",
+      "directoryPath": "#{myS3StagingLoc}/#{format(@scheduledStartTime, 'YYYY-MM-dd-HH-mm-ss')}",
+      "name": "S3StagingDataNode",
+      "id": "S3StagingDataNode",
+      "type": "S3DataNode"
+    },
+    {
+      "myComment" : "Activity that creates target table in Postgresql Database. Please refer to shell script hosted in your S3 bucket",
+      "output": {
+        "ref": "DestJdbcTable"
+      },
+      "input": {
+        "ref": "S3StagingDataNode"
+      },
+      "dependsOn": {
+        "ref": "SyncS3CsvToEc2"
+      },
+      "scriptUri": "s3://testbucket/scripts/dbconv_mysqlRDS-to-postgresqlRDS.sh",
+      "name": "JdbcTableCreateActivity",
+      "runsOn": {
+        "ref": "Ec2Instance"
+      },
+      "scriptArgument": [
+        "--rds_jdbc=#{myRDSJdbcConnectStr}",
+        "--rds_tbl=#{myRDSTableName}",
+        "--rds_pwd=#{*myRDSPassword}",
+        "--rds_usr=#{myRDSUsername}",
+        "--red_jdbc=#{myJdbcConnectStr}",
+        "--red_usr=#{myJdbcUsername}",
+        "--red_pwd=#{*myJdbcPassword}",
+        "--red_tbl=#{myJdbcTableName}",
+        "--red_dist=#{myJdbcDistributionKey}",
+        "--red_sort=#{myJdbcSortKeys}",
+        "--red_map=#{myJdbcTypeConvOverrideMap}"
+      ],
+      "id": "JdbcTableCreateActivity",
+      "type": "ShellCommandActivity"
+    },
+    {
+      "myComment" : "Your target Postgresql Database",
+      "database": {
+        "ref": "JdbcCluster"
+      },
+      "name": "DestJdbcTable",
+      "insertQuery": "#{myJdbcTableInsertSql}",
+      "id": "DestJdbcTable",
+      "type": "SqlDataNode",
+      "table": "#{myJdbcTableName}",
+      "selectQuery": "select * from #{table}"
+    },
+    {
+      "myComment" : "Your source Mysql RDS Database",
+      "databaseName": "#{myRDSDatabaseName}",
+      "*password": "#{*myRDSPassword}",
+      "name": "rds_mysql",
+      "jdbcProperties": "allowMultiQueries=true",
+      "id": "rds_mysql",
+      "type": "RdsDatabase",
+      "rdsInstanceId": "#{myRDSinstanceid}",
+      "username": "#{myRDSUsername}"
+    },
+    {
+      "myComment" : "Your Ec2 resource to run your pipeline activities. keyPair,subnetId and securityGroupIds are optional, if used please refer yours",
+      "subnetId": "subnet-7b3a9f46",
+      "securityGroupIds": [
+        "sg-f3973b95",
+        "sg-068b2160"
+      ],
+      "instanceType": "m3.medium",
+      "name": "Ec2Instance",
+      "keyPair": "ec2-VA-keypair",
+      "id": "Ec2Instance",
+      "type": "Ec2Resource",
+      "terminateAfter": "2 Hours"
+    },
+    {
+      "myComment" : "Your Postgresql details",
+      "connectionString": "#{myJdbcConnectStr}",
+      "*password": "#{*myJdbcPassword}",
+      "name": "JdbcCluster",
+      "id": "JdbcCluster",
+      "jdbcProperties": "tcpKeepAlive=true",
+      "type": "JdbcDatabase",
+      "jdbcDriverClass": "org.postgresql.Driver",
+      "username": "#{myJdbcUsername}"
+    },
+    {
+      "myComment" : "Activity that copies your source RDS table to intermediate S3 staging location",
+      "output": {
+        "ref": "S3StagingDataNode"
+      },
+      "input": {
+        "ref": "SrcRDSTable"
+      },
+      "name": "RDSToS3CopyActivity",
+      "id": "RDSToS3CopyActivity",
+      "runsOn": {
+        "ref": "Ec2Instance"
+      },
+      "type": "CopyActivity"
+    },
+    {
+      "myComment" : "Default Pipeline object that defines IAM roles, pipeline log bucket path and Schedule",
+      "failureAndRerunMode": "CASCADE",
+      "resourceRole": "DataPipelineDefaultResourceRole",
+      "role": "DataPipelineDefaultRole",
+      "pipelineLogUri": "s3://testbucket/logs/",
+      "scheduleType": "ONDEMAND",
+      "name": "Default",
+      "id": "Default"
+    },
+    {
+      "myComment" : "Your Mysql RDS table details",
+      "database": {
+        "ref": "rds_mysql"
+      },
+      "name": "SrcRDSTable",
+      "id": "SrcRDSTable",
+      "type": "SqlDataNode",
+      "table": "#{myRDSTableName}",
+      "selectQuery": "select * from #{table}"
+    },
+    {
+      "myComment" : "Cleanup S3 staging path after other pipeline activities are completed",
+      "input": {
+        "ref": "S3StagingDataNode"
+      },
+      "dependsOn": {
+        "ref": "JdbcTableCreateActivity"
+      },
+      "stage": "false",
+      "name": "S3StagingCleanupActivity",
+      "id": "S3StagingCleanupActivity",
+      "runsOn": {
+        "ref": "Ec2Instance"
+      },
+      "type": "ShellCommandActivity",
+      "command": "(aws s3 rm #{input.directoryPath} --recursive)"
+    }
+  ],
+  "parameters": [
+    {
+      "helpText": "The S3 folder to store RDS MySQL table data before loading to Jdbc. The S3 folder must be in the same region as the Jdbc cluster.",
+      "description": "S3 staging folder",
+      "id": "myS3StagingLoc",
+      "type": "AWS::S3::ObjectKey"
+    },
+    {
+      "description": "RDS MySQL password",
+      "id": "*myRDSPassword",
+      "type": "String"
+    },
+    {
+      "description": "RDS MySQL table name",
+      "id": "myRDSTableName",
+      "type": "String"
+    },
+    {
+      "helpText": "Override the default mapping of RDS MySQL data types to Jdbc data types.",
+      "watermark": "tinyint(1):smallint,char(35):varchar(70),bigint(20) unsigned:bigint",
+      "description": "MySQL to Jdbc type conversion overrides",
+      "optional": "true",
+      "id": "myJdbcTypeConvOverrideMap",
+      "type": "String"
+    },
+    {
+      "description": "Jdbc username",
+      "id": "myJdbcUsername",
+      "type": "String"
+    },
+    {
+      "watermark": "columnName",
+      "helpText": "Distribution key column in the Jdbc table. If the distribution key is not specified the primary key is set as a distribution key.",
+      "description": "Jdbc table distribution key",
+      "optional": "true",
+      "id": "myJdbcDistributionKey",
+      "type": "String"
+    },
+    {
+      "watermark": "jdbc:mysql://dbinstance.id.region.rds.amazonaws.com:3306/dbname",
+      "description": "RDS MySQL connection string",
+      "id": "myRDSJdbcConnectStr",
+      "type": "String"
+    },
+    {
+      "default": "default",
+      "watermark": "security group name",
+      "helpText": "The names of one or more security groups that collectively provide the EC2 instance connectivity to both the RDS instance and Jdbc cluster.",
+      "description": "RDS and Jdbc security group(s)",
+      "isArray": "true",
+      "id": "myRDSJdbcSecurityGrps",
+      "type": "String"
+    },
+    {
+      "helpText": "The name of an existing table or a new table that will be automatically created.",
+      "description": "Jdbc table name",
+      "id": "myJdbcTableName",
+      "type": "String"
+    },
+    {
+      "description": "Jdbc password",
+      "id": "*myJdbcPassword",
+      "type": "String"
+    },
+    {
+      "watermark": "columnName1,columnName2",
+      "helpText": "Sort key columns in the Jdbc table.",
+      "description": "Jdbc table sort keys",
+      "optional": "true",
+      "id": "myJdbcSortKeys",
+      "type": "String"
+    },
+    {
+      "description": "RDS MySQL username",
+      "id": "myRDSUsername",
+      "type": "String"
+    },
+    {
+      "watermark": "jdbc:postgresql://endpoint:port/database?tcpKeepAlive=true",
+      "description": "Jdbc connection string",
+      "id": "myJdbcConnectStr",
+      "type": "String"
+    }
+  ],
+  "values": {
+    "myS3StagingLoc": "",
+    "*myJdbcPassword": "",
+    "myRDSJdbcConnectStr": "",
+    "myJdbcConnectStr": "",
+    "myJdbcTableName": "",
+    "myRDSUsername": "",
+    "myRDSinstanceid": "",
+    "myRDSJdbcSecurityGrps": "",
+    "myJdbcUsername": "",
+    "myRDSDatabaseName": "",
+    "*myRDSPassword": "",
+    "myRDSTableName": "",
+    "myJdbcTableInsertSql": ""
+  }
+}
