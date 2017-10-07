@@ -163,12 +163,12 @@
   ],
   "parameters": [
     {
-      "description": "RDS MySQL password",
+      "description": "RDS password",
       "id": "*myRDSPassword",
       "type": "String"
     },
     {
-      "description": "RDS MySQL table name",
+      "description": "RDS table name",
       "id": "myRDSTableName",
       "type": "String"
     },
@@ -178,8 +178,8 @@
       "type": "String"
     },
     {
-      "watermark": "jdbc:mysql://dbinstance.id.region.rds.amazonaws.com:3306/dbname",
-      "description": "RDS MySQL connection string",
+      "watermark": "jdbc:postgresql://dbinstance.id.region.rds.amazonaws.com:5432/dbname",
+      "description": "RDS connection string",
       "id": "myRDSJdbcConnectStr",
       "type": "String"
     },
@@ -195,14 +195,6 @@
       "description": "Redshift table distribution key",
       "optional": "true",
       "id": "myRedshiftDistributionKey",
-      "type": "String"
-    },
-    {
-      "helpText": "Override the default mapping of RDS MySQL data types to Redshift data types.",
-      "watermark": "tinyint(1):smallint,char(35):varchar(70),bigint(20) unsigned:bigint",
-      "description": "MySQL to Redshift type conversion overrides",
-      "optional": "true",
-      "id": "myRedshiftTypeConvOverrideMap",
       "type": "String"
     },
     {
@@ -234,7 +226,7 @@
       "type": "String"
     },
     {
-      "description": "RDS MySQL username",
+      "description": "RDS username",
       "id": "myRDSUsername",
       "type": "String"
     },

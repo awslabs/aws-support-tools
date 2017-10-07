@@ -41,14 +41,14 @@
         "ref": "Ec2Instance"
       },
       "scriptArgument": [
-        "--rds_jdbc=#{myRDSJdbcConnectStr}",
-        "--rds_tbl=#{myRDSTableName}",
-        "--rds_pwd=#{*myRDSPassword}",
-        "--rds_usr=#{myRDSUsername}",
-        "--red_jdbc=#{myJdbcConnectStr}",
-        "--red_usr=#{myJdbcUsername}",
-        "--red_pwd=#{*myJdbcPassword}",
-        "--red_tbl=#{myJdbcTableName}",
+        "--rds_jdbc=#{myMysqlRDSConnectStr}",
+        "--rds_tbl=#{myMysqlRDSTableName}",
+        "--rds_pwd=#{*myMysqlRDSPassword}",
+        "--rds_usr=#{myMysqlRDSUsername}",
+        "--red_jdbc=#{myPsqlRDSConnectStr}",
+        "--red_usr=#{myPsqlRDSUsername}",
+        "--red_pwd=#{*myPsqlRDSPassword}",
+        "--red_tbl=#{myPsqlRDSTableName}",
         "--red_dist=#{myJdbcDistributionKey}",
         "--red_sort=#{myJdbcSortKeys}",
         "--red_map=#{myJdbcTypeConvOverrideMap}"
@@ -62,22 +62,22 @@
         "ref": "JdbcCluster"
       },
       "name": "DestJdbcTable",
-      "insertQuery": "#{myJdbcTableInsertSql}",
+      "insertQuery": "#{myPsqlRDSTableInsertSql}",
       "id": "DestJdbcTable",
       "type": "SqlDataNode",
-      "table": "#{myJdbcTableName}",
+      "table": "#{myPsqlRDSTableName}",
       "selectQuery": "select * from #{table}"
     },
     {
       "myComment" : "Your source Mysql RDS Database",
-      "databaseName": "#{myRDSDatabaseName}",
-      "*password": "#{*myRDSPassword}",
+      "databaseName": "#{myMysqlRDSDatabaseName}",
+      "*password": "#{*myMysqlRDSPassword}",
       "name": "rds_mysql",
       "jdbcProperties": "allowMultiQueries=true",
       "id": "rds_mysql",
       "type": "RdsDatabase",
-      "rdsInstanceId": "#{myRDSinstanceid}",
-      "username": "#{myRDSUsername}"
+      "rdsInstanceId": "#{myMysqlRDSinstanceid}",
+      "username": "#{myMysqlRDSUsername}"
     },
     {
       "myComment" : "Your Ec2 resource to run your pipeline activities. keyPair,subnetId and securityGroupIds are optional, if used please refer yours",
@@ -95,14 +95,14 @@
     },
     {
       "myComment" : "Your Postgresql details",
-      "connectionString": "#{myJdbcConnectStr}",
-      "*password": "#{*myJdbcPassword}",
+      "connectionString": "#{myPsqlRDSConnectStr}",
+      "*password": "#{*myPsqlRDSPassword}",
       "name": "JdbcCluster",
       "id": "JdbcCluster",
       "jdbcProperties": "tcpKeepAlive=true",
       "type": "JdbcDatabase",
       "jdbcDriverClass": "org.postgresql.Driver",
-      "username": "#{myJdbcUsername}"
+      "username": "#{myPsqlRDSUsername}"
     },
     {
       "myComment" : "Activity that copies your source RDS table to intermediate S3 staging location",
@@ -137,7 +137,7 @@
       "name": "SrcRDSTable",
       "id": "SrcRDSTable",
       "type": "SqlDataNode",
-      "table": "#{myRDSTableName}",
+      "table": "#{myMysqlRDSTableName}",
       "selectQuery": "select * from #{table}"
     },
     {
@@ -167,12 +167,12 @@
     },
     {
       "description": "RDS MySQL password",
-      "id": "*myRDSPassword",
+      "id": "*myMysqlRDSPassword",
       "type": "String"
     },
     {
       "description": "RDS MySQL table name",
-      "id": "myRDSTableName",
+      "id": "myMysqlRDSTableName",
       "type": "String"
     },
     {
@@ -185,7 +185,7 @@
     },
     {
       "description": "Jdbc username",
-      "id": "myJdbcUsername",
+      "id": "myPsqlRDSUsername",
       "type": "String"
     },
     {
@@ -199,7 +199,7 @@
     {
       "watermark": "jdbc:mysql://dbinstance.id.region.rds.amazonaws.com:3306/dbname",
       "description": "RDS MySQL connection string",
-      "id": "myRDSJdbcConnectStr",
+      "id": "myMysqlRDSConnectStr",
       "type": "String"
     },
     {
@@ -214,12 +214,12 @@
     {
       "helpText": "The name of an existing table or a new table that will be automatically created.",
       "description": "Jdbc table name",
-      "id": "myJdbcTableName",
+      "id": "myPsqlRDSTableName",
       "type": "String"
     },
     {
       "description": "Jdbc password",
-      "id": "*myJdbcPassword",
+      "id": "*myPsqlRDSPassword",
       "type": "String"
     },
     {
@@ -232,29 +232,30 @@
     },
     {
       "description": "RDS MySQL username",
-      "id": "myRDSUsername",
+      "id": "myMysqlRDSUsername",
       "type": "String"
     },
     {
       "watermark": "jdbc:postgresql://endpoint:port/database?tcpKeepAlive=true",
       "description": "Jdbc connection string",
-      "id": "myJdbcConnectStr",
+      "id": "myPsqlRDSConnectStr",
       "type": "String"
     }
   ],
   "values": {
     "myS3StagingLoc": "",
-    "*myJdbcPassword": "",
-    "myRDSJdbcConnectStr": "",
-    "myJdbcConnectStr": "",
-    "myJdbcTableName": "",
-    "myRDSUsername": "",
-    "myRDSinstanceid": "",
+    "myMysqlRDSConnectStr": "",
+    "myMysqlRDSDatabaseName": "",
+    "myMysqlRDSTableName": "",
+    "myMysqlRDSUsername": "",
+    "*myMysqlRDSPassword": "",
+    "myMysqlRDSinstanceid": "",
     "myRDSJdbcSecurityGrps": "",
-    "myJdbcUsername": "",
-    "myRDSDatabaseName": "",
-    "*myRDSPassword": "",
-    "myRDSTableName": "",
-    "myJdbcTableInsertSql": ""
+    "myPsqlRDSConnectStr": "",
+    "myPsqlRDSTableName": "",
+    "myPsqlRDSUsername": "",
+    "*myPsqlRDSPassword": "",
+    "myPsqlRDSTableInsertSql": "",
+    "myJdbcTypeConvOverrideMap":""
   }
 }
