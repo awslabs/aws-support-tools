@@ -1,0 +1,88 @@
+<html>
+  <head>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.4.2.js"></script>
+    //This script is based on the Javascript SDK ver 2.4.2.
+
+    </head>
+    <body>
+
+        <!--In this section we are creating the Upload buttons to be used to upload files.-->
+        <input type="file" id="file-chooser" />
+        <button id="upload-button">Upload to S3 directly</button>
+        <button id="upload-button2">Upload to S3 with Accelerate</button>
+        <div id="results"></div>
+
+
+        <!--In this section we put in the Security Credentials.Your security credentials should have
+        permission to upload objects to S3 Bucket.-->
+        <script type="text/javascript">
+            AWS.config.update({
+                accessKeyId: '<Access Key ID>', //put in your access key
+                secretAccessKey: '<Secret Access Key>' //put in your secret access key.
+            });
+
+            //We create the variable "s3" to upload the data to S3 directly.
+            var s3 = new AWS.S3(
+                {
+                    region: '<region-name>' //update based on where your bucket is located e.g. us-west-2 for PDX
+                }
+            );
+
+            //We create the variable "s3_ta" to upload the data to S3 via Transfer Acceleration.
+            //Note: we need to set 'useAccelerateEndpoint: true' to direct the request to S3 TA endpoint.
+            var s3_ta = new AWS.S3(
+                {
+                    useAccelerateEndpoint: true,
+                    region: '<region-name>' //update based on where your bucket is located e.g. us-west-2 for PDX
+                }
+            );
+
+
+            var fileChooser = document.getElementById('file-chooser');
+            var button = document.getElementById('upload-button');
+            var button2 = document.getElementById('upload-button2');
+            var results = document.getElementById('results');
+
+
+            //In this section we are uploading files to S3 Bucket directly and calculating the Upload Speed.
+            button.addEventListener('click', function() {
+                var time = new Date().getTime()
+                var file = fileChooser.files[0];
+                if (file) {
+                    results.innerHTML = '';
+
+                    var params = {Bucket: '<Bucket-Name>', Key: file.name, ContentType: file.type, Body: file};  //update the bucket name
+                    var options = {partSize: 5 * 1024 * 1024, queueSize: 4};
+                    s3.upload(params, options, function (err, data) {
+                        var timeTaken = ((new Date().getTime() - time) / 1000.0);
+                        results.innerHTML = err ? 'ERROR!' : 'Uploaded without acceleration in ' + timeTaken + ' seconds.' + ' Speed: ' + (file.size * 8.0 / timeTaken / 1024.0 / 1024.0) + ' Mbps';
+                    });
+                } else {
+                    results.innerHTML = 'Nothing to upload.';
+                }
+            }, false);
+
+
+
+            //In this section we are uploading files to S3 Bucket via TA and calculating the Upload Speed
+            button2.addEventListener('click', function() {
+                var time = new Date().getTime()
+                var file = fileChooser.files[0];
+                if (file) {
+                    results.innerHTML = '';
+
+                    var params = {Bucket: '<Bucket-Name>', Key: file.name, ContentType: file.type, Body: file};//update the bucket name
+                    var options = {partSize: 5 * 1024 * 1024, queueSize: 4};
+                    s3_ta.upload(params, options, function (err, data) {
+                        var timeTaken = ((new Date().getTime() - time) / 1000.0);
+                        results.innerHTML = err ? 'ERROR!' : 'Uploaded with acceleration in ' + timeTaken + ' seconds.' + ' Speed: ' + (file.size * 8.0 / timeTaken / 1024.0 / 1024.0) + ' Mbps';
+                    });
+                } else {
+                    results.innerHTML = 'Nothing to upload.';
+                }
+            }, false);
+        </script>
+
+</html>
