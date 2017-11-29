@@ -4,8 +4,8 @@
 
 In many cases, when using a Cognito User Pool for authentication, it would be nice to have the details of the logged in user available in our back-end application. Some examples are:
 
-    - API Gateway using a User Pool for authorisation; but after that the backend integration is not aware of the details of the user who invoked the API.
-    - A Cognito Identity Pool is used to retrieve STS temporary credentials and then Lambda is invoked; but Lambda has no knowledge of the identity of the user that originally authenticated against the User Pool.
+- API Gateway using a User Pool for authorisation; but after that the backend integration is not aware of the details of the user who invoked the API.
+- A Cognito Identity Pool is used to retrieve STS temporary credentials and then Lambda is invoked; but Lambda has no knowledge of the identity of the user that originally authenticated against the User Pool.
 
 In all those cases it would be necessary to pass the user details in the payload to the the backend, but how can we ensure that those details don't get spoofed?
 
@@ -15,7 +15,7 @@ Luckily the JSON Web Tokens (JWT) come to help us. Upon login, Cognito User Pool
 
 Every JWT token is composed of 3 sections: header, payload and signature. Let's have a look at the content of a sample ID Token:
 
-```
+```json
 {
   "kid": "abcdefghijklmnopqrstuvwxyz=",
   "alg": "RS256"
@@ -23,7 +23,7 @@ Every JWT token is composed of 3 sections: header, payload and signature. Let's 
 ```
 The header contains the algorithm used to sign the token (in our case is RS256 which means RSA signature with SHA-256) and a Key ID (kid) that we'll need later on.
 
-```
+```json
 {
   "sub": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
   "aud": "xxxxxxxxxxxxxxxxxxx",
@@ -48,7 +48,7 @@ https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/jwks.json
 
 Such JSON file looks like this
 
-```
+```json
 {
     "keys": [{
         "alg": "RS256",
@@ -70,4 +70,9 @@ Such JSON file looks like this
 
 All we need to do is to search for the key with a kid matching the kid in our JWT token and then use some libraries to decode the token and verify its signature. The good news is that we can pass the whole token in the payload to the back-end application and rest assured that it cannot be tampered with.
 
-This solution is applicable to virtually any applications that want to verify the identity of a Cognito user from the JWT token, but since a common requirement is to do it from AWS Lambda, I wrote some sample Lambda code in Python 2.7 and Node.js 4.3.
+This solution is applicable to virtually any applications that want to verify the identity of a Cognito user from the JWT token, but since a common requirement is to do it from AWS Lambda, I wrote some sample Lambda code in Python 2.7 and NodeJS 4.3.
+
+## Requirements
+For the Python version I've used <a href="https://github.com/mpdavis/python-jose">python-jose</a>, to handle the JWT token decoding and signature verification; that library must be included in the Lambda deployment package as explained.
+
+For the NodeJS version I've used the NPM version of the same library which can be found <a href="https://www.npmjs.com/package/node-jose">here</a>.
