@@ -74,16 +74,16 @@ This solution is applicable to virtually any applications that want to verify th
 
 ## Requirements
 
-# Python 2.7
+### Python 2.7
 For the Python version I've used <a href="https://github.com/mpdavis/python-jose">python-jose</a>, to handle the JWT token decoding and signature verification; that library is already part of the Lambda environment, so no additional steps are required.
 However, if ran locally, it will be necessary to install it. As an example, can be installed via "pip" with
 ```
 pip install python-jose
 ```
 
-# NodeJS 4.3
-For the NodeJS version I've used <a href="https://www.npmjs.com/package/node-jose">node-jose</a> which needs to be included in the Lambda package. It can be done via NPM with
+### NodeJS 4.3
+For the NodeJS version I've used <a href="https://www.npmjs.com/package/node-jose">node-jose</a> which needs to be included in the Lambda deployment package. It can be done via NPM with
 ```
 npm install node-jose
 ```
-from within the script directory. Please refer to the AWS<a href="http://docs.aws.amazon.com/lambda/latest/dg/nodejs-create-deployment-pkg.html">documentation</a> for more details.
+from within the script directory. Please refer to the AWS <a href="http://docs.aws.amazon.com/lambda/latest/dg/nodejs-create-deployment-pkg.html">documentation</a> for more details.
