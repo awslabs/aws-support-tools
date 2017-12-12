@@ -7,9 +7,13 @@ Please see the AWS Lambda Developer Guide section
 "[Execution Environment and Available Libraries](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)"
 for additional details.
 
-`NOTE`: If you have not created a KeyPair and IAM Role for EC2, first follow the following guides 
+`NOTE`: If you have not created a KeyPair and IAM Role for EC2, first follow the following guides:
 * http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html
 * http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#working-with-iam-roles
+
+The IAM Instance Profile Role is optional. If your Lambda function utilizes
+other AWS services or actions, you may wish to attach the same IAM Policies
+that you use with your Lambda Execution Role to the IAM Instance Profile Role.
 
 You can use the `lambda-user-data.txt` script to launch an EC2 instance locked to the correct base AMI with [aws-sam-local](https://github.com/awslabs/aws-sam-local). You can upload the file in the AWS Console EC2 Launch Wizard under Advanced Details" or use the AWS CLI installed into a default subnet like this:
 ```bash
