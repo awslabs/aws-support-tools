@@ -8,4 +8,4 @@
 
 | Name | Description |
 | :---: | --- |
-| **HTML Script** | *It contains the HTML Script upload-test to test upload speed to S3 Buckets.* |
+| **Bash Script** | *It contains the Bash Script test-upload.sh and test-upload-macosx.sh to test upload speed to S3 Buckets via direct upload and via Transfer Acceleration.* |
