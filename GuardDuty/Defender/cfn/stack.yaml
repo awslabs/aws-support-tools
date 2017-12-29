@@ -1,0 +1,52 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: GuardDuty Defender
+
+Parameters:
+  Role:
+    Type: String
+    Description: Role used by lambda function to action guardduty findings
+
+Resources:
+  Defender:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: ./src/
+      Timeout: 300
+      MemorySize : 128
+      Description: GuardDuty Defender
+      FunctionName: guardduty-defender
+      Handler: defender.lambda_handler
+      Role: !Ref Role
+      Runtime: python2.7
+      Environment:
+        Variables:
+          SNS_TOPIC: !Ref DefenderTopic
+
+  DefenderPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt Defender.Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DefenderRule.Arn
+
+  DefenderRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: guardduty-defender
+      Description: GuardDuty Defender Event Rule
+      EventPattern:
+        source:
+          - "aws.guardduty"
+      State: ENABLED
+      Targets:
+        -
+          Arn: !GetAtt Defender.Arn
+          Id: Defender
+
+  DefenderTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: GuardDutyDefenderEmailNotifications
