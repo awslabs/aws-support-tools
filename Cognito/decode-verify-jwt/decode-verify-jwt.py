@@ -1,4 +1,4 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file
 # except in compliance with the License. A copy of the License is located at
@@ -11,11 +11,13 @@
 
 import urllib
 import json
+import time
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 
 region = 'ap-southeast-2'
 userpool_id = 'ap-southeast-2_xxxxxxxxx'
+app_client_id = '<ENTER APP CLIENT ID HERE>'
 keys_url = 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(region, userpool_id)
 # instead of re-downloading the public keys every time
 # we download them only on cold start
@@ -45,18 +47,25 @@ def lambda_handler(event, context):
     # decode the signature
     decoded_signature = base64url_decode(encoded_signature)
     # verify the signature
-    if public_key.verify(message, decoded_signature):
-        print('Signature successfully verified')
-        # since we passed the verification, now we can safely
-        # get the unverified claims
-        claims = jwt.get_unverified_claims(token)
-        # do some stuff with our claims
-        print(claims)
-        return claims
-    else:
+    if not public_key.verify(message, decoded_signature):
         print('Signature verification failed')
         return False
-
+    print('Signature successfully verified')
+    # since we passed the verification, we can now safely
+    # use the unverified claims
+    claims = jwt.get_unverified_claims(token)
+    # additionally we can verify the token expiration
+    if time.time() > claims['exp']:
+        print('Token is expired')
+        return False
+    # and the Audience
+    if claims['aud'] != app_client_id:
+        print('Token was not issued for this audience')
+        return False
+    # now we can use the claims
+    print(claims)
+    return claims
+        
 # the following is useful to make this script executable in both
 # AWS Lambda and any other local environments
 if __name__ == '__main__':

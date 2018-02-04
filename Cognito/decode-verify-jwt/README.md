@@ -1,29 +1,30 @@
 # Decode and verify Amazon Cognito JWT tokens
 
+## Issue
+I want to use an Amazon Cognito user pool as the authentication method for my application. What is a secure way for me to verify the ID and access tokens sent by clients to my application?
+
 ## Short Description
 
-In many cases, when using a Cognito User Pool for authentication, it would be nice to have the details of the logged in user available in our back-end application. Some examples are:
+When clients authenticate to your application with a user pool, Amazon Cognito sends an ID token. You might have cases where you need to manually verify the ID token in order to trust the information contained in it. Some examples include:
 
-- API Gateway using a User Pool for authorisation; but after that the backend integration is not aware of the details of the user who invoked the API.
-- A Cognito Identity Pool is used to retrieve STS temporary credentials and then Lambda is invoked; but Lambda has no knowledge of the identity of the user that originally authenticated against the User Pool.
-
-In all those cases it would be necessary to pass the user details in the payload to the the backend, but how can we ensure that those details don't get spoofed?
+- You created a web application and want to use an Amazon Cognito user pool for authentication.
+- You use an Amazon Cognito user pool for authentication and an Amazon Cognito identity pool to retrieve STS temporary credentials. AWS Lambda is invoked with those credentials, but Lambda doesn’t have information about who originally authenticated with the user pool.
 
 ## Resolution
 
-Luckily the JSON Web Tokens (JWT) come to help us. Upon login, Cognito User Pool returns a base64-encoded JSON string called JWT that contains important information (called claims) about the user. It actually returns 3 tokens called ID, Access and Refresh token, each one with its own purpose; however the token containing all the user fields defined in the User Pool, is the ID one.
+After a user logs in, an Amazon Cognito user pool returns a JWT, which is a base64-encoded JSON string that contains information about the user (called claims). Amazon Cognito returns three tokens: the ID token, access token, and refresh token—the ID token contains the user fields defined in the Amazon Cognito user pool.
 
-Every JWT token is composed of 3 sections: header, payload and signature. Let's have a look at the content of a sample ID Token:
+JWT tokens include three sections: a header, payload, and signature.
 
-```json
+The following is the header of a sample ID token. The header contains the key ID (“kid”), as well as the algorithm (“alg”) used to sign the token. In this example, the algorithm is “RS256”, which is an RSA signature with SHA-256.
+```
 {
   "kid": "abcdefghijklmnopqrstuvwxyz=",
   "alg": "RS256"
 }
 ```
-The header contains the algorithm used to sign the token (in our case is RS256 which means RSA signature with SHA-256) and a Key ID (kid) that we'll need later on.
-
-```json
+The following is an example of the payload, which has information about the user, as well as timestamps of the token creation and expiration.
+```
 {
   "sub": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
   "aud": "xxxxxxxxxxxxxxxxxxx",
@@ -38,17 +39,12 @@ The header contains the algorithm used to sign the token (in our case is RS256 w
   "email": "something@example.com"
 }
 ```
-The payload contains information about the user as well as token creation and expiration dates.
-
-The third section is the signature of a hashed combination of the header and the payload. In particular Cognito generates two pairs of RSA keys for each User Pool, then uses one of the private keys to sign the token and makes the corresponding public key available at the address
-
+The following is an example of the signature, which is a hashed combination of the header and the payload. Amazon Cognito generates two pairs of RSA keys for each user pool. One of the private keys is used to sign the token, and the corresponding public key becomes available at an address in this format:
 ```
 https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/jwks.json
 ```
-
-Such JSON file looks like this
-
-```json
+The JSON file is structured in this format:
+```
 {
     "keys": [{
         "alg": "RS256",
@@ -58,7 +54,8 @@ Such JSON file looks like this
         "n": "lsjhglskjhgslkjgh43lj5h34lkjh34lkjht34ljth3l",
         "use": "sig"
     }, {
-        "alg": "RS256",
+        "alg":
+        "RS256",
         "e": "AQAB",
         "kid": "fgjhlkhjlkhj5jkl5h=",
         "kty": "RSA",
@@ -67,10 +64,11 @@ Such JSON file looks like this
     }]
 }
 ```
+To verify the signature of an Amazon Cognito JWT, search for the key with a key ID that matches the key ID of the JWT, then use libraries to decode the token and verify the signature. Be sure to also verify that:
 
-All we need to do is to search for the key with a kid matching the kid in our JWT token and then use some libraries to decode the token and verify its signature. The good news is that we can pass the whole token in the payload to the back-end application and rest assured that it cannot be tampered with.
+- The token is not expired.
+- The audience ("aud") specified in the payload matches the app client ID created in the Amazon Cognito user pool.
 
-This solution is applicable to virtually any applications that want to verify the identity of a Cognito user from the JWT token, but since a common requirement is to do it from AWS Lambda, I wrote some sample Lambda code in Python 2.7 and NodeJS 4.3.
 
 ## Requirements
 
