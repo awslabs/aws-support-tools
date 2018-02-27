@@ -19,24 +19,24 @@ JWT tokens include three sections: a header, payload, and signature.
 The following is the header of a sample ID token. The header contains the key ID (“kid”), as well as the algorithm (“alg”) used to sign the token. In this example, the algorithm is “RS256”, which is an RSA signature with SHA-256.
 ```
 {
-  "kid": "abcdefghijklmnopqrstuvwxyz=",
+  "kid": "abcdefghijklmnopqrsexample=",
   "alg": "RS256"
 }
 ```
 The following is an example of the payload, which has information about the user, as well as timestamps of the token creation and expiration.
 ```
 {
-  "sub": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-  "aud": "xxxxxxxxxxxxxxxxxxx",
+  "sub": "aaaaaaaa-bbbb-cccc-dddd-example",
+  "aud": "xxxxxxxxxxxxexample",
   "email_verified": true,
   "token_use": "id",
   "auth_time": 1500009400,
-  "iss": "https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_XXXxxXXxX",
-  "cognito:username": "emanuele",
+  "iss": "https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_example",
+  "cognito:username": "anaya",
   "exp": 1500013000,
-  "given_name": "Emanuele",
+  "given_name": "Anaya",
   "iat": 1500009400,
-  "email": "something@example.com"
+  "email": "anaya@example.com"
 }
 ```
 The following is an example of the signature, which is a hashed combination of the header and the payload. Amazon Cognito generates two pairs of RSA keys for each user pool. One of the private keys is used to sign the token, and the corresponding public key becomes available at an address in this format:
@@ -49,17 +49,17 @@ The JSON file is structured in this format:
     "keys": [{
         "alg": "RS256",
         "e": "AQAB",
-        "kid": "abcdefghijklmnopqrstuvwxyz=",
+        "kid": "abcdefghijklmnopqrsexample=",
         "kty": "RSA",
-        "n": "lsjhglskjhgslkjgh43lj5h34lkjh34lkjht34ljth3l",
+        "n": "lsjhglskjhgslkjgh43lj5h34lkjh34lkjht3example",
         "use": "sig"
     }, {
         "alg":
         "RS256",
         "e": "AQAB",
-        "kid": "fgjhlkhjlkhj5jkl5h=",
+        "kid": "fgjhlkhjlkhexample=",
         "kty": "RSA",
-        "n": "sgjhlk6jp98ugp98up34hpoi65hgh",
+        "n": "sgjhlk6jp98ugp98up34hpexample",
         "use": "sig"
     }]
 }
@@ -73,15 +73,11 @@ To verify the signature of an Amazon Cognito JWT, search for the key with a key 
 ## Requirements
 
 ### Python 2.7
-For the Python version I've used <a href="https://github.com/mpdavis/python-jose">python-jose</a>, to handle the JWT token decoding and signature verification; that library is already part of the Lambda environment, so no additional steps are required.
-However, if ran locally, it will be necessary to install it. As an example, can be installed via "pip" with
-```
-pip install python-jose
-```
+For the Python version I've used [python-jose](https://github.com/mpdavis/python-jose), to handle the JWT token decoding and signature verification; that library must be included in the Lambda deployment package using one of the methods discussed [here](https://docs.aws.amazon.com/lambda/latest/dg/lambda-python-how-to-create-deployment-package.html).
 
 ### NodeJS 4.3
-For the NodeJS version I've used <a href="https://www.npmjs.com/package/node-jose">node-jose</a> which needs to be included in the Lambda deployment package. It can be done via NPM with
+For the NodeJS version I've used [node-jose](https://www.npmjs.com/package/node-jose) which needs to be included in the Lambda deployment package. It can be done via NPM with
 ```
 npm install node-jose
 ```
-from within the script directory. Please refer to the AWS <a href="http://docs.aws.amazon.com/lambda/latest/dg/nodejs-create-deployment-pkg.html">documentation</a> for more details.
+from within the script directory. Please refer to the AWS [documentation](http://docs.aws.amazon.com/lambda/latest/dg/nodejs-create-deployment-pkg.html) for more details.
