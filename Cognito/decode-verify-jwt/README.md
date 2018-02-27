@@ -74,10 +74,6 @@ To verify the signature of an Amazon Cognito JWT, search for the key with a key 
 
 ### Python 2.7
 For the Python version I've used [python-jose](https://github.com/mpdavis/python-jose), to handle the JWT token decoding and signature verification; that library must be included in the Lambda deployment package using one of the methods discussed [here](https://docs.aws.amazon.com/lambda/latest/dg/lambda-python-how-to-create-deployment-package.html).
-However, if ran locally, it will be necessary to install it. As an example, can be installed via "pip" with
-```
-pip install python-jose
-```
 
 ### NodeJS 4.3
 For the NodeJS version I've used [node-jose](https://www.npmjs.com/package/node-jose) which needs to be included in the Lambda deployment package. It can be done via NPM with
