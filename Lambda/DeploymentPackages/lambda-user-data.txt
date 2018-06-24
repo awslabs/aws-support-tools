@@ -21,30 +21,20 @@ runcmd:
   yum -y install docker
   sudo usermod -a -G docker ec2-user
   service docker start
-  # http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-up-node-on-ec2-instance.html
-  cd /tmp
-  curl -O https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh
-  su -l ec2-user /tmp/install.sh
-  su -l ec2-user -c 'nvm install --lts 8'
-  cat > ntmp.sh << EOF
-  npm --quiet --silent -g install standard
-  npm --quiet --silent -g install @angular/cli
-  EOF
-  su -l ec2-user /tmp/ntmp.sh
 
   # update AWS CLI to latest from pip
   yum -y remove aws-cli python27-boto python27-botocore
   yum -y install gcc git wget 
-  echo -e 'aws-sam-cli\nboto3\nawscli\nfaker\nvirtualenv' > requirements-to-freeze.txt
-  pip-2.7 install -r requirements-to-freeze.txt -U
+  cd /tmp
+  echo -e 'setuptools\nboto3\nawscli\nfaker\ncookiecutter\nvirtualenv' > requirements-to-freeze.txt
+  pip-2.7 -q install -r requirements-to-freeze.txt -U
+  # must be done after setuptools upgrade
+  pip-2.7 install aws-sam-cli -U
 
   # code samples
-  cd /tmp
-  git clone -b v0.2.11 https://github.com/awslabs/aws-sam-local
-  su -l ec2-user -c 'cp -r /tmp/aws-sam-local/samples $HOME ; cd $HOME/samples/hello-world/node/ ; sam local invoke -e event.json'
   git clone https://github.com/awslabs/serverless-application-model
   echo '{"key1":"value1","key2":"value2","key3":"value3"}' > /tmp/serverless-application-model/examples/event.json
-  su -l ec2-user -c 'cp -r /tmp/serverless-application-model/examples $HOME '
+  su -l ec2-user -c 'cp -r /tmp/serverless-application-model/examples $HOME ; cd $HOME/examples/apps/hello-world-python/ ; sam local invoke -e ~/examples/event.json '
 
   echo END
   date +'%Y-%m-%dT%H:%M:00Z' --utc

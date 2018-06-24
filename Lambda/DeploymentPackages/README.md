@@ -26,9 +26,10 @@ You can use the `lambda-user-data.txt` script to launch an EC2 instance locked t
   aws ec2 run-instances --generate-cli-skeleton
 ```
 
-After a few minutes, the instance will be ready. Log in via SSH and run the nodejs sample:
+After a few minutes, the instance will be ready. Log in via SSH and run the Python 2.7 example:
 ```bash
-  cd samples/hello-world/node
+  cd examples/apps/hello-world-python/ 
+  echo '{"key1":"value1","key2":"value2","key3":"value3"}' > event.json
   sam local invoke -e event.json
 ```
 
