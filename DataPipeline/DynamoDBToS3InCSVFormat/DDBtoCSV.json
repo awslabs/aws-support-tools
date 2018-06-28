@@ -1,0 +1,61 @@
+{
+  "objects": [
+    {
+      "dependsOn": {
+        "ref": "HiveActivityId_M6taG"
+      },
+      "stage": "false",
+      "name": "Copy_DDB_to_CSV",
+      "hiveScript": "INSERT OVERWRITE TABLE csv_features\nSELECT * FROM ddb_features;",
+      "id": "HiveActivityId_jFy3R",
+      "runsOn": {
+        "ref": "EmrClusterId_g3LnE"
+      },
+      "type": "HiveActivity"
+    },
+    {
+      "stage": "false",
+      "dependsOn": {
+        "ref": "EmrActivityId_MCS3Q"
+      },
+      "name": "CSV_Hive_external_table",
+      "hiveScript": "CREATE EXTERNAL TABLE IF NOT EXISTS csv_features \n    (Id BIGINT, Class String, Latitude DOUBLE, Longitude DOUBLE, Name String, State String, Elevation DOUBLE)\nROW FORMAT DELIMITED FIELDS terminated by ','\nLINES TERMINATED BY '\\n'\nSTORED AS TEXTFILE\nLOCATION 's3n://bhargav-ddbexport/csv-features/';",
+      "id": "HiveActivityId_M6taG",
+      "runsOn": {
+        "ref": "EmrClusterId_g3LnE"
+      },
+      "type": "HiveActivity"
+    },
+    {
+      "stage": "false",
+      "name": "DDB_Hive_external_table",
+      "hiveScript": "CREATE EXTERNAL TABLE IF NOT EXISTS ddb_features \n    (Id BIGINT, Class String, Latitude DOUBLE, Longitude DOUBLE, Name String, State String, Elevation DOUBLE)\nSTORED BY 'org.apache.hadoop.hive.dynamodb.DynamoDBStorageHandler' \nTBLPROPERTIES (\n    \"dynamodb.table.name\" = \"Features\", \n    \"dynamodb.column.mapping\" = \"Id:Id,Class:Class,Latitude:Latitude,Longitude:Longitude,Name:Name,State:State,Elevation:Elevation\"\n);",
+      "id": "EmrActivityId_MCS3Q",
+      "runsOn": {
+        "ref": "EmrClusterId_g3LnE"
+      },
+      "type": "HiveActivity"
+    },
+    {
+      "name": "EMR_DDB_to_CSV_conversion_cluster",
+      "coreInstanceCount": "2",
+      "coreInstanceType": "m3.xlarge",
+      "releaseLabel": "emr-5.9.0",
+      "id": "EmrClusterId_g3LnE",
+      "masterInstanceType": "m3.xlarge",
+      "region": "us-west-2",
+      "type": "EmrCluster",
+      "terminateAfter": "2 Hours"
+    },
+    {
+      "failureAndRerunMode": "CASCADE",
+      "resourceRole": "DataPipelineDefaultResourceRole",
+      "role": "DataPipelineDefaultRole",
+      "pipelineLogUri": "s3://aws-logs-bhargavnunna-us-west-2/",
+      "scheduleType": "ONDEMAND",
+      "name": "Default",
+      "id": "Default"
+    }
+  ],
+  "parameters": []
+}
