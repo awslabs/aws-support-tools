@@ -16,8 +16,8 @@ var queueParams = {AttributeNames: ["ApproximateNumberOfMessages"], QueueUrl: qu
 
 
 exports.handler = (event, context, callback) => {
-	var date = (new Date()).toString().split(' ').splice(1, 4).join('-').replace(/:/g, '-');
-	var url = null;
+    var date = (new Date()).toString().split(' ').splice(1, 4).join('-').replace(/:/g, '-');
+    var url = null;
 
     function s3upload() {
         if (prefix == undefined) {
@@ -125,9 +125,10 @@ exports.handler = (event, context, callback) => {
                     var message = data.Messages[0];
                     body = JSON.parse(message.Body);
                     msg = JSON.parse(body.Message);
-                    var destination = msg.mail.destination[0];
+                    var source = msg.mail.source;
                     var type = msg.notificationType;
                     var time = msg.mail.timestamp;
+                    var source_ip = msg.mail.sourceIp;
                     var id = msg.mail.messageId;
                     var otr = "<tr>";
                     var ftr = "</tr>";
@@ -136,41 +137,42 @@ exports.handler = (event, context, callback) => {
                     var btype = null;
                     var bsubtype = null;
                     var diagcode = null;
-
                     //console.log(msg);
 
+
                     if (type == "Bounce") {
+                        var destination = msg.bounce.bouncedRecipients[0].emailAddress;
                         btype = msg.bounce.bounceType; // Permanent || Transient
                         bsubtype = msg.bounce.bounceSubType; // General || Supressed
                         if (btype == "Permanent" && bsubtype == "Suppressed") {
                             diagcode = "Suppressed by SES";
-                            text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + destination + cline + oline + diagcode + cline + oline + time + cline + oline + id + cline + ftr;
+                            var text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + source + cline + oline + destination + cline + oline + diagcode + cline + oline + source_ip + cline + oline + time + cline + oline + id + cline + ftr;
                             msgSuppres.push(text);
 
                         } else if (btype == "Permanent" && bsubtype == "General") {
                             diagcode = msg.bounce.bouncedRecipients[0].diagnosticCode;
-                            text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + destination + cline + oline + diagcode + cline + oline + time + cline + oline + id + cline + ftr;
+                            var text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + source + cline + oline + destination + cline + oline + diagcode + cline + oline + source_ip + cline + oline + time + cline + oline + id + cline + ftr;
                             msgBouncePerm.push(text);
 
                         } else if (btype == "Permanent" && bsubtype == "NoEmail") {
                             diagcode = msg.bounce.bouncedRecipients[0].diagnosticCode;
-                            text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + destination + cline + oline + diagcode + cline + oline + time + cline + oline + id + cline + ftr;
+                            var text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + source + cline + oline + destination + cline + oline + diagcode + cline + oline + source_ip + cline + oline + time + cline + oline + id + cline + ftr;
                             msgBouncePerm.push(text);
 
                         } else if (btype == "Undetermined") {
                             diagcode = msg.bounce.bouncedRecipients[0].diagnosticCode;
-                            text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + destination + cline + oline + diagcode + cline + oline + time + cline + oline + id + cline + ftr;
+                            var text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + source + cline + oline + destination + cline + oline + diagcode + cline + oline + source_ip + cline + oline + time + cline + oline + id + cline + ftr;
                             msgBouncePerm.push(text);
 
                         } else if (btype == "Transient") {
                             diagcode = "soft-Bounce";
-                            text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + destination + cline + oline + diagcode + cline + oline + time + cline + oline + id + cline + ftr;
+                            var text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + source + cline + oline + destination + cline + oline + diagcode + cline + oline + source_ip + cline + oline + time + cline + oline + id + cline + ftr;
                             msgBounceTrans.push(text);
 
                         } else {
                             console.log("it's an unknown bounce");
                             diagcode = "unknown";
-                            text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + destination + cline + oline + diagcode + cline + oline + time + cline + oline + id + cline + ftr;
+                            var text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + source + cline + oline + destination + cline + oline + diagcode + cline + oline + source_ip + cline + oline + time + cline + oline + id + cline + ftr;
                             msgBouncePerm.push(text);
                         }
 
@@ -178,11 +180,11 @@ exports.handler = (event, context, callback) => {
                         console.log("Delivery notification not supported");
 
                     } else if (type == "Complaint") {
+                        var destination = msg.complaint.complainedRecipients[0].emailAddress;
                         btype = "null";
                         bsubtype = "null";
                         diagcode = "null";
-                        text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + destination + cline + oline + diagcode + cline + oline + time + cline + oline + id + cline + ftr;
-
+                        var text = otr + oline + type + cline + oline + btype + cline + oline + bsubtype + cline + oline + source + cline + oline + destination + cline + oline + diagcode + cline + oline + source_ip + cline + oline + time + cline + oline + id + cline + ftr;
                         msgComplaint.push(text);
 
                     }
@@ -202,9 +204,9 @@ exports.handler = (event, context, callback) => {
                         var sp = msgSuppres.join('');
                         var bt = msgBounceTrans.join('');
                         var cp = msgComplaint.join('');
-                        var begin = fs.readFileSync('template/begin.html', 'utf8');
+                        var begin = fs.readFileSync('template/begin_new.html', 'utf8');
                         var middle = bp + sp + bt + cp;
-                        var end = fs.readFileSync('template/end.html', 'utf8');
+                        var end = fs.readFileSync('template/end_new.html', 'utf8');
                         content = begin + middle + end;
 
                         s3upload();
