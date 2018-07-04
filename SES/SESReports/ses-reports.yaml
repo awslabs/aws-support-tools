@@ -404,7 +404,7 @@ Resources:
 
           def lambda_handler(event, context):
               try:
-                  url = "https://raw.githubusercontent.com/rsavordelli/aws-support-tools/master/SES/SESReports/sesreport.zip"
+                  url = "https://raw.githubusercontent.com/awslabs/aws-support-tools/master/SES/SESReports/sesreport.zip"
                   download = urllib.URLopener()
                   download.retrieve(url, '/tmp/sesreport.zip')
                   rdata = {}
