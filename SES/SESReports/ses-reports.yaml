@@ -7,19 +7,23 @@ Description: >
 Parameters:
   BucketName:
     Type: "String"
-    Description: "Bucket that will be created to save the reports (Must be a new one)"
+    Description: "Bucket that will be created to save the reports (It will create a new bucket for you, please choose a non-existent bucket name)"
   BucketPrefix:
     Type: "String"
     Description: "[OPTIONAL] The S3 Bucket Key Prefix, Example: Prefix/"
   SourceEmail:
     Type: "String"
-    Description: Email address that will be used as FROM address (Must be SES Verified) -> "yourRecipient@yourDomain.com"
+    Description: "Email address that will be used as FROM address (Must be SES Verified) -> yourRecipient@yourDomain.com.
+    The solution will send you a daily email with the Report link using the From address specified in this parameter."
   DestinationEmail:
     Type: "String"
     Description: The recipient that will receive the reports URL , example -> "yourDestination@Domain.com"
   Identity:
     Type: "String"
-    Description: "The identity for which the Amazon SNS topic will be set. You can specify an identity by using its name or by using its Amazon Resource Name (ARN). Examples: user@example.com, example.com, arn:aws:ses:us-east-1:123456789012:identity/example.com"
+    Description: "The SES identity for which the Amazon SNS topic will be set (Email or Domain). 
+    You can specify an identity by using its name or by using its Amazon Resource Name (ARN). 
+    Examples: user@example.com, example.com, arn:aws:ses:us-east-1:123456789012:identity/example.com.
+    You can also give as an input multiple identities comma delimited (,)"
   Frequency:
     Type: String
     Default: "cron(00 23 * * ? *)"
@@ -260,6 +264,7 @@ Resources:
             var snsTopic = event.ResourceProperties.MySNSTopic;
             var NotificationType = event.ResourceProperties.NotificationType;
             var MyQueue = event.ResourceProperties.MyQueue;
+            var identities = identity.replace(/\s/g, '').split(',');
             var responseData = {};
 
               function purgeQueue(MyQueue){
@@ -282,12 +287,14 @@ Resources:
                 return;
               }
 
+            for (var i = 0, len = identities.length; i < len; i++) {
+              console.log("Enabling notificaiton for: " + identities[i]);
             var params = {
-              Identity: identity, 
+              Identity: identities[i], 
               NotificationType: NotificationType,
               SnsTopic: snsTopic
             };
-
+            
             ses.setIdentityNotificationTopic(params, function(err, data) {
                 if (err) {
                     console.log(err, err.stack); // an error occurred
@@ -299,6 +306,8 @@ Resources:
                     console.log(data);  // successful response
                 }
             });
+          };
+
           }; 
       Runtime: "nodejs4.3"
       Timeout: "25"
