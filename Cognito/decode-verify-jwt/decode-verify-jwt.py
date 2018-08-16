@@ -37,7 +37,7 @@ def lambda_handler(event, context):
             key_index = i
             break
     if key_index == -1:
-        print('Public key not found in jwks.json');
+        print('Public key not found in jwks.json')
         return False
     # construct the public key
     public_key = jwk.construct(keys[key_index])
