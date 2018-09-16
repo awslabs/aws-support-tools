@@ -26,7 +26,7 @@ runcmd:
   yum -y remove aws-cli python27-boto python27-botocore
   yum -y install gcc git wget 
   cd /tmp
-  echo -e 'setuptools\nboto3\nawscli\nfaker\ncookiecutter\nvirtualenv' > requirements-to-freeze.txt
+  echo -e 'pathlib2\nsetuptools\nboto3\nawscli\nfaker\ncookiecutter\nvirtualenv' > requirements-to-freeze.txt
   pip-2.7 -q install -r requirements-to-freeze.txt -U
   # must be done after setuptools upgrade
   pip-2.7 install aws-sam-cli -U
