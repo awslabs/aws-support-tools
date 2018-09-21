@@ -78,12 +78,10 @@ done
 
 echo "RDS Jdbc: $RDSJdbc"
 echo "RDS Usr: $RDSUsr"
-#echo "RDS Pwd: $RDSPwd"
 echo "RDS Tbl: $RDSTbl"
 
 echo "REDShift Jdbc: $REDJdbc"
 echo "RED Usr: $REDUsr"
-#echo "RED Pwd: $REDPwd"
 echo "(Optional) REDShift Generated Tbl: $REDTbl"
 echo "(Optional) REDShift Distribution Key: $REDDist"
 echo "(Optional) REDShift Sort Key(s): $REDSort"

@@ -287,15 +287,6 @@ def parse(input_filename, output_filename, table_name, distribution_key, redshif
     # Finish file
     output.write("COMMIT;\n")
 
-    #output.write("START TRANSACTION;\n")
-    # Write FK constraints out
-    #output.write("\n-- Foreign keys --\n")
-    #for line in foreign_key_lines:
-    #    output.write("%s;\n" % line)
-    # Finish file
-    #output.write("\n")
-    #output.write("COMMIT;\n")
-
     print ""
 
 
