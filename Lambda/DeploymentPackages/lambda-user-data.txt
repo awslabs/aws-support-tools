@@ -17,17 +17,20 @@ runcmd:
   # let ec2-user read logs
   setfacl -R -m g:wheel:rx,g:adm:rx /var/log/
 
-  # install aws-sam-local and dependencies
   yum -y install docker
-  sudo usermod -a -G docker ec2-user
+  usermod -a -G docker ec2-user
   service docker start
 
-  # update AWS CLI to latest from pip
-  yum -y remove aws-cli python27-boto python27-botocore
-  yum -y install gcc git wget 
+  # install aws-sam-cli dependencies
   cd /tmp
-  echo -e 'pathlib2\nsetuptools\nboto3\nawscli\nfaker\ncookiecutter\nvirtualenv' > requirements-to-freeze.txt
+  echo -e 'enum34\npathlib2\nsetuptools\nboto3\nawscli\nfaker\ncookiecutter\nvirtualenv' > requirements-to-freeze.txt
+  curl -O -L --silent --show-error --fail --connect-timeout 2 --retry-delay 10 --retry 5 https://raw.githubusercontent.com/awslabs/aws-sam-cli/develop/requirements/base.txt
+
+  # update from pip
+  yum -y remove aws-cli python27-boto python27-botocore
+  yum -y install gcc git wget rpmdevtools
   pip-2.7 -q install -r requirements-to-freeze.txt -U
+  pip-2.7 -q install -r base.txt -U
   # must be done after setuptools upgrade
   pip-2.7 install aws-sam-cli -U
 
