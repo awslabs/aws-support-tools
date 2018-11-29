@@ -52,7 +52,7 @@ exports.handler = (event, context, callback) => {
                         // now we can use the claims
                         var claims = JSON.parse(result.payload);
                         // additionally we can verify the token expiration
-                        current_ts = Math.floor(new Date() / 1000);
+                        var current_ts = Math.floor(new Date() / 1000);
                         if (current_ts > claims.exp) {
                             callback('Token is expired');
                         }
