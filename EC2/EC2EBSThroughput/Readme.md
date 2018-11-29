@@ -18,7 +18,7 @@ Place the script on your instance and make it executable
 
 The below IAM policy has to be attached to the instance via IAM role for being able to push the CloudWatch metrics.
  
-########################################################## 
+#####
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -34,9 +34,9 @@ The below IAM policy has to be attached to the instance via IAM role for being a
         }
     ]
 }
-########################################################### 
+#####
 
-chmod +x ebs-stats.sh
+$chmod +x ebs-stats.sh
 
 Run the script as a "root" user or "sudo" otherwise it may fail.
 <sleep interval>:is the amount of seconds between each data point.
