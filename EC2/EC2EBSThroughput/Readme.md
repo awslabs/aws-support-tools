@@ -18,8 +18,8 @@ Place the script on your instance and make it executable
 
 The below IAM policy has to be attached to the instance via IAM role for being able to push the CloudWatch metrics.
  
-<block>
-{
+ {
+ 
     "Version": "2012-10-17",
     "Statement": [
         {
@@ -33,8 +33,9 @@ The below IAM policy has to be attached to the instance via IAM role for being a
             "Resource": "*"
         }
     ]
+    
 }
-</block>
+
 
 $chmod +x ebs-stats.sh
 
