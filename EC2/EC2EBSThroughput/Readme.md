@@ -1,15 +1,15 @@
--You can use this script measure the Aggregate EBS throughput of your EC2 instance:
+- You can use this script measure the Aggregate EBS throughput of your EC2 instance:
 
--The script will install sysstat package as main tool for gathering the required statistics.
+- The script will install sysstat package as main tool for gathering the required statistics.
 
 - The script will show the aggreagte throughput for Disk IOPS you are doing on your linux instance.
 
-- The script will also push the aggregated throughput as CloudWatch mertic and you have full control on the granularity of the Clodwatch metric up to 1 econd.
+- The script will also push the aggregated throughput as CloudWatch metric and you have full control on the granularity of the Clodwatch metric up to 1 second.
 
 
--The script is only compatible with Amazon Linux , Redhat, Centos Instances but can be easily customized to do the same job on other Linux distribution. 
+- The script is only compatible with Amazon Linux, Redhat, and CentOS Instances but can be easily customized to do the same job on other Linux distributions. 
 
--he script accept only numerical argument which identify The frequency for  running the loop that's gathering the data & pushing metrics to Cloudwatch.
+- The script accepts only numerical argument which identify the frequency for running the loop that's gathering the data & pushing metrics to Cloudwatch.
 
 ------- Running the script -------
 
