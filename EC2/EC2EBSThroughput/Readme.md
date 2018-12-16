@@ -7,7 +7,7 @@
 - The script will also push the aggregated throughput as CloudWatch mertic and you have full control on the granularity of the Clodwatch metric up to 1 econd.
 
 
--The script is only compatible with Amazon Linux , Redhat, Centos Instances but can be easily customized to do the same job on other Linux istribution. 
+-The script is only compatible with Amazon Linux , Redhat, Centos Instances but can be easily customized to do the same job on other Linux distribution. 
 
 -he script accept only numerical argument which identify The frequency for  running the loop that's gathering the data & pushing metrics to Cloudwatch.
 
