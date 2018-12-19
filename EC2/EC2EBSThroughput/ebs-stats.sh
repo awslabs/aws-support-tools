@@ -13,9 +13,6 @@ while read line; do
   ARRAY[$c]="$line"
   c=$((c+1))  
 done < <(curl http://169.254.169.254/latest/meta-data/block-device-mapping/)
-#printf '%s\n' "${ARRAY[@]}"
-#echo ${ARRAY[*]}
-#for i in `curl http://169.254.169.254/latest/meta-data/block-device-mapping/`;do
 function contains() {
     local n=$#
     local value=${!n}
@@ -33,8 +30,7 @@ if [ $(contains "${ARRAY[@]}" "ephemeral") == "y" ]; then
     echo "The instance has Instance Store Volumes, Please consider DiskReadBytes, DiskWriteBytes instance metrics"
 while true; 
 do 
- Sum=`sar -b 1 1 | awk '(NR==4){print $5+$6}'`
-# echo $Sum
+ Sum=`sar -b 1 1 | awk '(NR==5){print $5+$6}'`
  sleep $1
 SumKB=$(( ( ${Sum%.*} * 512) / 1024 ))
 aws cloudwatch put-metric-data --metric-name EBSThroughputKB --namespace EBS  --dimensions InstanceId=$Instanceid --value $SumKB --unit Kilobytes/Second --region $EC2_REGION 
@@ -49,8 +45,7 @@ fi
 #Start a loop to gather the SAR output & sum breads/s , bwrite/s, please bear in mind $
 while true; 
 do 
- Sum=`sar -b 1 1 | awk '(NR==4){print $5+$6}'`
-# echo $Sum
+ Sum=`sar -b 1 1 | awk '(NR==5){print $5+$6}'`
  sleep $1
 SumKB=$(( ( ${Sum%.*} * 512) / 1024 ))
 aws cloudwatch put-metric-data --metric-name EBSThroughputKB --namespace EBS  --dimensions InstanceId=$Instanceid --value $SumKB --unit Kilobytes/Second --region $EC2_REGION 
