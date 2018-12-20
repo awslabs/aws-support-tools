@@ -1,4 +1,11 @@
-- You can use this script measure the Aggregate EBS throughput of your EC2 instance:
+prerequisite:
+
+-For RHEL based Distros, please install aws cli if it’s not already installed following the below Doc:
+https://docs.aws.amazon.com/cli/latest/userguide/install-linux.html
+
+
+
+- You can use this script measure the Aggregate EBS throughput of your EC2 instance.
 
 - The script will install sysstat package as main tool for gathering the required statistics.
 
