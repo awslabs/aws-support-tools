@@ -128,7 +128,7 @@ Resources:
       Code:
         S3Bucket: !Ref MyS3Bucket
         S3Key: "sesreport.zip"
-      Runtime: "nodejs4.3"
+      Runtime: "nodejs6.10"
       Timeout: "300"
       Environment:
         Variables:
@@ -309,7 +309,7 @@ Resources:
           };
 
           }; 
-      Runtime: "nodejs4.3"
+      Runtime: "nodejs6.10"
       Timeout: "25"
   
   #Execute Lambda Custom Resource
