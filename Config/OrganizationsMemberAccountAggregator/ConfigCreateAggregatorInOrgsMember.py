@@ -1,5 +1,19 @@
 #!/usr/bin/env python3
 
+# Copyright 2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file
+# except in compliance with the License. A copy of the License is located at
+#
+#     http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+# BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under the License.
+
+
+# Created by Keith Walker
+
 # The purpose of this script is to create a Config Aggregator
 # in an Organizations Member Account that Aggregates all of your
 # Organization's Member Accounts across all supported Regions.
@@ -39,11 +53,11 @@ try:
         for account in page['Accounts']:
             account_ids.append(account['Id'])
             print(account['Id'])
-    AggregatorAccount=input('Please choose the Account where you want the Aggregator to reside in: ')
-    if AggregatorAccount not in account_ids:
+    aggregator_account=input('Please choose the Account where you want the Aggregator to reside in: ')
+    if aggregator_account not in account_ids:
         print('The Account Id that you entered is not within the Organization!')
         exit(1)
-    if (AggregatorAccount == master_account_id):
+    if (aggregator_account == master_account_id):
         print('This script is meant to create a Config Aggregator in a Member Account')
         print('Please choose an Account that is not the Master Account')
         exit(1)
@@ -52,7 +66,7 @@ except Exception as e:
 
 sts=boto3.client('sts')
 
-member_orgs_role_arn='arn:aws:iam::' + AggregatorAccount + ':role/' + orgs_access_role_name
+member_orgs_role_arn='arn:aws:iam::' + aggregator_account + ':role/' + orgs_access_role_name
 
 try:
     member_credentials=sts.assume_role(
@@ -69,25 +83,13 @@ config=boto3.client('config',
     aws_session_token=member_credentials['SessionToken'],
 )
 
-try:
-    config.put_configuration_aggregator(
-        ConfigurationAggregatorName=configuration_aggregator_name,
-        AccountAggregationSources=[
-            {
-                'AllAwsRegions':True,
-                 'AccountIds':account_ids
-            }
-        ],
-    )
-except Exception as e:
-    print(e)
-    exit(1)
+aggregation_accounts_with_errors=[]
 
 for account in account_ids:
     print('Accepting Authorizations in Account: ' + account)
     account_orgs_role_arn='arn:aws:iam::' + account + ':role/' + orgs_access_role_name
     try:
-        if account not in [AggregatorAccount, master_account_id]:
+        if account not in [aggregator_account, master_account_id]:
             credentials=sts.assume_role(
                 RoleArn=account_orgs_role_arn,
                 RoleSessionName='ConfigAggregatorScript',
@@ -100,7 +102,7 @@ for account in account_ids:
             for region in config_regions:
                 print('Authorizing Region: ' + region)
                 member_config.put_aggregation_authorization(
-                    AuthorizedAccountId=AggregatorAccount,
+                    AuthorizedAccountId=aggregator_account,
                     AuthorizedAwsRegion=region
                 )
             authorizations=member_config.describe_aggregation_authorizations()
@@ -112,17 +114,17 @@ for account in account_ids:
             for region in config_regions:
                 print('Authorizing Region: ' + region)
                 master_config.put_aggregation_authorization(
-                    AuthorizedAccountId=AggregatorAccount,
+                    AuthorizedAccountId=aggregator_account,
                     AuthorizedAwsRegion=region
                 )
             authorizations=master_config.describe_aggregation_authorizations()
             print('Sucessfully Authorized Regions in ' + account + ': ')
             for authorization in authorizations['AggregationAuthorizations']:
                 print(authorization['AuthorizedAwsRegion'])
-
     except Exception as e:
         print(e)
         print('An error occoured in ' + account)
+        aggregation_accounts_with_errors.append(account)
         while answer not in ['y', 'n', 'a']:
             answer = input('Do you want to continue? Y/A/N: ')
             if answer.lower().startswith('y'):
@@ -135,3 +137,26 @@ for account in account_ids:
             elif answer.lower().startswith('n'):
                 print("Exiting")
                 exit(1)
+
+try:
+    response = config.put_configuration_aggregator(
+        ConfigurationAggregatorName=configuration_aggregator_name,
+        AccountAggregationSources=[
+            {
+                'AllAwsRegions':True,
+                 'AccountIds':account_ids
+            }
+        ],
+    )
+    print('\n\rConfig Aggegator was created')
+    print('Account: ' + aggregator_account)
+    print('Aggregator: ' + configuration_aggregator_name)
+    if (len(aggregation_accounts_with_errors)):
+        print('\n\rThere was an error putting Authorizations in the following Accounts: ' )
+        print(aggregation_accounts_with_errors)
+        print('You may need to log in to these Accounts and manually authorize the Aggregator.')
+except Exception as e:
+    print(e)
+    exit(1)
+
+
