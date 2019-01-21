@@ -7,3 +7,5 @@ The purpose of this script is to create a Config Aggregator in an Organizations 
 Note: You must run this script in an Organizations Master Account with all Features Enabled.
 
 Each Member Account must have an OrganizationAccountAccessRole who's name matches the string provided to the variable orgs_access_role_name in the script. The OrganizationAccountAccessRoles must have the proper IAM permissions to perform all Config API calls contained in the script. The credentials used to run the script in the Organizations Master Account must have IAM permissions to List Accounts in Organizations as well as perform the requisite Config Service API calls.
+
+This script requires Python3 installed and the boto3 library.
