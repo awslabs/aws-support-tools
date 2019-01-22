@@ -20,56 +20,59 @@
 # Note: you must run this in an Organizations Master Account
 
 # Each Member Account must have an OrganizationAccountAccessRole
-# that matches the string provided to the variable orgs_access_role_name
+# that matches the string provided to the variable ORGS_ACCESS_ROLE_NAME
 # the OrganizationAccountAccessRole must have the proper IAM permissions
-orgs_access_role_name='OrganizationAccountAccessRole'
 
 import boto3
+ORGS_ACCESS_ROLE_NAME = 'OrganizationAccountAccessRole'
 
-configuration_aggregator_name='ConfigAggregator1'
+CONFIGURATION_AGGREGATOR_NAME = 'ConfigAggregator1'
 
 # disabled getting regions automatically for now as
 # get_available_regions() returns unsupported regions for Config Aggregator
 #config_regions=boto3.session.Session().get_available_regions('config')
-regions='ap-south-1 ap-northeast-2 ap-southeast-1 ap-southeast-2 ap-northeast-1 ca-central-1 eu-central-1 eu-west-1 eu-west-2 eu-west-3 sa-east-1 us-east-1 us-east-2 us-west-1 us-west-2'
-config_regions=regions.split()
+regions = 'ap-south-1 ap-northeast-2 ap-southeast-1 ap-southeast-2 ap-northeast-1 ca-central-1 \
+eu-central-1 eu-west-1 eu-west-2 eu-west-3 sa-east-1 us-east-1 us-east-2 us-west-1 us-west-2'
+config_regions = regions.split()
 
-answer=None
+continue_on_error = None
 
-orgs=boto3.client('organizations')
+orgs = boto3.client('organizations')
 
 try:
-    organization=orgs.describe_organization()['Organization']
+    organization = orgs.describe_organization()['Organization']
 except Exception as e:
     print(e)
     exit(1)
 
-master_account_id=organization['MasterAccountId']
+master_account_id = organization['MasterAccountId']
 
 try:
-    account_ids=[]
-    paginator=orgs.get_paginator('list_accounts')
+    account_ids = []
+    paginator = orgs.get_paginator('list_accounts')
     for page in paginator.paginate():
         for account in page['Accounts']:
             account_ids.append(account['Id'])
             print(account['Id'])
-    aggregator_account=input('Please choose the Account where you want the Aggregator to reside in: ')
+    aggregator_account = input(
+        'Please choose the Account where you want the Aggregator to reside in: ')
     if aggregator_account not in account_ids:
         print('The Account Id that you entered is not within the Organization!')
         exit(1)
-    if (aggregator_account == master_account_id):
+    if aggregator_account == master_account_id:
         print('This script is meant to create a Config Aggregator in a Member Account')
         print('Please choose an Account that is not the Master Account')
         exit(1)
 except Exception as e:
     print(e)
 
-sts=boto3.client('sts')
+sts = boto3.client('sts')
 
-member_orgs_role_arn='arn:aws:iam::' + aggregator_account + ':role/' + orgs_access_role_name
+member_orgs_role_arn = 'arn:aws:iam::' + \
+    aggregator_account + ':role/' + ORGS_ACCESS_ROLE_NAME
 
 try:
-    member_credentials=sts.assume_role(
+    member_credentials = sts.assume_role(
         RoleArn=member_orgs_role_arn,
         RoleSessionName='ConfigAggregatorScript',
     )['Credentials']
@@ -77,47 +80,48 @@ except Exception as e:
     print(e)
     exit(1)
 
-config=boto3.client('config',
-    aws_access_key_id=member_credentials['AccessKeyId'],
-    aws_secret_access_key=member_credentials['SecretAccessKey'],
-    aws_session_token=member_credentials['SessionToken'],
-)
+config = boto3.client('config',
+                      aws_access_key_id=member_credentials['AccessKeyId'],
+                      aws_secret_access_key=member_credentials['SecretAccessKey'],
+                      aws_session_token=member_credentials['SessionToken'],
+                      )
 
-aggregation_accounts_with_errors=[]
+aggregation_accounts_with_errors = []
 
 for account in account_ids:
     print('Accepting Authorizations in Account: ' + account)
-    account_orgs_role_arn='arn:aws:iam::' + account + ':role/' + orgs_access_role_name
+    account_orgs_role_arn = 'arn:aws:iam::' + \
+        account + ':role/' + ORGS_ACCESS_ROLE_NAME
     try:
         if account not in [aggregator_account, master_account_id]:
-            credentials=sts.assume_role(
+            credentials = sts.assume_role(
                 RoleArn=account_orgs_role_arn,
                 RoleSessionName='ConfigAggregatorScript',
             )['Credentials']
-            member_config=boto3.client('config',
-                aws_access_key_id=credentials['AccessKeyId'],
-                aws_secret_access_key=credentials['SecretAccessKey'],
-                aws_session_token=credentials['SessionToken'],
-            )
+            member_config = boto3.client('config',
+                                         aws_access_key_id=credentials['AccessKeyId'],
+                                         aws_secret_access_key=credentials['SecretAccessKey'],
+                                         aws_session_token=credentials['SessionToken'],
+                                         )
             for region in config_regions:
                 print('Authorizing Region: ' + region)
                 member_config.put_aggregation_authorization(
                     AuthorizedAccountId=aggregator_account,
                     AuthorizedAwsRegion=region
                 )
-            authorizations=member_config.describe_aggregation_authorizations()
+            authorizations = member_config.describe_aggregation_authorizations()
             print('Sucessfully Authorized Regions in ' + account + ': ')
             for authorization in authorizations['AggregationAuthorizations']:
                 print(authorization['AuthorizedAwsRegion'])
         if account == master_account_id:
-            master_config=boto3.client('config')
+            master_config = boto3.client('config')
             for region in config_regions:
                 print('Authorizing Region: ' + region)
                 master_config.put_aggregation_authorization(
                     AuthorizedAccountId=aggregator_account,
                     AuthorizedAwsRegion=region
                 )
-            authorizations=master_config.describe_aggregation_authorizations()
+            authorizations = master_config.describe_aggregation_authorizations()
             print('Sucessfully Authorized Regions in ' + account + ': ')
             for authorization in authorizations['AggregationAuthorizations']:
                 print(authorization['AuthorizedAwsRegion'])
@@ -125,38 +129,36 @@ for account in account_ids:
         print(e)
         print('An error occoured in ' + account)
         aggregation_accounts_with_errors.append(account)
-        while answer not in ['y', 'n', 'a']:
-            answer = input('Do you want to continue? Y/A/N: ')
-            if answer.lower().startswith('y'):
+        while continue_on_error not in ['y', 'a']:
+            continue_on_error = input('Do you want to continue? Y/A/N: ')
+            if continue_on_error.lower().startswith('y'):
                 print("Continuing")
-                answer='unknown'
+                continue_on_error = 'unknown'
                 break
-            elif answer.lower().startswith('a'):
+            elif continue_on_error.lower().startswith('a'):
                 print("Continuing")
-                answer='a'
-            elif answer.lower().startswith('n'):
+                continue_on_error = 'a'
+            elif continue_on_error.lower().startswith('n'):
                 print("Exiting")
                 exit(1)
 
 try:
-    response = config.put_configuration_aggregator(
-        ConfigurationAggregatorName=configuration_aggregator_name,
+    config.put_configuration_aggregator(
+        ConfigurationAggregatorName=CONFIGURATION_AGGREGATOR_NAME,
         AccountAggregationSources=[
             {
-                'AllAwsRegions':True,
-                 'AccountIds':account_ids
+                'AllAwsRegions': True,
+                'AccountIds': account_ids
             }
         ],
     )
     print('\n\rConfig Aggegator was created')
     print('Account: ' + aggregator_account)
-    print('Aggregator: ' + configuration_aggregator_name)
-    if (len(aggregation_accounts_with_errors)):
-        print('\n\rThere was an error putting Authorizations in the following Accounts: ' )
+    print('Aggregator: ' + CONFIGURATION_AGGREGATOR_NAME)
+    if aggregation_accounts_with_errors:
+        print('\n\rThere was an error putting Authorizations in the following Accounts: ')
         print(aggregation_accounts_with_errors)
         print('You may need to log in to these Accounts and manually authorize the Aggregator.')
 except Exception as e:
     print(e)
     exit(1)
-
-
