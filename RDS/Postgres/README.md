@@ -5,8 +5,7 @@ AWS CLI must be installed and configured properly. User/profile configured with 
 
 ## Limitations:
 * EC2 Roles currently not supported.
-* Tested on version 10.6 only, should work with 9.6.11 or higher, and 9.5.15 or higher. [Documentation here.]
-(https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html#UsingWithRDS.IAMDBAuth.Availability)
+* Tested on version 10.6 only, should work with 9.6.11 or higher, and 9.5.15 or higher. [Documentation here](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html#UsingWithRDS.IAMDBAuth.Availability)
 
 ## Usage:
 Step 1: Go to RDS Console, select the instance, click on "Modify", "Enable IAM Authentication", "Next", "Apply immediately".
