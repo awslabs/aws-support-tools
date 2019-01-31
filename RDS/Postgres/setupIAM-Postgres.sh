@@ -111,7 +111,13 @@ then
     echo ". ~/.pg_${IAM_USER}"
     exit 1
 else
-    echo "Environment configured successfully."
+    echo ''
+    echo "*** Environment configured successfully ***"
+    echo ''
+    echo "Please connect with the master user to your database and execute the following commands: "
+    echo "create user ${IAM_USER} with login;"
+    echo "grant rds_iam to ${IAM_USER};"
+    echo ''
     echo "You can connect to the database now with the following connection string: "
     echo "${CONN}"
     echo ''
