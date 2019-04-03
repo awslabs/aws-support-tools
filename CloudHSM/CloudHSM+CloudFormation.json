@@ -1,0 +1,732 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "AWS CloudFormation Template to set up a CloudHSM Cluster using StepFunctions. Returns cluster_id",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "HSM Cluster Configuration"
+                    },
+                    "Parameters": [
+                        "VPCInput"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Non-Production - Leave Blank if using this template in Production"
+                    },
+                    "Parameters": [
+                        "InstanceType",
+                        "KeyName",
+						"ImageId"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "VPCInput": {
+                    "default": "VPC to launch the CloudHSM Cluster"
+                },
+                "KeyName": {
+                    "default": "EC2 Key Pair"
+                },
+                "InstanceType": {
+                    "default": "Instance Type"
+                },
+				"ImageId": {
+					"default": "Latest Amazon Linux AMI ID from SSM"
+				}
+            }
+        }
+    },
+	"Conditions": {
+		"SignCSR": {
+			"Fn::Not" : [{
+				"Fn::And": [
+				  {"Fn::Equals" : [{"Ref" : "KeyName"},""]},
+				  {"Fn::Equals": [{"Ref": "InstanceType"}, ""]}
+				  ]
+			}]
+		}
+	},
+    "Parameters": {
+        "VPCInput": {
+            "Description": "The VPC you wish to deploy the HSM Cluster in.",
+            "Type": "AWS::EC2::VPC::Id"
+        },
+        "KeyName": {
+            "Description": "Leave Blank if using in Production. Add name of EC2 KeyPair if testing.",
+            "Type": "String"
+        },
+        "InstanceType": {
+            "Type": "String",
+            "AllowedValues": [
+                "t2.micro",
+                "t2.medium",
+                "t2.large",
+                ""
+            ],
+            "Description": "Leave Blank if in production. Enter t2.micro, t2.medium, t2.large for your test instance."
+        },
+		"ImageId": {
+			"Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+			"Default" : "/aws/service/ami-amazon-linux-latest/amzn-ami-hvm-x86_64-ebs"
+		}
+    },
+    "Resources": {
+        "CloudHSMCluster": {
+            "Type": "Custom::CustomClusterLauncher",
+            "Properties": {
+                "ServiceToken": {
+                    "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${CustomClusterLauncher}"
+                },
+                "VPC_Id": {
+                    "Ref": "VPCInput"
+                },
+                "CreateSFN_function": {
+                    "Ref": "StepFunctionCreateCluster"
+                },
+                "DeleteSFN_function": {
+                    "Ref": "StepFunctionDeleteCluster"
+                }
+            }
+        },
+        "StatesExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    {
+                                        "Fn::Sub": "states.${AWS::Region}.amazonaws.com"
+                                    }
+                                ]
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "StatesExecutionPolicy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "lambda:InvokeFunction"
+                                    ],
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "StepFunctionCreateCluster": {
+            "Type": "AWS::StepFunctions::StateMachine",
+            "Properties": {
+                "DefinitionString": {
+                    "Fn::Sub": "{\r\n    \"Comment\": \"Creates a CloudHSM and initializes it\",\r\n    \"StartAt\": \"ConfigCluster\",\r\n    \"States\": {\r\n        \"ConfigCluster\": {\r\n            \"Type\": \"Pass\",\r\n            \"Next\": \"CreateCluster\"\r\n        },\r\n        \"CreateCluster\": {\r\n            \"Type\": \"Task\",\r\n            \"Resource\": \"arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${CreateCluster}\",\r\n            \"Next\": \"wait_for_cluster\",\r\n            \"ResultPath\": \"$.cluster_id\"\r\n        },\r\n        \"wait_for_cluster\": {\r\n            \"Type\": \"Wait\",\r\n            \"Seconds\": 30,\r\n            \"Next\": \"GetClusterStatus\"\r\n        },\r\n        \"GetClusterStatus\": {\r\n            \"Type\": \"Task\",\r\n            \"Resource\": \"arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${GetClusterStatus}\",\r\n            \"Next\": \"ClusterReady?\",\r\n            \"ResultPath\": \"$.Clusterstatus\"\r\n        },\r\n        \"ClusterReady?\": {\r\n            \"Type\": \"Choice\",\r\n            \"Choices\": [\r\n                {\r\n                    \"Variable\": \"$.Clusterstatus\",\r\n                    \"StringEquals\": \"UNINITIALIZED\",\r\n                    \"Next\": \"ConfigHSM\"\r\n                }\r\n            ],\r\n            \"Default\": \"wait_for_cluster\"\r\n        },\r\n        \"ConfigHSM\": {\r\n            \"Type\": \"Pass\",\r\n            \"Next\": \"CreateHSM\"\r\n        },\r\n        \"CreateHSM\": {\r\n            \"Type\": \"Task\",\r\n            \"Resource\": \"arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${CreateHSM}\",\r\n            \"Next\": \"wait_for_HSM\",\r\n            \"ResultPath\": \"$.hsm_id\"\r\n        },\r\n        \"wait_for_HSM\": {\r\n            \"Type\": \"Wait\",\r\n            \"Seconds\": 30,\r\n            \"Next\": \"GetHSMStatus\"\r\n        },\r\n        \"GetHSMStatus\": {\r\n            \"Type\": \"Task\",\r\n            \"Resource\": \"arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${CheckHSMStatus}\",\r\n            \"Next\": \"HSMReady?\",\r\n            \"ResultPath\": \"$.HSMstatus\"\r\n        },\r\n        \"HSMReady?\": {\r\n            \"Type\": \"Choice\",\r\n            \"Choices\": [\r\n                {\r\n                    \"Variable\": \"$.HSMstatus\",\r\n                    \"StringEquals\": \"ACTIVE\",\r\n                    \"Next\": \"RespondToCFN\"\r\n                }\r\n            ],\r\n            \"Default\": \"wait_for_HSM\"\r\n        },\r\n        \"RespondToCFN\": {\r\n            \"Type\": \"Task\",\r\n            \"Resource\": \"arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${CFNRespond}\",\r\n            \"End\": true\r\n        }\r\n    }\r\n}"
+                },
+                "RoleArn": {
+                    "Fn::GetAtt": [
+                        "StatesExecutionRole",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+        "StepFunctionDeleteCluster": {
+            "Type": "AWS::StepFunctions::StateMachine",
+            "Properties": {
+                "DefinitionString": {
+                    "Fn::Sub": "{\r\n    \"Comment\": \"Deletes CloudHSM cluster as provided by PhysicalResourceId\",\r\n    \"StartAt\": \"GetClusterInfo\",\r\n    \"States\": {\r\n        \"GetClusterInfo\": {\r\n            \"Type\": \"Pass\",\r\n            \"Next\": \"DeleteHSM\"\r\n        },\r\n        \"DeleteHSM\": {\r\n            \"Type\": \"Task\",\r\n            \"Resource\": \"arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${DeleteHSMs}\",\r\n            \"Next\": \"wait_for_HSMs\",\r\n\t\t\t\"ResultPath\": \"$.hsms\"\r\n        },\r\n        \"wait_for_HSMs\": {\r\n            \"Type\": \"Wait\",\r\n            \"Seconds\": 30,\r\n            \"Next\": \"GetHSMStatus\"\r\n        },\r\n        \"GetHSMStatus\": {\r\n            \"Type\": \"Task\",\r\n            \"Resource\": \"arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${CheckHSMStatus}\",\r\n            \"Next\": \"HSMReady?\",\r\n            \"ResultPath\": \"$.HSMstatus\"\r\n        },\r\n        \"HSMReady?\": {\r\n            \"Type\": \"Choice\",\r\n            \"Choices\": [\r\n                {\r\n                    \"Variable\": \"$.HSMstatus\",\r\n                    \"StringEquals\": \"DELETED\",\r\n                    \"Next\": \"DeleteCluster\"\r\n                }\r\n            ],\r\n            \"Default\": \"wait_for_HSMs\"\r\n        },\r\n        \"DeleteCluster\": {\r\n            \"Type\": \"Task\",\r\n            \"Resource\": \"arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${DeleteCluster}\",\r\n            \"Next\": \"wait_for_cluster\",\r\n            \"ResultPath\": \"$.cluster\"\r\n        },\r\n        \"wait_for_cluster\": {\r\n            \"Type\": \"Wait\",\r\n            \"Seconds\": 30,\r\n            \"Next\": \"GetClusterStatus\"\r\n        },\r\n        \"GetClusterStatus\": {\r\n            \"Type\": \"Task\",\r\n            \"Resource\": \"arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${GetClusterStatus}\",\r\n            \"Next\": \"ClusterReady?\",\r\n            \"ResultPath\": \"$.Clusterstatus\"\r\n        },\r\n        \"ClusterReady?\": {\r\n            \"Type\": \"Choice\",\r\n            \"Choices\": [\r\n                {\r\n                    \"Variable\": \"$.Clusterstatus\",\r\n                    \"StringEquals\": \"DELETED\",\r\n                    \"Next\": \"RespondToCFN\"\r\n                }\r\n            ],\r\n            \"Default\": \"wait_for_cluster\"\r\n        },\r\n        \"RespondToCFN\": {\r\n            \"Type\": \"Task\",\r\n            \"Resource\": \"arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${CFNRespond}\",\r\n            \"End\": true\r\n        }\r\n    }\r\n}"
+                },
+                "RoleArn": {
+                    "Fn::GetAtt": [
+                        "StatesExecutionRole",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+		"CloudHSMLambdaExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "CloudHSMLambdaPolicy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "logs:CreateLogGroup",
+                                        "logs:CreateLogStream",
+                                        "logs:PutLogEvents",
+                                        "ec2:Describe*",
+										"ec2:AuthorizeSecurityGroup*",
+										"ec2:RevokeSecurityGroup*",
+										"ec2:CreateSecurityGroup",
+										"ec2:DeleteSecurityGroup",
+										"ec2:CreateNetworkInterface",
+										"ec2:CreateTags",
+										"ec2:DeleteNetworkInterface",
+										"ec2:DetachNetworkInterface",
+										"cloudhsm:*",
+										"states:*"
+                                    ],
+                                    "Resource": [
+                                        "*"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "CustomClusterLauncher": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+								"import boto3",
+								"import json",
+								"import time",
+								"import os",
+								"from botocore.vendored import requests",
+								"SFN = boto3.client('stepfunctions')",
+								"def lambda_handler(event, context):",
+								" CreatestepArn = event['ResourceProperties']['CreateSFN_function']",
+								" DeletestepArn = event['ResourceProperties']['DeleteSFN_function']",
+								" print('ResponseURL is ' + str(event['ResponseURL']))",
+								" if (os.environ['AWS_REGION'] == 'ap-northeast-3') or (os.environ['AWS_REGION'] == 'sa-east-1'):",
+								"  responseStatus = 'FAILED'",
+								"  responseData = {'Failed': 'Unsupported Region.'}",
+								"  time.sleep(3)",
+								"  sendResponse(event, context, responseStatus, responseData) ",
+								" print('REQUEST BODY:n' + str(event))",
+								" try:",
+								"  if event['RequestType'] == 'Delete':",
+								"   print('delete')",
+								"   PhysicalResourceId = event['PhysicalResourceId']",
+								"   print('Trying to invoke ' + str(DeletestepArn) + ' to delete Cluster')",
+								"   response = SFN.describe_state_machine(stateMachineArn=str(DeletestepArn))",
+								"   print(response)",
+								"   SFN.start_execution(stateMachineArn=DeletestepArn,input=json.dumps(event))",
+								"   return",
+								"  elif event['RequestType'] == 'Create':",
+								"   print('create')",
+								"   #The rest of your create logic goes here",
+								"   print('Trying to invoke ' + str(CreatestepArn) + ' to create Cluster')",
+								"   print(SFN.describe_state_machine(stateMachineArn=CreatestepArn))",
+								"   SFN.start_execution(stateMachineArn=CreatestepArn,input=json.dumps(event))",
+								"   return",
+								"  elif event['RequestType'] == 'Update':",
+								"   print('update')",
+								"   print('Update not supported for now')",
+								"   PhysicalResourceId = event['PhysicalResourceId']",
+								"   sendResponse(event, context, 'SUCCESS', {'cluster_id': PhysicalResourceId}, None, PhysicalResourceId)",
+								"  responseStatus = 'SUCCESS'",
+								"  responseData = {'Success': 'Everything worked.'}",
+								" except:",
+								"  responseStatus = 'FAILED'",
+								"  responseData = {'Failed': 'Something bad happened.'}",
+								"  time.sleep(3)",
+								" sendResponse(event, context, responseStatus, responseData)",
+								"def sendResponse(event, context, responseStatus, responseData, reason=None, physical_resource_id=None):",
+								" responseBody = {'Status': responseStatus,",
+								"     'Reason': 'See the details in CloudWatch Log Stream: ' + context.log_stream_name,",
+								"     'PhysicalResourceId': physical_resource_id or context.log_stream_name,",
+								"     'StackId': event['StackId'],",
+								"     'RequestId': event['RequestId'],",
+								"     'LogicalResourceId': event['LogicalResourceId'],",
+								"     'Data': responseData}",
+								" print('RESPONSE BODY:/n' + json.dumps(responseBody))",
+								" responseUrl = event['ResponseURL']",
+								" json_responseBody = json.dumps(responseBody)",
+								" headers = {",
+								"  'content-type' : '',",
+								"  'content-length' : str(len(json_responseBody))",
+								" }",
+								" try:",
+								"  response = requests.put(responseUrl,",
+								"        data=json_responseBody,",
+								"        headers=headers)",
+								"  print('Status code: ' + response.reason)",
+								" except Exception as e:",
+								"  print('send(..) failed executing requests.put(..): ' + str(e))"
+                            ]
+                        ]
+                    }
+                },
+                "Handler": "index.lambda_handler",
+                "Runtime": "python3.7",
+                "Timeout": "20",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "CloudHSMLambdaExecutionRole",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+		"CreateCluster": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+								"import json",
+								"import boto3",
+								"HSM = boto3.client('cloudhsmv2')",
+								"EC2 = boto3.client('ec2')",
+								"def lambda_handler(event, context):",
+								" print(event)",
+								" target_vpc = event['ResourceProperties']['VPC_Id']",
+								" #subnets = []",
+								" subnets_and_az = dict()",
+								" vpc_info = EC2.describe_subnets(Filters=[{'Name': 'vpc-id', 'Values': [target_vpc]}])",
+								" for subnet in vpc_info['Subnets']:",
+								"  subnets_and_az[subnet['AvailabilityZone']] = subnet['SubnetId']",
+								" subnets = list(subnets_and_az.values())",
+								" # At most one subnet is allowed per availability zone when creating cluster.",
+								" print('Subnets ' + str(subnets) + ' are unique per-az found in the VPC ' + str(target_vpc))",
+								" Cluster = HSM.create_cluster(SubnetIds=subnets,HsmType='hsm1.medium')",
+								" cluster_id = Cluster['Cluster']['ClusterId']",
+								" return cluster_id"
+                            ]
+                        ]
+                    }
+                },
+                "Handler": "index.lambda_handler",
+                "Runtime": "python3.7",
+                "Timeout": "20",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "CloudHSMLambdaExecutionRole",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+		"GetClusterStatus": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+								"import json",
+								"import boto3",
+								"HSM = boto3.client('cloudhsmv2')",
+								"def lambda_handler(event, context):",
+								" print(event)",
+								" if event['RequestType'] == 'Create':",
+								"  cluster_id = event['cluster_id']",
+								"  cluster = HSM.describe_clusters(Filters={'clusterIds': [cluster_id]})",
+								"  print('Finding state for cluster ' + str(cluster))",
+								"  return cluster['Clusters'][0]['State']",
+								" elif event['RequestType'] == 'Delete':",
+								"  cluster_id = event['PhysicalResourceId']",
+								"  print('Finding state for Physical Resource ' + str(cluster_id))",
+								"  cluster = HSM.describe_clusters(Filters={'clusterIds': [cluster_id]})",
+								"  if not cluster['Clusters']:",
+								"   return 'DELETED'",
+								"  else:",
+								"   return cluster['Clusters'][0]['State']"
+                            ]
+                        ]
+                    }
+                },
+                "Handler": "index.lambda_handler",
+                "Runtime": "python3.7",
+                "Timeout": "20",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "CloudHSMLambdaExecutionRole",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+		"CreateHSM": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+								"import json",
+								"import boto3",
+								"HSM = boto3.client('cloudhsmv2')",
+								"def lambda_handler(event, context):",
+								" print(event)",
+								" target_vpc = event['ResourceProperties']['VPC_Id']",
+								" cluster_id = event['cluster_id']",
+								" az_names= []",
+								" cluster_info = HSM.describe_clusters(Filters={'clusterIds': [cluster_id]})",
+								" print(cluster_info)",
+								" for az in cluster_info['Clusters'][0]['SubnetMapping']:",
+								"  az_names.append(az)",
+								" print('AZs ' + str(az_names) + ' are found in the VPC ' + str(target_vpc))",
+								" try:",
+								"  hsm_device = HSM.create_hsm(ClusterId=cluster_id,AvailabilityZone=az_names[0])",
+								"  print(hsm_device)",
+								" except HSM.exceptions.CloudHsmServiceException as e: # Exception as e:",
+								"  print(e)",
+								"  print('Trying to create HSM in AZ ' + str(az_names[1]) + ' instead.')",
+								"  try:",
+								"   hsm_device = HSM.create_hsm(ClusterId=cluster_id,AvailabilityZone=az_names[1])",
+								"   print(hsm_device)",
+								"  except HSM.exceptions.CloudHsmServiceException as f:",
+								"   print(f)",
+								"   print('Failed in 2 AZs - exiting with no HSM deployed')",
+								" return hsm_device['Hsm']['HsmId']"
+                            ]
+                        ]
+                    }
+                },
+                "Handler": "index.lambda_handler",
+                "Runtime": "python3.7",
+                "Timeout": "20",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "CloudHSMLambdaExecutionRole",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+		"CheckHSMStatus": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+								"import json",
+								"import boto3",
+								"HSM = boto3.client('cloudhsmv2')",
+								"def lambda_handler(event, context):",
+								" print(event)",
+								" if event['RequestType'] == 'Create':",
+								"  cluster_id = event['cluster_id']",
+								"  cluster = HSM.describe_clusters(Filters={'clusterIds': [cluster_id]})",
+								"  print(cluster)",
+								"  hsm = cluster['Clusters'][0]['Hsms'][0]",
+								"  print(hsm)",
+								"  print(hsm['State'])",
+								"  #if hsm['State'] == 'ACTIVE':",
+								"   #sendResponse(event, context, 'SUCCESS', {'cluster_id': cluster['Clusters'][0]['ClusterId']}, None, cluster_id)",
+								"  return hsm['State']",
+								" elif event['RequestType'] == 'Delete':",
+								"  cluster_id = event['PhysicalResourceId']",
+								"  cluster = HSM.describe_clusters(Filters={'clusterIds': [cluster_id]})",
+								"  print(cluster)",
+								"  if not cluster['Clusters'][0]['Hsms']:",
+								"   return 'DELETED'",
+								"  else:",
+								"   states = dict()",
+								"   for hsm in cluster['Clusters'][0]['Hsms']:",
+								"    states[hsm['HsmId']] = hsm['State']",
+								"   return states"
+                            ]
+                        ]
+                    }
+                },
+                "Handler": "index.lambda_handler",
+                "Runtime": "python3.7",
+                "Timeout": "20",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "CloudHSMLambdaExecutionRole",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+		"DeleteCluster": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+								"import json",
+								"import boto3",
+								"HSM = boto3.client('cloudhsmv2')",
+								"def lambda_handler(event, context):",
+								" print(event)",
+								" cluster_id = event['PhysicalResourceId']",
+								" print('Deleting Cluster ' + str(cluster_id))",
+								" HSM.delete_cluster(ClusterId=cluster_id)",
+								" return {'Deleting': cluster_id}"
+                            ]
+                        ]
+                    }
+                },
+                "Handler": "index.lambda_handler",
+                "Runtime": "python3.7",
+                "Timeout": "20",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "CloudHSMLambdaExecutionRole",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+		"DeleteHSMs": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+								"import json",
+								"import boto3",
+								"HSM = boto3.client('cloudhsmv2')",
+								"def lambda_handler(event, context):",
+								"    print(event)",
+								"    cluster_id = event['PhysicalResourceId']",
+								"    cluster_info = HSM.describe_clusters(Filters={'clusterIds': [cluster_id]})",
+								"    print(cluster_info)",
+								"    hsms = []",
+								"    for hsm in cluster_info['Clusters'][0]['Hsms']:",
+								"        print('Deleting HSM ' + str(hsm['HsmId']))",
+								"        hsms.append(hsm['HsmId'])",
+								"        HSM.delete_hsm(ClusterId=cluster_id,HsmId=hsm['HsmId'])",
+								"    return {'Deleting': hsms}"
+                            ]
+                        ]
+                    }
+                },
+                "Handler": "index.lambda_handler",
+                "Runtime": "python3.7",
+                "Timeout": "20",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "CloudHSMLambdaExecutionRole",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+		"CFNRespond": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+								"import json",
+								"from botocore.vendored import requests",
+								"def lambda_handler(event, context):",
+								" if event['RequestType'] == 'Create':",
+								"  cluster_id = event['cluster_id']",
+								"  if event['HSMstatus'] == 'ACTIVE':",
+								"   print('Responding to CloudFormation with SUCCESS')",
+								"   sendResponse(event, context, 'SUCCESS', {'cluster_id': event['cluster_id'], 'hsm_id': event['hsm_id']}, None, cluster_id)",
+								"  else:",
+								"   print('Responding to CloudFormation with FAILED')",
+								"   sendResponse(event, context, 'FAILED', {'cluster_id': event['cluster_id'], 'hsm_id': event['hsm_id']}, None, cluster_id)",
+								"  return",
+								" elif event['RequestType'] == 'Delete':",
+								"  cluster_id = event['PhysicalResourceId']",
+								"  sendResponse(event, context, 'SUCCESS', {'cluster_id': cluster_id}, None, cluster_id)",
+								"  return",
+								"def sendResponse(event, context, responseStatus, responseData, reason=None, physical_resource_id=None):",
+								" responseBody = {'Status': responseStatus,",
+								"     'Reason': 'See the details in CloudWatch Log Stream: ' + context.log_stream_name,",
+								"     'PhysicalResourceId': physical_resource_id or context.log_stream_name,",
+								"     'StackId': event['StackId'],",
+								"     'RequestId': event['RequestId'],",
+								"     'LogicalResourceId': event['LogicalResourceId'],",
+								"     'Data': responseData}",
+								" print('RESPONSE BODY:/n' + json.dumps(responseBody))",
+								" responseUrl = event['ResponseURL']",
+								" json_responseBody = json.dumps(responseBody)",
+								" headers = {",
+								"  'content-type' : '',",
+								"  'content-length' : str(len(json_responseBody))",
+								" }",
+								" try:",
+								"  response = requests.put(responseUrl,",
+								"        data=json_responseBody,",
+								"        headers=headers)",
+								"  print('Status code: ' + response.reason)",
+								" except Exception as e:",
+								"  print('send(..) failed executing requests.put(..): ' + str(e))"
+                            ]
+                        ]
+                    }
+                },
+                "Handler": "index.lambda_handler",
+                "Runtime": "python3.7",
+                "Timeout": "20",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "CloudHSMLambdaExecutionRole",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+		"ClientInstance": {
+			"Type" : "AWS::EC2::Instance",
+			"Condition" : "SignCSR",
+			"DependsOn": "CloudHSMCluster",
+			"Properties": {
+				"InstanceType": {"Ref": "InstanceType"},
+				"ImageId": {"Ref": "ImageId"},
+				"KeyName": {"Ref": "KeyName"},
+				"IamInstanceProfile" : {
+					"Ref" : "ClientInstanceProfile"
+				},
+				"UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+						"#!/bin/bash\n",
+						"sudo yum update -y\n",
+						"sleep 10\n",
+						"wget https://s3.amazonaws.com/cloudhsmv2-software/CloudHsmClient/EL6/cloudhsm-client-latest.el6.x86_64.rpm\n",
+						"sudo yum install -y ./cloudhsm-client-latest.el6.x86_64.rpm\n",
+						"export instance_id=$(curl 169.254.169.254/latest/meta-data/instance-id/)\n",
+						"echo $instance_id\n",
+						"export region=$(curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\\\" '{print $4}')\n",
+						"export cluster_id=",
+						{"Fn::GetAtt": ["CloudHSMCluster", "cluster_id"]},
+						"\n",
+						"sleep 10\n",
+						"echo Creating Key\n",
+						"sudo openssl genrsa -out customerCA.key 2048\n",
+						"echo Creating CA\n",
+						"sudo openssl req -new -x509 -days 3652 -key customerCA.key -out customerCA.crt -subj \"/C=IE/ST=$region/O=CloudHSM/OU=Amazon/CN=$cluster_id\"\n",
+						"aws cloudhsmv2 describe-clusters --filters clusterIds=$cluster_id --region $region --output text --query 'Clusters[].Certificates.ClusterCsr' > ${cluster_id}_ClusterCsr.csr\n",
+						"sudo openssl x509 -req -days 3652 -in ${cluster_id}_ClusterCsr.csr -CA customerCA.crt -CAkey customerCA.key -CAcreateserial -out ${cluster_id}_CustomerHsmCertificate.crt\n",
+						"sudo cp customerCA.crt /opt/cloudhsm/etc/customerCA.crt\n",
+						"aws cloudhsmv2 initialize-cluster --cluster-id $cluster_id --signed-cert file://${cluster_id}_CustomerHsmCertificate.crt --trust-anchor file://customerCA.crt --region $region\n",
+						"export c_init=\"\"\n",
+						"while [ \"$c_init\" != \"INITIALIZED\" ]; do echo Waiting for Cluster to be initialized…;  c_init=$(aws cloudhsmv2 describe-clusters --query 'Clusters[].State' --region $region --output text) ; sleep 5 ; done\n",
+						"echo Cluster Initialized!\n",
+						"aws cloudhsmv2  describe-clusters --filters clusterIds=$cluster_id --query \"Clusters[0].Hsms[0].EniIp\" --output text --region $region > hsm_ip.txt\n",
+						"export instance_group=$(aws ec2 describe-instances --instance-ids $instance_id --query Reservations[*].Instances[*].SecurityGroups[*].GroupId --output text --region $region)\n",
+						"export security_group=$(aws cloudhsmv2 describe-clusters --query Clusters[*].SecurityGroup[] --output text --region $region)\n",
+						"aws ec2 authorize-security-group-ingress --group-id $security_group --source-group $instance_group --protocol all --region $region\n",
+						"sudo /opt/cloudhsm/bin/configure -a `cat hsm_ip.txt`\n",
+						"sudo start cloudhsm-client\n"
+					]]}}
+			}
+		},
+		"ClientInstanceRole" : {
+		  "Type" : "AWS::IAM::Role",
+		  "Condition" : "SignCSR",
+		  "DependsOn": "CloudHSMCluster",
+		  "Properties" : {
+			"AssumeRolePolicyDocument": {
+			  "Version" : "2012-10-17",
+			  "Statement" : [
+				{
+				  "Effect" : "Allow",
+				  "Principal" : {
+					"Service" : ["ec2.amazonaws.com"]
+				  },
+				  "Action" : [
+					"sts:AssumeRole"
+				  ]
+				}
+			  ]
+			},
+			"Path" : "/"
+		  }
+		},
+		"ClientInstanceProfile" : {
+			  "Type" : "AWS::IAM::InstanceProfile",
+			  "DependsOn": "CloudHSMCluster",
+			  "Properties" : {
+				"Path" : "/",
+				"Roles" : [
+				  {
+					"Ref" : "ClientInstanceRole"
+				  }
+				]
+			  }
+		},
+		"ClientInstanceRolePolicy" : {
+		  "Type" : "AWS::IAM::Policy",
+		  "Condition" : "SignCSR",
+		  "DependsOn": "CloudHSMCluster",
+		  "Properties" : {
+			"PolicyName": "CloudHSMAccess",
+			"PolicyDocument" : {
+			  "Version" : "2012-10-17",
+			  "Statement" : [
+				{
+				  "Effect" : "Allow",
+				  "Action" : [
+					"ec2:Describe*",
+					"ec2:AuthorizeSecurityGroup*",
+					"cloudhsm:Describe*",
+					"cloudhsm:InitializeCluster"
+				  ],
+				  "Resource" : "*"
+				}
+			  ]
+			},
+			"Roles" : [
+			  {
+				"Ref" : "ClientInstanceRole"
+			  }
+			]
+		  }
+		}
+    },
+    "Outputs": {
+        "ClusterId": {
+            "Description": "The cluster_id value of the Cluster that has been set up",
+            "Value": {
+                "Fn::GetAtt": [
+                    "CloudHSMCluster",
+                    "cluster_id"
+                ]
+            }
+        }
+    }
+}
