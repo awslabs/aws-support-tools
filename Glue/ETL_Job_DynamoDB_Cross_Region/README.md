@@ -1,12 +1,12 @@
 # Access a cross-region DynamoDB table in a Glue Job? #
 
-##Problem
+## Problem
 
 When using the Glue ETL API, we cannot currently (2019.Q2) create DynamicFrames from DynamoDB tables in a different region using Glue Connections or Glue Data Catalog. The Glue Data Catalog can only add metadata tables for DynamoDB tables using a crawler (manual tables can only be added for S3 data stores), and these Crawlers can only crawl DynamoDB tables in the same region as the Glue job. Creating DynamicFrames from Glue connections can also only be done from DynamoDB tables in the same region.
 
 
 
-##Solution
+## Solution
 
 Since the environment in which our driver program is running has the AWS SDK installed, we can import it into our program and use it to pull data from the DynamoDB table in another region.  Once we have this data in a collection, we can create an RDD from it.
 
