@@ -1,5 +1,7 @@
 # DeploymentPackages
 
+**UPDATE** Please see the blog post "[Upcoming updates to the AWS Lambda and AWS Lambda@Edge execution environment](https://aws.amazon.com/blogs/compute/upcoming-updates-to-the-aws-lambda-execution-environment/)"
+
 *Deployment Package helpers for AWS Lambda.*
 
 When creating deployment packages for AWS Lambda, any native binaries must be compiled to match the underlying AWS Lambda execution environment.
