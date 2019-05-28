@@ -128,8 +128,8 @@ Resources:
       Code:
         S3Bucket: !Ref MyS3Bucket
         S3Key: "sesreport.zip"
-      Runtime: "nodejs6.10"
-      Timeout: "300"
+      Runtime: "nodejs8.10"
+      Timeout: "600"
       Environment:
         Variables:
           Key: Value
