@@ -41,7 +41,7 @@ fi
 
 for region in $regions; do
   # http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Filtering.html#Filtering_Resources_CLI
-  AMINAME="amzn-ami-hvm-2017.03.1.20170812-x86_64-gp2"
+  AMINAME="amzn-ami-hvm-2018.03.0.20190514-x86_64-gp2"
   QUERY="Images[].[Name,\`$region\`,ImageId]"
   aws ec2 describe-images --output text \
        --filters "Name=owner-alias,Values=amazon" "Name=name,Values=$AMINAME" \

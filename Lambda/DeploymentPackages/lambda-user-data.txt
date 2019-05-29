@@ -1,5 +1,5 @@
 #cloud-config
-repo_releasever: 2017.03
+repo_releasever: 2018.03
 resize_rootfs:   noblock
 
 runcmd:
@@ -17,27 +17,31 @@ runcmd:
   # let ec2-user read logs
   setfacl -R -m g:wheel:rx,g:adm:rx /var/log/
 
-  yum -y install docker
+  yum -q -y install docker
   usermod -a -G docker ec2-user
   service docker start
 
-  # install aws-sam-cli dependencies
+  # aws-sam-cli dependencies
   cd /tmp
   echo -e 'enum34\npathlib2\nsetuptools\nboto3\nawscli\nfaker\ncookiecutter\nvirtualenv' > requirements-to-freeze.txt
   curl -O -L --silent --show-error --fail --connect-timeout 2 --retry-delay 10 --retry 5 https://raw.githubusercontent.com/awslabs/aws-sam-cli/develop/requirements/base.txt
+  echo 'aws-sam-cli' > sam.txt
 
   # update from pip
-  yum -y remove aws-cli python27-boto python27-botocore
-  yum -y install gcc git wget rpmdevtools
-  pip-2.7 -q install -r requirements-to-freeze.txt -U
-  pip-2.7 -q install -r base.txt -U
+  yum -q -y remove aws-cli python27-boto python27-botocore
+  yum -q -y install gcc git wget python36-pip python36-devel
+  yum -q -y update --security
+  pip-3.6 -q install -r requirements-to-freeze.txt -U
+  pip-3.6 -q install -r base.txt -U
   # must be done after setuptools upgrade
-  pip-2.7 install aws-sam-cli -U
+  pip-3.6 -q install -r sam.txt -U
 
   # code samples
   git clone https://github.com/awslabs/serverless-application-model
   echo '{"key1":"value1","key2":"value2","key3":"value3"}' > /tmp/serverless-application-model/examples/event.json
-  su -l ec2-user -c 'cp -r /tmp/serverless-application-model/examples $HOME ; cd $HOME/examples/apps/hello-world-python/ ; sam local invoke -e ~/examples/event.json '
+  region=$(curl -sSf --connect-timeout 2 --retry-delay 10 --retry 5 http://169.254.169.254/latest/dynamic/instance-identity/document | grep region |sed -e 's/.*: "\(.*\)".*/\1/')
+  su -l ec2-user -c "aws configure set default.region $region"
+  su -l ec2-user -c 'cp -r /tmp/serverless-application-model/examples $HOME ; cd $HOME/examples/apps/hello-world-python3/ ; sam local invoke -e ~/examples/event.json '
 
   echo END
   date +'%Y-%m-%dT%H:%M:00Z' --utc
