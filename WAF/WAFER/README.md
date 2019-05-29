@@ -1,8 +1,8 @@
-#WAFER - AWS WAF Enhanced Replicator
+# WAFER - AWS WAF Enhanced Replicator
 
 WAFER, a tool to facilitate the replication of AWS WAF global or regional configurations.
 
-##Pre-requisites
+## Pre-requisites
 
 To use WAFER, you must have:
 - A valid AWS CLI configuration (at least the _credentials_ file);
@@ -11,14 +11,14 @@ To use WAFER, you must have:
 - PIP (to install Boto3);
 - IAM permissions to access AWS WAF resources in read-only mode.
 
-##Installation
+## Installation
 
 1. Clone the AWS Support GitHub repository and navigate to the WAF/WAFER directory;
 2. Run "pip install -r requirements.txt" to install the Boto 3 SDK;
 3. Optionally, give execution permission to the _wafer_ file.
 
 
-##Directory Structure
+## Directory Structure
 
 One of the first steps that the tool does is creating a reference directory to hold the files. This directory name is **.wafer**. WAFER will create this directory inside the user's home directory. 
 
@@ -27,7 +27,7 @@ Inside the **.wafer** directory, two other directories are created:
 - "logs" - stores the log files;
 - "templates" - stores the Terraform template files.
 
-##Usage
+## Usage
 
 The tool runs around a Web ACL. So, you have to either choose one from the list that you be presented to you, or provide a Web ACL ID on the command line itself.
 
@@ -48,7 +48,7 @@ Usage:
 
 As pointed out above, you must choose the **scope**: if you want to replicate a global or a regional Web ACL. In case you choose the regional way, you must provide the AWS region where the Web ACL is located. 
 
-##What does the tool get?
+## What does the tool get?
 
 WAFER will grab (get) the following resources, according to the provided scope (global or regional):
 
@@ -59,10 +59,10 @@ WAFER will grab (get) the following resources, according to the provided scope (
 
 **WAFER does not get an associated resource's specific data or properties. If, for example, your regional Web ACL is associated to an Application Load Balancer (ALB), WAFER will only detect that and write the relevant blocks in the Terraform template file.**
 
-##What does the tool not get?
+## What does the tool not get?
 
 WAFER does not get rules unrelated to the Web ACL you chose or provided through a CLI argument.
 
-##What happens afterwards?
+## What happens afterwards?
 
 Just before end, WAFER will compress both the template and the log files inside a zip file and show you its location. You are welcome to upload this zip file to a WAF support case should you have opened any. The AWS support engineer will be able to replicate your configuration.
