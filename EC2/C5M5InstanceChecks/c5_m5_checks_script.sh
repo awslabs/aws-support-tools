@@ -126,7 +126,7 @@ if [ `id -u` -ne 0 ]; then                                              # Checks
         exit 1
 fi
 
-modinfo nvme > /dev/null 2>&1
+(modinfo nvme || grep 'nvme_open' /boot/System.map-$(uname -r)) > /dev/null 2>&1
 if [ $? -ne 0 ]
     then
     # NVMe Module is not installed. 
