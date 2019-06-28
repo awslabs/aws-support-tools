@@ -1,5 +1,29 @@
 #!/bin/bash
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file
+# except in compliance with the License. A copy of the License is located at
+# 
+#     http://aws.amazon.com/apache2.0/
+# 
+# or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+# BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under the License.
+
 ## Functions ##
+securityDisclaimer(){
+    # This function just lets the user know what will be done so he can cancel before doing anything if he wants.
+    cat << EOF
+Info: Executing this script will:
+    1. Query your account ID from AWS CLI.
+    2. Create IAM Policy and Role.
+    3. Download SSL certificate to this machine.
+    4. Create parameter file on ${HOME}
+
+EOF
+    read -p "Do you wish to proceed Y/N? [N]: " DECISION; DECISION=${DECISION:-N}; echo $DECISION
+    if [[ ${DECISION} == y ]] || [[ ${DECISION} == Y ]]; then echo "Proceeding..."; else exit 1; fi
+}
 getAccountID(){
     # This requires AWS CLI to be properly configured!
     ACC_ID="$(aws sts get-caller-identity --query "[Account]" --output text)"
@@ -93,6 +117,7 @@ validateSettings(){
 }
 
 ## MAIN Workflow ##
+securityDisclaimer
 getAccountID
 loadVariables
 createJSONPolicy
