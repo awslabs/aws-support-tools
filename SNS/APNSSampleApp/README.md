@@ -128,6 +128,8 @@ Register App Id in iTunes Connect
     6. Enter **APNSSampleApp** in the **Profile Name:** field.
     7. Click **Generate** and **Download**.
     8. Open the downloaded provisioning profile to add to xCode.
+    9. Open project setting tab General in Xcode, deselecte **Automatically manage signing** if it is selected
+    10. Select the provisioning profile added in step 8 for **Signing (Debug)**
 18. In xCode click on Project name **APNSSampleApp** then click **Capabilities** tab.
 19. Switch **On** Push Notifications.
 
@@ -141,22 +143,23 @@ Publishing Notification using AWS SNS
 -------------------------------------
 Advantage of using SNS is scalability which is required when publishing tens of millions of notifications in a very short time and abstracts interaction with different push services behind a unified API.
 
-1. Add a new platform application in SNS console -> Applications.
+1. Create a new platform application in SNS console -> **Side Menu - Mobile - Push notifications**.
 2. Enter **APNSSampleApp** for the name.
-3. Select **Apple Development** from the **Push Notification Platform** drop down menu.
-4. Click **Choose file** button.
-5. Select **APNSSampleAppDevelopment.p12** file that we exported from Keychain.
-6. Click **Load Credentials from File** to populate **Certificate** and **Private Key** boxes.
-7. Click **Create Platform Application** button.
-8. Click on the new application ARN to enter.
-9. Click **Create Platform Endpoint** button.
-10. Paste your **Device Token** in the **Device token** field.
-11. Enter optional data in **User Data** field.
-12. Click **Add Endpoint** button.
-13. Select the newly added endpoint from the list.
-14. Click **Publish to endpoint** button.
-15. Select **JSON** for **Message format**.
-16. Enter the following in the **Message** box and click **Publish message** button.
+3. Select **Apple iOS/VoIP/Mac** from the **Push notification platform** drop down menu.
+4. Select **Used for development in sandbox** as the generated certificate is for development
+5. Select **iOS push certificate** from the **Push certificate type** drop down menu.
+6. Click **Choose file** button.
+7. Select **APNSSampleAppDevelopment.p12** file that we exported from Keychain.
+8. Click **Load Credentials from File** to populate **Certificate** and **Private Key** boxes.
+9. Click **Create platform application** button.
+10. Click on the new application name to enter.
+11. Click **Create application endpoint** button.
+12. Paste your **Device Token** in the **Device token** field.
+13. Enter optional data in **User Data** field.
+14. Click **Create application endpoint** button.
+15. Select the newly added endpoint from the list.
+16. Click **Publish message** button.
+17. Enter the following in the **Message body to send to the endpoint** box and click **Publish message** button.
 
     ```json
     {
