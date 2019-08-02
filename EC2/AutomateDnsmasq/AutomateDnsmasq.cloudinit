@@ -1,0 +1,65 @@
+#cloud-config
+
+########################################################################
+
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file
+# except in compliance with the License. A copy of the License is located at
+#
+#     http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is distributed on an "AS IS"
+# BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under the License
+
+
+########################################################################
+
+# The aim of this cloud-init directive is to automate the installation and configuration of DNSMasq services on Amazon Linux 1 & 2
+# This should be injected as user-data on instance during the launch process
+
+# Install dnsmasq package
+packages: 
+  - dnsmasq
+
+# Create dnsmasq user
+users: 
+  - default
+  - name: dnsmasq
+    inactive: true
+    system: true
+
+# Run Shell commands to configure dnsmasq
+runcmd:
+ 
+  # Start dnsmask service and enable it to start at every reboot
+  - pidof systemd && systemctl restart dnsmasq.service || service dnsmasq restart
+  - pidof systemd && systemctl enable  dnsmasq.service || chkconfig dnsmasq on
+
+  # Configure /etc/dhcp/dhclient.conf and /etc/resolv.dnsmasqwith the right DNS IP Address
+  # Note that this DNS is set to 169.254.169.253 for VPC and to 172.16.0.23 for ec2-classic
+  - INTERFACE=$(curl --silent http://169.254.169.254/latest/meta-data/network/interfaces/macs/ | head -n1); 
+    IS_IT_CLASSIC=$(curl --write-out %{http_code} --silent --output /dev/null http://169.254.169.254/latest/meta-data/network/interfaces/macs/${INTERFACE}/vpc-id); 
+    if [[ $IS_IT_CLASSIC == '404' ]]; then bash -c "echo 'supersede domain-name-servers 127.0.0.1, 172.16.0.23;' >> /etc/dhcp/dhclient.conf && echo 'nameserver 172.16.0.23' > /etc/resolv.dnsmasq"; else  bash -c "echo 'supersede domain-name-servers 127.0.0.1, 169.254.169.253;' >> /etc/dhcp/dhclient.conf && echo 'nameserver 169.254.169.253' > /etc/resolv.dnsmasq"; fi
+
+  # Restart dhclient
+  - bash -c "dhclient"
+
+# Configure /etc/dnsmasq.conf accordingly
+write_files: 
+  - path: /etc/dnsmasq.conf
+    content: |
+        # Server Configuration
+        listen-address=127.0.0.1
+        port=53
+        bind-interfaces
+        user=dnsmasq
+        group=dnsmasq
+        pid-file=/var/run/dnsmasq.pid
+        # Name resolution options
+        resolv-file=/etc/resolv.dnsmasq
+        cache-size=500
+        neg-ttl=60
+        domain-needed
+        bogus-priv
