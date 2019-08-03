@@ -5,7 +5,8 @@ EMR provides AWS CLI export using the console.
 ![Image of AWS CLI export](./aws-cli-export.png)
 
 You will then get a single line of AWS CLI to create a cluster with the same settings.
-However, there is no API for command line tool. So this code is making AWS CLI for create-cluster.
+
+However, there is no API for command line tool. So this code is making AWS CLI for create-cluster programmatically.
 
 ## What this script does:
 
