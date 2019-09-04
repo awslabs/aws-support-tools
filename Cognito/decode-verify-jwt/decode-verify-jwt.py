@@ -1,4 +1,4 @@
-# Copyright 2017-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file
 # except in compliance with the License. A copy of the License is located at
@@ -9,9 +9,9 @@
 # BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under the License.
 
-import urllib
 import json
 import time
+import urllib.request
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 
@@ -22,8 +22,9 @@ keys_url = 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.forma
 # instead of re-downloading the public keys every time
 # we download them only on cold start
 # https://aws.amazon.com/blogs/compute/container-reuse-in-lambda/
-response = urllib.urlopen(keys_url)
-keys = json.loads(response.read())['keys']
+with urllib.request.urlopen(keys_url) as f:
+  response = f.read()
+keys = json.loads(response.decode('utf-8'))['keys']
 
 def lambda_handler(event, context):
     token = event['token']

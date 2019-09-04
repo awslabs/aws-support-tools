@@ -72,12 +72,10 @@ To verify the signature of an Amazon Cognito JWT, search for the key with a key 
 
 ## Requirements
 
-### Python 2.7
-For the Python version I've used [python-jose](https://github.com/mpdavis/python-jose), to handle the JWT token decoding and signature verification; that library must be included in the Lambda deployment package using one of the methods discussed [here](https://docs.aws.amazon.com/lambda/latest/dg/lambda-python-how-to-create-deployment-package.html).
+Please refer to the [Verifying a JSON Web Token](https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html) section of the Amazon Cognito Developer Guide for other programming languages and runtimes.
 
-### NodeJS 4.3
-For the NodeJS version I've used [node-jose](https://www.npmjs.com/package/node-jose) which needs to be included in the Lambda deployment package. It can be done via NPM with
-```
-npm install node-jose
-```
-from within the script directory. Please refer to the AWS [documentation](http://docs.aws.amazon.com/lambda/latest/dg/nodejs-create-deployment-pkg.html) for more details.
+Per the [Security in AWS Lambda shared responsibility](https://docs.aws.amazon.com/lambda/latest/dg/lambda-security.html), you are responsible for updating libraries as needed, as well as other factors including the sensitivity of your data, your company’s requirements, and applicable laws and regulations.
+
+### Python 3
+The Python code uses [python-jose](https://github.com/mpdavis/python-jose) to handle the JWT token decoding and signature verification; that library must be included in the Lambda deployment package using one of the methods discussed in the [Deployment Package in Python](https://docs.aws.amazon.com/lambda/latest/dg/lambda-python-how-to-create-deployment-package.html) section of the AWS Lambda Developer Guide. 
+
