@@ -29,7 +29,7 @@ runcmd:
 
   # update from pip
   yum -q -y remove aws-cli python27-boto python27-botocore
-  yum -q -y install gcc git wget python36-pip python36-devel
+  yum -q -y install gcc git python36-pip python36-devel
   yum -q -y update --security
   pip-3.6 -q install -r requirements-to-freeze.txt -U
   pip-3.6 -q install -r base.txt -U
@@ -37,11 +37,11 @@ runcmd:
   pip-3.6 -q install -r sam.txt -U
 
   # code samples
-  git clone https://github.com/awslabs/serverless-application-model
-  echo '{"key1":"value1","key2":"value2","key3":"value3"}' > /tmp/serverless-application-model/examples/event.json
+  git clone https://github.com/aws-samples/serverless-app-examples
+  echo '{"key1":"value1","key2":"value2","key3":"value3"}' > /tmp/serverless-app-examples/event.json
   region=$(curl -sSf --connect-timeout 2 --retry-delay 10 --retry 5 http://169.254.169.254/latest/dynamic/instance-identity/document | grep region |sed -e 's/.*: "\(.*\)".*/\1/')
   su -l ec2-user -c "aws configure set default.region $region"
-  su -l ec2-user -c 'cp -r /tmp/serverless-application-model/examples $HOME ; cd $HOME/examples/apps/hello-world-python3/ ; sam local invoke -e ~/examples/event.json '
+  su -l ec2-user -c 'cp -r /tmp/serverless-app-examples $HOME ; cd $HOME/serverless-app-examples/python/hello-world-python3/ ; sam local invoke -e ~/serverless-app-examples/event.json '
 
   echo END
   date +'%Y-%m-%dT%H:%M:00Z' --utc

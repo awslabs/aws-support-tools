@@ -1,13 +1,13 @@
 # DeploymentPackages
 
-**UPDATE** Please see the blog post "[Upcoming updates to the AWS Lambda and AWS Lambda@Edge execution environment](https://aws.amazon.com/blogs/compute/upcoming-updates-to-the-aws-lambda-execution-environment/)"
-
-*Deployment Package helpers for AWS Lambda.*
-
 When creating deployment packages for AWS Lambda, any native binaries must be compiled to match the underlying AWS Lambda execution environment.
 Please see the AWS Lambda Developer Guide section
 "[Execution Environment and Available Libraries](http://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html)"
 for additional details.
+
+You can launch an EC2 instance locked to the correct AMI with [aws-sam-cli](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html) to build and test.
+
+*Requirements*
 
 `NOTE`: If you have not created a KeyPair and IAM Role for EC2, first follow the following guides:
 * http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html
@@ -16,10 +16,12 @@ for additional details.
 The IAM Instance Profile Role is optional. To troubleshoot IAM Policies, attach the same policies that you 
 use with your Lambda Execution Role to the IAM Instance Profile Role.
 
-You can use the `lambda-user-data.txt` script to launch an EC2 instance locked to the correct base AMI with [aws-sam-cli](https://github.com/awslabs/aws-sam-cli). You can upload the file in the AWS Console EC2 Launch Wizard under "Advanced Details" or use the AWS CLI like this:
+*Deployment Package helpers for AWS Lambda*
+
+You can use the `lambda-user-data.txt` script by uploading the file in the "Advanced Details" of the [AWS Console EC2 Launch Wizard](https://console.aws.amazon.com/ec2/v2/home#Images:visibility=public-images;search=amzn-ami-hvm-2018.03.0.20181129-x86_64-gp2) or use the AWS CLI like this:
 ```bash
-  aws ec2 run-instances --instance-type t2.medium \
-    --region us-east-1 --image-id ami-0756fbca465a59a30 \
+  aws ec2 run-instances --instance-type t3.medium \
+    --region us-east-1 --image-id ami-0080e4c5bc078760e \
     --key-name $KEY --iam-instance-profile Name=$ROLE \
     --output text --query "Instances[].[InstanceId]" \
     --user-data file://lambda-user-data.txt
@@ -30,7 +32,7 @@ You can use the `lambda-user-data.txt` script to launch an EC2 instance locked t
 
 After a few minutes, the instance will be ready. Log in via SSH and run the Python example:
 ```bash
-  cd examples/apps/hello-world-python3/
+  cd $HOME/serverless-app-examples/python/hello-world-python3
   echo '{"key1":"value1","key2":"value2","key3":"value3"}' > event.json
   sam local invoke -e event.json
 ```
@@ -41,24 +43,24 @@ For additional details about locking the Amazon Linux AMI yum repository to a sp
 * https://aws.amazon.com/amazon-linux-ami/faqs/#lock
 * http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
 
-## Amazon Linux AMI amzn-ami-hvm-2018.03.0.20190514-x86_64-gp2
+## Amazon Linux AMI amzn-ami-hvm-2018.03.0.20181129-x86_64-gp2
 
 | Region | AMI Image ID |
 | :---: | --- |
-| ap-northeast-1| ami-0ccdbc8c1cb7957be |
-| ap-northeast-2| ami-082b5ca9ff663f3b8 |
-| ap-northeast-3| ami-004176091a55d5176 |
-| ap-south-1| ami-0eacc5b7915ba9921 |
-| ap-southeast-1| ami-03097abf0db1cdff2 |
-| ap-southeast-2| ami-05067171f4230ac41 |
-| ca-central-1| ami-07ab3281411d31d04 |
-| eu-central-1| ami-03a71cec707bfc3d7 |
-| eu-north-1| ami-be4bc3c0 |
-| eu-west-1| ami-03c242f4af81b2365 |
-| eu-west-2| ami-05663d374a152d239 |
-| eu-west-3| ami-0f962299dc4d90c81 |
-| sa-east-1| ami-0eb2a191bf5e40e10 |
-| us-east-1| ami-0756fbca465a59a30 |
-| us-east-2| ami-04768381bf606e2b3 |
-| us-west-1| ami-063dd30adbb186909 |
-| us-west-2| ami-07a0c6e669965bb7c |
+| ap-northeast-1| ami-00a5245b4816c38e6 |
+| ap-northeast-2| ami-00dc207f8ba6dc919 |
+| ap-northeast-3| ami-0b65f69a5c11f3522 |
+| ap-south-1| ami-0ad42f4f66f6c1cc9 |
+| ap-southeast-1| ami-05b3bcf7f311194b3 |
+| ap-southeast-2| ami-02fd0b06f06d93dfc |
+| ca-central-1| ami-07423fb63ea0a0930 |
+| eu-central-1| ami-0cfbf4f6db41068ac |
+| eu-north-1| ami-86fe70f8 |
+| eu-west-1| ami-08935252a36e25f85 |
+| eu-west-2| ami-01419b804382064e4 |
+| eu-west-3| ami-0dd7e7ed60da8fb83 |
+| sa-east-1| ami-05145e0b28ad8e0b2 |
+| us-east-1| ami-0080e4c5bc078760e |
+| us-east-2| ami-0cd3dfa4e37921605 |
+| us-west-1| ami-0ec6517f6edbf8044 |
+| us-west-2| ami-01e24be29428c15b2 |
