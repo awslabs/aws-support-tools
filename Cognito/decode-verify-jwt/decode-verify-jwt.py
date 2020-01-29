@@ -33,7 +33,7 @@ def lambda_handler(event, context):
     kid = headers['kid']
     # search for the kid in the downloaded public keys
     key_index = -1
-    for i in range(len(keys)):
+    for i in keys:
         if kid == keys[i]['kid']:
             key_index = i
             break
