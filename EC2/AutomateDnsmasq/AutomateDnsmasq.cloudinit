@@ -22,6 +22,7 @@
 # Install dnsmasq package
 packages: 
   - dnsmasq
+  - bind-utils
 
 # Create dnsmasq user
 users: 

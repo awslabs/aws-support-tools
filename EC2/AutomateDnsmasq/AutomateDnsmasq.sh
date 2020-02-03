@@ -32,7 +32,7 @@ else
 fi
 
 # Install dnsmasq package
-yum install -y dnsmasq
+yum install -y dnsmasq bind-utils
 
 # Create the required User and Group
 groupadd -r dnsmasq
