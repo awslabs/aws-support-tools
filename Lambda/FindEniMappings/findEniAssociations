@@ -1,0 +1,117 @@
+#!/bin/bash
+
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+# jq is required for this script to work, exit if it isn't present
+which jq &> /dev/null
+if [ $? -ne 0 ]
+then
+  echo "The json parsing package 'jq' is required to run this script, please install it before continuing"
+  exit 1
+fi
+
+set -e #fail if any of our subcommands fail
+printf "This script is for determining why an ENI that is managed by AWS Lambda has not been deleted.\n\n"
+
+# take the region and the ENI id as parameters
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+  --eni)
+  ENI="$2"
+  shift # past argument
+  shift # past value
+  ;;
+  --region)
+  REGION="$2"
+  shift # past argument
+  shift # past value
+  ;;
+esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+# Both parameters are required, fail if they are absent
+if [ -z $ENI ] && [ -z $REGION ];
+then
+  echo "Both --eni and --region are required"
+  exit 1
+elif [ -z $ENI ]
+then
+  echo "--eni is required"
+  exit 1
+elif [ -z $REGION ]
+then
+  echo "--region is required"
+  exit 1
+fi
+
+# search for the ENI to get the subnet and security group(s) it uses
+METADATA="$(aws ec2 describe-network-interfaces --network-interface-ids ${ENI} --filters Name=network-interface-id,Values=${ENI} --region ${REGION} --output json --query 'NetworkInterfaces[0].{Subnet:SubnetId,SecurityGroups:Groups[*].GroupId}')"
+
+read Subnet < <(echo $METADATA | jq -r '.Subnet')
+SecurityGroups=()
+for row in $(echo $METADATA | jq -r '.SecurityGroups[]')
+do
+  SecurityGroups+=(${row})
+done
+# Sort the list of SGs, so that we can easily compare with the list from a Lambda function
+IFS=$'\n' SortedSGs=($(sort <<<"${SecurityGroups[*]}"))
+unset IFS
+echo "Found "${ENI}" with "$Subnet" using Security Groups" ${SortedSGs[@]}
+echo "Searching for Lambda function versions using "$Subnet" and Security Groups" ${SortedSGs[@]}"..."
+
+# Get all the Lambda functions in an account that are using the same subnet, including versions
+Response="$(aws lambda list-functions --function-version ALL --region ${REGION} --output json --query 'Functions[?VpcConfig!=`null` && VpcConfig.SubnetIds!=`[]`] | [].{Arn:FunctionArn, Subnets:VpcConfig.SubnetIds, SecurityGroups: VpcConfig.SecurityGroupIds} | [?contains(Subnets, `'$Subnet'`) == `true`]')"
+Functions=()
+for row in $(echo $Response | jq -c -r '.[]')
+do
+  Functions+=(${row})
+done
+# check if we got any functions with this subnet at all
+if [ $(echo "${#Functions[@]}") -eq 0 ]
+then
+  printf "\nNo Lambda functions or versions found that were using the same subnet as this ENI.\nIf this ENI is not deleted automatically in the next 24 hours then it may be 'stuck'. If the ENI will not allow you to delete it manually after 24 hours then please contact AWS support and send them the output of this script."
+  exit 0
+fi
+Results=()
+for each in "${Functions[@]}"
+do
+  # Check if there are any functions that match the security groups of the ENI
+  LambdaSGs=()
+  for row in $(echo "$each" | jq -r '.SecurityGroups[]')
+  do
+    LambdaSGs+=(${row})
+  done
+  # Need both lists of SGs sorted for easy comparison
+  IFS=$'\n' SortedLambdaSGs=($(sort <<<"${LambdaSGs[*]}"))
+  unset IFS
+  set +e # diff is wierd and returns exit code 1 if the inputs differ, so we need to temporarily disable parent script failure on non-zero exit codes
+  diff=$(diff <(printf "%s\n" "${SortedSGs[@]}") <(printf "%s\n" "${SortedLambdaSGs[@]}"))
+  set -e
+  if [[ -z "$diff" ]]; then
+    Results+=($(echo "$each" | jq -r '.Arn'))
+  fi
+done
+if [ ${#Results[@]} -eq 0 ]; # if we didn't find anything then we need to check if the ENI was modified, as Lambda will still be using it, even if the SGs no longer match
+then
+  printf "No functions or versions found with this subnet/security group combination. Searching for manual changes made to the ENI...\n"
+  Changes="$(aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=ModifyNetworkInterfaceAttribute --region ${REGION} --output json --query 'Events[] | [?contains(CloudTrailEvent, `'$ENI'`) == `true` && contains(CloudTrailEvent, `groupId`) == `true` && contains(CloudTrailEvent, `errorMessage`) == `false`]')"
+  if [ "$(echo $Changes | jq -r 'length')" -gt 0 ]
+  then
+    printf "\nChanges were made to this ENI's security group outside of the Lambda control plane. Any Lambda function that pointed to this ENI originally will still be using it, even with changes on the ENI side.\n\nThe following functions share the same subnet as this ENI. Any of them that are will need to be disassociated/deleted before Lambda will clean up this ENI. Each of these could potentially be using this ENI:\n"
+    for each in "${Functions[@]}"
+    do
+      echo "$each" | jq -r '.Arn'
+    done
+  else
+    printf "\nNo manual changes to the ENI found. If this ENI is not deleted automatically in the next 24 hours then it may be 'stuck'. If the ENI will not allow you to delete it manually after 24 hours then please contact AWS support and send them the output of this script.\n"
+  fi
+else
+  printf "\nThe following function version(s) use the same subnet and security groups as "${ENI}". They will need to be disassociated/deleted before Lambda will clean up this ENI:\n"
+  printf "%s\n" "${Results[@]}"
+fi
