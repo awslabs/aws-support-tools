@@ -1,4 +1,4 @@
-You can use this script to do the pre-requisites checks before changing the instance type to M5/C5. This script performs the following actions:
+You can use this script to do the pre-requisites checks before changing the instance type to Nitro. This script performs the following actions:
 
     - Verify if NVMe module is installed on your instance. If yes then it will verify if it is loaded in the intiramfs image.
 
@@ -13,10 +13,10 @@ You can use this script to do the pre-requisites checks before changing the inst
 
 - Place the script on your instance and make it executable
 
-    # chmod +x c5_m5_checks_script.sh
+    # chmod +x nitro_check_script.sh
 
 - Run the script as a "root" user or "sudo" otherwise it would fail with the following message "This script must be run as root"
 
-    # sudo ./c5_m5_checks_script.sh
+    # sudo ./nitro_check_script.sh
 
 ----------------------------------

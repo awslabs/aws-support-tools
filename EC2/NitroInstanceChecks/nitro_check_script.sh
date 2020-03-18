@@ -78,7 +78,8 @@ check_fstab () {
 
     if [ -s /tmp/device_names ]; then
 
-        echo -e "\n\nERROR  Your fstab file contains device names. Mount the partitions using UUID's before changing an instance type to M5/C5."                                                         # Outputs the new fstab file
+        echo -e "\n\nERROR  Your fstab file contains device names. Mount the partitions using UUID's before changing an instance type to Nitro."                                                         # Outputs the new fstab file
+
         printf "\nEnter y to replace device names with UUID in /etc/fstab file to make it compatible for NVMe block device names.\nEnter n to keep the file as-is with no modification (y/n) "
         read RESPONSE;
         case "$RESPONSE" in
@@ -130,25 +131,33 @@ if [ `id -u` -ne 0 ]; then                                              # Checks
         exit 1
 fi
 
-(modinfo nvme || grep 'nvme' /boot/System.map-$(uname -r)) > /dev/null 2>&1
+(grep 'nvme' /boot/System.map-$(uname -r)) > /dev/null 2>&1
 if [ $? -ne 0 ]
     then
-    # NVMe Module is not installed. 
-    echo -e "------------------------------------------------\nERROR  NVMe Module is not available on your instance. \n\t- Please install NVMe module before changing your instance type to M5/C5. Look at the following link for further guidance:"
-    echo -e "\t> https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html"
+    # NVMe modules is not built into the kernel
+    (modinfo nvme) > /dev/null 2>&1
+    if [ $? -ne 0 ]
+        then
+        # NVMe Module is not installed. 
+        echo -e "------------------------------------------------\nERROR  NVMe Module is not available on your instance. \n\t- Please install NVMe module before changing your instance type to Nitro. Look at the following link for further guidance:"
+        echo -e "\t> https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html"
 
-else 
+    else
+        echo -e "------------------------------------------------\n"
+        echo -e "OK     NVMe Module is installed and available on your instance"
+        check_NVMe_in_initrd                # Calling function to check if NVMe module is loaded in initramfs. 
+    fi
+else
+    # NVMe modules is built into the kernel
     echo -e "------------------------------------------------\n"
     echo -e "OK     NVMe Module is installed and available on your instance"
-    check_NVMe_in_initrd                # Calling function to check if NVMe module is loaded in initramfs. 
 fi
-
 
 modinfo ena > /dev/null 2>&1
 if [ $? -ne 0 ] 
     then
     # ENA Module is not installed. 
-    echo -e "\n\nERROR  ENA Module is not available on your instance. \n\t- Please install ENA module before changing your instance type to M5/C5. Look at the following link for further guidance:"
+    echo -e "\n\nERROR  ENA Module is not available on your instance. \n\t- Please install ENA module before changing your instance type to Nitro. Look at the following link for further guidance:"
     echo -e "\t> https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking-ena.html#enhanced-networking-ena-linux"
 
 else 
