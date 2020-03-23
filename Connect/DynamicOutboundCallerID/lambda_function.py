@@ -69,7 +69,7 @@ def lambda_handler(event, context):
             "default_queue_outbound_country": default_queue_outbound_country
         }
         numObj = phonenumbers.parse(response["outbound_number"])
-        if not phonenumbers.is_valid_number(numObj):
+        if not phonenumbers.is_valid_number(numObj) and e164_format.match(response["outbound_number"]) == False:
             logger.error("Outbound number {} is not valid.".format(
                 response["outbound_number"]))
             return None
@@ -125,7 +125,7 @@ def lambda_handler(event, context):
         "default_queue_outbound_country": default_queue_outbound_country
     }
     numObj = phonenumbers.parse(response["outbound_number"])
-    if not phonenumbers.is_valid_number(numObj):
+    if not phonenumbers.is_valid_number(numObj) and e164_format.match(response["outbound_number"]) == False:
             logger.error("Outbound number {} is not valid.".format(
                 response["outbound_number"]))
             return None
