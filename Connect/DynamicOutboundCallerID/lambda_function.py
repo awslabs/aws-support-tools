@@ -29,7 +29,7 @@ def lambda_handler(event, context):
         customer_no = event["Details"]["ContactData"]["CustomerEndpoint"]["Address"]
         if e164_format.match(customer_no) == False:
             raise Exception(
-                "Does not satisfy the regex '^\+?[1-9]\d{1,14}$'. Is it a valid number?")
+                "Is it a valid phone number?")
         customer_country = phonenumbers.phonenumberutil.region_code_for_country_code(
             phonenumbers.parse(customer_no).country_code)
     except Exception:
