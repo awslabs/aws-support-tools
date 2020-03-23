@@ -17,15 +17,19 @@ import botocore
 import boto3
 import os
 import json
+import re
 logger = logging.getLogger()
 # Logging level can be changed between logging.INFO to logging.ERROR to show verbose information or errors only in CloudWatch
 logger.setLevel(logging.ERROR)
 s3 = boto3.resource("s3")
-
+e164_format = re.compile("^\+?[1-9]\d{1,14}$")
 
 def lambda_handler(event, context):
     try:
         customer_no = event["Details"]["ContactData"]["CustomerEndpoint"]["Address"]
+        if e164_format.match(customer_no) == False:
+            raise Exception(
+                "Does not satisfy the regex '^\+?[1-9]\d{1,14}$'. Is it a valid number?")
         customer_country = phonenumbers.phonenumberutil.region_code_for_country_code(
             phonenumbers.parse(customer_no).country_code)
     except Exception:
