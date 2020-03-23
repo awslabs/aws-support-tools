@@ -60,7 +60,7 @@ def lambda_handler(event, context):
         print('Token is expired')
         return False
     # and the Audience  (use claims['client_id'] if verifying an access token)
-    if claims['aud'] != app_client_id:
+    if claims['client_id'] != app_client_id:
         print('Token was not issued for this audience')
         return False
     # now we can use the claims
