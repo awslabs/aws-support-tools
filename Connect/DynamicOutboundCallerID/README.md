@@ -61,7 +61,7 @@ This can also be referenced [here](https://docs.aws.amazon.com/connect/latest/ad
 This Lambda function requires two environment variables:
 
 - `BUCKET_NAME`: The S3 bucket name where the routing profile is stored.
-- `COUNTRY_ROUTING_LIST_KEY`: The path for the routing profile.
+- `COUNTRY_ROUTING_LIST_KEY`: The path of the routing profile object.
 
 ## Routing file
 
@@ -97,3 +97,56 @@ Note: During call routing, if the Lambda function fails to invoke for any reason
 ## Outbound Whisper Flow
 
 After invoking the Lambda function in an outbound whisper flow, a “[Call Phone Number](https://docs.aws.amazon.com/connect/latest/adminguide/call-phone-number.html)” block needs to be placed. Tick the box of “Caller ID number to display (optional)”, and pick “Use attribute” from the radio buttons. For “Type”, select “External”. For “Attribute”, type in “`outbound_number`“, which is one of the key Lambda responses.
+
+## IAM Permissions
+
+This Lambda function require at least a read access to the routing file stored in S3.
+
+### Example
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowGetRoutingProfile",
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": [
+                "arn:aws:s3:::<BUCKET_NAME>/<COUNTRY_ROUTING_LIST_KEY>"
+            ]
+        }
+    ]
+}
+```
+
+## Logging
+
+If the Lambda function has the following permission, it will send diagnostic logs to CloudWatch log:
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "logs:CreateLogGroup",
+            "Resource": "arn:aws:logs:<region>:<account-id>:*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": [
+                "arn:aws:logs:<region>:<account-id>:log-group:/aws/lambda/<lambda-function-name>:*"
+            ]
+        }
+    ]
+}
+```
+
+### Notice
+
+Since this Lambda function requires sensitive information such as the pair of client ID and client secret, the default logging level is set as `logging.ERROR`. Therefore, the function payload is not sent to CloudWatch automatically. Only the error message is forwarded to CloudWatch logs.
