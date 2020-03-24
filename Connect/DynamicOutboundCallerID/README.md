@@ -4,7 +4,7 @@ An AWS Lambda function to be put in an outbound whisper flow in an Amazon Connec
 
 ## External Dependencies
 
-- [phonenumbers](https://pypi.org/project/phonenumbers/)
+- [`phonenumbers`](https://pypi.org/project/phonenumbers/)
 
 ### How to install external dependencies?
 
@@ -54,7 +54,7 @@ Amazon Connect sends the following payload to Lambda function inside a contact f
 }
 ```
 
-This can also be referenced [here](https://docs.aws.amazon.com/connect/latest/adminguide/connect-lambda-functions.html#function-contact-flow)
+This can also be referenced [here](https://docs.aws.amazon.com/connect/latest/adminguide/connect-lambda-functions.html#function-contact-flow).
 
 ## Environment Variables
 
