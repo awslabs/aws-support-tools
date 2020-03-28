@@ -100,7 +100,7 @@ After invoking the Lambda function in an outbound whisper flow, a “[Call Phone
 
 ## IAM Permissions
 
-This Lambda function require at least a read access to the routing file stored in S3.
+This Lambda function require at least a read access to the routing file stored in S3. The value in square brackets needs to be replaced with genuine value.
 
 ### Example
 
@@ -122,7 +122,7 @@ This Lambda function require at least a read access to the routing file stored i
 
 ## Logging
 
-If the Lambda function has the following permission, it will send diagnostic logs to CloudWatch log:
+If the Lambda function has the following permission (provided that the value in square brackets are placed with genuine value), it will send diagnostic logs to CloudWatch log:
 
 ```
 {
@@ -146,7 +146,3 @@ If the Lambda function has the following permission, it will send diagnostic log
     ]
 }
 ```
-
-### Notice
-
-Since this Lambda function requires sensitive information such as the pair of client ID and client secret, the default logging level is set as `logging.ERROR`. Therefore, the function payload is not sent to CloudWatch automatically. Only the error message is forwarded to CloudWatch logs.
