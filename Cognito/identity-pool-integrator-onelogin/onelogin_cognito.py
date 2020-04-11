@@ -67,6 +67,7 @@ get_identity_id = identity.get_id(AccountId=account_id, IdentityPoolId=identity_
 identity_id = get_identity_id['IdentityId']
 
 #Fourth Call to get the AWS temporary credentials
+#The iam_saml_identity_provider_configured_with_onelogin tag to be filled below is the IAM SAML Identity Provider name of the Identity Provider we have created for OneLogin
 
 get_temporary_aws_credentials = identity.get_credentials_for_identity(IdentityId=identity_id,Logins={'<iam_saml_identity_provider_configured_with_onelogin>':saml_assertion})
 
