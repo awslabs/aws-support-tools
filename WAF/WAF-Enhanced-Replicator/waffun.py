@@ -24,7 +24,8 @@ def header():
     '''
     Prints Utility's Header.
     '''
-    headerMessage = "WAFER - AWS WAF Enhanced Replicator - Version " + getVersion() + "\n"
+    headerMessage = "WAFER - AWS WAF Enhanced Replicator - Version " + getVersion() + "\n" \
+                    "This utility works with WAF v1 (classical) only.\n"
     print(headerMessage)
 
 def usage():
