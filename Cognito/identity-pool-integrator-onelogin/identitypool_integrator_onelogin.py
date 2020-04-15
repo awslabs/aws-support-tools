@@ -1,5 +1,6 @@
 """
 Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+SPDX-License-Identifier: MIT-0
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this
 software and associated documentation files (the "Software"), to deal in the Software
@@ -18,60 +19,112 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import requests
 import boto3
 import json
+import argparse
+import sys
+import traceback
 
-#First Call to get the access token Reference - https://developers.onelogin.com/api-docs/1/oauth20-tokens/generate-tokens-2
+def main():
+    # Get and parse the values passed in arguments to use in the integration tester.
+    parser = argparse.ArgumentParser(description='Cognito Identity Pool and OneLogin SAML Authentication Integrator')
 
-get_oauth_tokens = requests.post('https://api.us.onelogin.com/auth/oauth2/v2/token',
-  auth=('<appclient_id_onelogin>','<appclient_secret_onelogin>'),
-  json={
-    "grant_type": "client_credentials"
-  }
-)
+    parser.add_argument('-d','--debugflag', help='Enter Y to enable debugging. This will print the credentials into STDOUT', type=str)
+    parser.add_argument('-e','--emailorusername', required=True, help='Enter email to login/username to your User Pool', type=str)
+    parser.add_argument('-p','--password',required=True, help='Enter password to login to your User Pool', type=str)
+    parser.add_argument('-a','--appid', required=True ,help='Enter your Cognito App Id', type=str)
+    parser.add_argument('-s','--subdomain', required=True, help='The name of the subdomain that got created when you created the OneLogin account', type=str)
+    parser.add_argument('-i','--identityprovidername', required=True, help='This tag to be filled below is the IAM SAML Identity Provider name of the Identity Provider we have created for OneLogin', type=str)
+    parser.add_argument('-c','--accountid', required=True, help='Account ID of your AWS Account', type=str)
+    parser.add_argument('-t','--identitypoolid', required=True, help='ID of your Cognito Identity Pool', type=str)
 
-get_oauth_tokens = get_oauth_tokens.json()
+    args = vars(parser.parse_args())
 
-print("The OneLogin Access Token is ",get_oauth_tokens['access_token'])
+    debugflag = args.get("debugflag")
 
-print ("-----------------------------------------------")
+    if debugflag is None:
+        debugflag == "N"
 
-access_token = get_oauth_tokens['access_token']
+    emailorusername = args["emailorusername"]
+    password = args["password"]
+    appid = args["appid"]
+    subdomain = args["subdomain"]
+    identityprovidername = args["identityprovidername"]
+    accountid = args["accountid"]
+    identitypoolid = args["identitypoolid"]
 
-#Second Call to get the SAML response token - https://developers.onelogin.com/api-docs/1/saml-assertions/generate-saml-assertion
+    try:
+        # Get the OneLogin App Client ID and App Client Secret. This is stored in a secrets manager
+        ssm_client = boto3.client("ssm")
 
-payload = {
-  "username_or_email": "<email>",
-  "password": "<password>",
-  "app_id": "<app_id>",
-  "subdomain":"<your_subdomain>" #The name of the subdomain that got created when you created the OneLogin account.
-}
+        app_credentials = ssm_client.get_parameter(Name="OneLoginAppCredentials")
+        appclientidonelogin, appclientsecretonelogin = app_credentials["Parameter"]["Value"].split(",")
 
-headers = {'Authorization': 'bearer:'+access_token,'Content-Type' : 'application/json'}
+        #First Call to get the access token Reference - https://developers.onelogin.com/api-docs/1/oauth20-tokens/generate-tokens-2
+        get_oauth_tokens = requests.post('https://api.us.onelogin.com/auth/oauth2/v2/token',
+          auth=(appclientidonelogin,appclientsecretonelogin),
+          json={
+            "grant_type": "client_credentials"
+          }
+        )
 
-get_saml_assertion = requests.post(url = 'https://api.us.onelogin.com/api/1/saml_assertion',headers = headers,data=json.dumps(payload))
+        get_oauth_tokens = get_oauth_tokens.json()
 
-#print(list(get_saml_assertion))
+        if debugflag == "Y":
+            print("The OneLogin Access Token is ",get_oauth_tokens['access_token'])
+        else:
+            print("The OneLogin Access Token has been obtained successfully")
 
-saml_assertion = get_saml_assertion.json()["data"]
+        print("-----------------------------------------------")
 
-print("The SAML Assertion from OneLogin is ", saml_assertion)
+        access_token = get_oauth_tokens['access_token']
 
-print ("-----------------------------------------------")
+        #Second Call to get the SAML response token - https://developers.onelogin.com/api-docs/1/saml-assertions/generate-saml-assertion
 
-account_id,identity_pool_id = '<aws_account_id>','<identity_pool_id>'
+        payload = {
+          "username_or_email": emailorusername,
+          "password": password,
+          "app_id": appid,
+          "subdomain":subdomain #The name of the subdomain that got created when you created the OneLogin account.
+        }
 
-identity = boto3.client('cognito-identity')
+        headers = {'Authorization': 'bearer:'+access_token,'Content-Type' : 'application/json'}
 
-#Third Call to get the identity-id using the cognito get-id call
+        get_saml_assertion = requests.post(url = 'https://api.us.onelogin.com/api/1/saml_assertion',headers = headers,data=json.dumps(payload))
 
-get_identity_id = identity.get_id(AccountId=account_id, IdentityPoolId=identity_pool_id,Logins={'<iam_saml_identity_provider_configured_with_onelogin>':saml_assertion})
+        saml_assertion = get_saml_assertion.json()["data"]
 
-identity_id = get_identity_id['IdentityId']
+        if debugflag == "Y":
+            print("The SAML Assertion from OneLogin is ", saml_assertion)
+        else:
+            print("The SAML assertion has been obtained successfully")
 
-#Fourth Call to get the AWS temporary credentials
-#The iam_saml_identity_provider_configured_with_onelogin tag to be filled below is the IAM SAML Identity Provider name of the Identity Provider we have created for OneLogin
+        print("-----------------------------------------------")
 
-get_temporary_aws_credentials = identity.get_credentials_for_identity(IdentityId=identity_id,Logins={'<iam_saml_identity_provider_configured_with_onelogin>':saml_assertion})
+        account_id,identity_pool_id = accountid,identitypoolid
 
-print("The temporary AWS credentials are ", get_temporary_aws_credentials)
+        identity = boto3.client('cognito-identity')
 
-print ("-----------------------------------------------")
+        #Third Call to get the identity-id using the cognito get-id call
+
+        get_identity_id = identity.get_id(AccountId=account_id, IdentityPoolId=identity_pool_id,Logins={'<iam_saml_identity_provider_configured_with_onelogin>':saml_assertion})
+
+        identity_id = get_identity_id['IdentityId']
+
+        #Fourth Call to get the AWS temporary credentials
+
+        get_temporary_aws_credentials = identity.get_credentials_for_identity(IdentityId=identity_id,Logins={'<iam_saml_identity_provider_configured_with_onelogin>':saml_assertion})
+
+        if debugflag == "Y":
+            print("The temporary AWS credentials are ", get_temporary_aws_credentials)
+        else:
+            print("The temporary AWS credentials have been obtained successfully")
+
+        print("-----------------------------------------------")
+
+    except Exception as e:
+        print("Error occured")
+        traceback.print_exc(file=sys.stdout)
+
+# Main of the program
+if __name__ == '__main__':
+	main()
+
