@@ -105,13 +105,13 @@ def main():
 
         #Third Call to get the identity-id using the cognito get-id call
 
-        get_identity_id = identity.get_id(AccountId=account_id, IdentityPoolId=identity_pool_id,Logins={'<iam_saml_identity_provider_configured_with_onelogin>':saml_assertion})
+        get_identity_id = identity.get_id(AccountId=account_id, IdentityPoolId=identity_pool_id,Logins={identityprovidername:saml_assertion})
 
         identity_id = get_identity_id['IdentityId']
 
         #Fourth Call to get the AWS temporary credentials
 
-        get_temporary_aws_credentials = identity.get_credentials_for_identity(IdentityId=identity_id,Logins={'<iam_saml_identity_provider_configured_with_onelogin>':saml_assertion})
+        get_temporary_aws_credentials = identity.get_credentials_for_identity(IdentityId=identity_id,Logins={identityprovidername:saml_assertion})
 
         if debugflag == "Y":
             print("The temporary AWS credentials are ", get_temporary_aws_credentials)
