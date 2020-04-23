@@ -65,4 +65,4 @@ WAFER does not get rules unrelated to the Web ACL you chose or provided through 
 
 ## What happens afterwards?
 
-Just before end, WAFER will compress both the template and the log files inside a zip file and show you its location. You are welcome to upload this zip file to a WAF support case should you have opened any. The AWS support engineer will be able to replicate your configuration.
+Just before end, WAFER will compress both the template and the log files inside a zip file and show you its location.
