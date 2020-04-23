@@ -36,32 +36,32 @@ if command -v gdate >/dev/null; then
 fi
 
 # Taking Input parameters from the user
-read -p "Enter the local path of the file you want to upload: " FILENAME
-read -p "Enter the destination file name: " S3_FILENAME
+read -p "Enter the local path of the file you want to upload: " filename
+read -p "Enter the destination file name: " s3_filename
 read -p "Enter the name of the bucket: " bucketname
 read -p "Enter the region of your Bucket (e.g. us-west-2): " region
 
 use_acceleration=$(readyn 'Do you want to upload via Transfer Acceleration: (y/n)')
 
-FILESIZE="$(wc -c <"$FILENAME")"
-STARTTIME=$(date +"%s.%N")
+filesize="$(wc -c <"$filename")"
+starttime=$(date +"%s.%N")
 if $use_acceleration; then
     # Uploading the file to the S3 Bucket using Transfer Acceleration.
     use_acceleration_str="with acceleration"
     aws configure set s3.addressing_style virtual
-    aws s3 cp "$FILENAME" "s3://$bucketname/$S3_FILENAME" --region "$region" --endpoint-url http://s3-accelerate.amazonaws.com
+    aws s3 cp "$filename" "s3://$bucketname/$s3_filename" --region "$region" --endpoint-url http://s3-accelerate.amazonaws.com
 else
     # Uploading the file to the S3 Bucket via a Direct upload.
     use_acceleration_str="without acceleration"
-    aws s3 cp "$FILENAME" "s3://$bucketname/$S3_FILENAME" --region "$region"
+    aws s3 cp "$filename" "s3://$bucketname/$s3_filename" --region "$region"
 fi
-ENDTIME=$(date +"%s.%N")
-Time_elapsed=$(calc "$ENDTIME-$STARTTIME")
-Throughput=$(calc "$FILESIZE*8/$Time_elapsed")
-Throughput_in_Mbps=$(calc "$Throughput/(1024*1024)")
-echo "File uploaded $use_acceleration_str at $Throughput_in_Mbps Mbps speed."
+endtime=$(date +"%s.%N")
+time_elapsed=$(calc "$endtime-$starttime")
+throughput=$(calc "$filesize*8/$time_elapsed")
+throughput_in_mbps=$(calc "$throughput/(1024*1024)")
+echo "File uploaded $use_acceleration_str at $throughput_in_mbps Mbps speed."
 
 delete_file=$(readyn 'Do you want to delete the uploaded file: (y/n)')
 if $delete_file; then
-    aws s3 rm "s3://$bucketname/$S3_FILENAME" --region "$region"
+    aws s3 rm "s3://$bucketname/$s3_filename" --region "$region"
 fi
