@@ -31,6 +31,9 @@ calc() {
     printf %s\\n "$*" | bc
 }
 
+if command -v gdate >/dev/null; then
+    date() { command gdate "$@"; }
+fi
 
 # Taking Input parameters from the user
 read -p "Enter the local path of the file you want to upload: " FILENAME
