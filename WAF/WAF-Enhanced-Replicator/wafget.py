@@ -326,7 +326,7 @@ def getWaf(arguments):
     log.close()
     template.close()
 
-    # Zipping files to facilitate attaching them to an eventual support case.
+    # Zipping files.
     try:
         import zlib
         compression = zipfile.ZIP_DEFLATED
@@ -345,7 +345,7 @@ def getWaf(arguments):
         print("Unable to add {} to the zip file!".format(listLogTemplate[1]))
     
     zf.close()
-    print("\nIf this operation is related to a support case, upload the file {} to the case.".format(package))
+    print("\nGenerated ZIP file: {}.".format(package))
 
 
 def crawlConditions(botoClient, log, template, suffix):
