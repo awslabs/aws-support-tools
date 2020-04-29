@@ -6,11 +6,10 @@
 
 <b>Usage:</b>
 
-onelogin_cognito.py [-h] [-d DEBUGFLAG] -e EMAILORUSERNAME -p PASSWORD<br>
+identitypool_integrator_onelogin.py [-h] [-d DEBUGFLAG] -e EMAILORUSERNAME -p PASSWORD<br>
                            -a APPID -s SUBDOMAIN -i IDENTITYPROVIDERNAME -c<br>
                            ACCOUNTID -t IDENTITYPOOLID
 
-Cognito Identity Pool and OneLogin SAML Authentication Integrator<br><br>
 
 <b>Optional Arguments:<br><br></b>
   -h, --help            show this help message and exit<br><br>
