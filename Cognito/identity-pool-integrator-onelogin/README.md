@@ -1,32 +1,36 @@
-Cognito Identity Pool and OneLogin SAML Authentication Integration tester script
+<h1>Cognito Identity Pool and OneLogin SAML Authentication Integration tester script</h1>
 
-Requirements - boto3 installed and aws cli configured
+<b>Requirements</b>
 
-usage: onelogin_cognito.py [-h] [-d DEBUGFLAG] -e EMAILORUSERNAME -p PASSWORD
-                           -a APPID -s SUBDOMAIN -i IDENTITYPROVIDERNAME -c
+- boto3 installed and aws cli configured
+
+<br>Usage:<br>
+
+onelogin_cognito.py [-h] [-d DEBUGFLAG] -e EMAILORUSERNAME -p PASSWORD<br>
+                           -a APPID -s SUBDOMAIN -i IDENTITYPROVIDERNAME -c<br>
                            ACCOUNTID -t IDENTITYPOOLID
 
 Cognito Identity Pool and OneLogin SAML Authentication Integrator
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -d DEBUGFLAG, --debugflag DEBUGFLAG
-                        Enter Y to enable debugging. This will print the
-                        credentials into STDOUT
-  -e EMAILORUSERNAME, --emailorusername EMAILORUSERNAME
-                        Enter email to login/username to your User Pool
-  -p PASSWORD, --password PASSWORD
-                        Enter password to login to your User Pool
-  -a APPID, --appid APPID
-                        Enter your Cognito App Id
-  -s SUBDOMAIN, --subdomain SUBDOMAIN
-                        The name of the subdomain that got created when you
-                        created the OneLogin account
-  -i IDENTITYPROVIDERNAME, --identityprovidername IDENTITYPROVIDERNAME
-                        This tag to be filled below is the IAM SAML Identity
-                        Provider name of the Identity Provider we have created
-                        for OneLogin
-  -c ACCOUNTID, --accountid ACCOUNTID
-                        Account ID of your AWS Account
-  -t IDENTITYPOOLID, --identitypoolid IDENTITYPOOLID
-                        ID of your Cognito Identity Pool
+<b>Optional Arguments:<br><br></b>
+  -h, --help            show this help message and exit<br><br>
+  -d DEBUGFLAG, --debugflag DEBUGFLAG<br><br>
+                        Enter Y to enable debugging. This will print the<
+                        credentials into STDOUT<br><br>
+  -e EMAILORUSERNAME, --emailorusername EMAILORUSERNAME<br><br>
+                        Enter email to login/username to your User Pool<br><br>
+  -p PASSWORD, --password PASSWORD<br><br>
+                        Enter password to login to your User Pool<br><br>
+  -a APPID, --appid APPID<br><br>
+                        Enter your Cognito App Id<br><br>
+  -s SUBDOMAIN, --subdomain SUBDOMAIN<br><br>
+                        The name of the subdomain that got created when you<br><br>
+                        created the OneLogin account<br><br>
+  -i IDENTITYPROVIDERNAME, --identityprovidername IDENTITYPROVIDERNAME<br><br>
+                        This tag to be filled below is the IAM SAML Identity<br><br>
+                        Provider name of the Identity Provider we have created<br><br>
+                        for OneLogin<br><br>
+  -c ACCOUNTID, --accountid ACCOUNTID<br><br>
+                        Account ID of your AWS Account<br><br>
+  -t IDENTITYPOOLID, --identitypoolid IDENTITYPOOLID<br><br>
+                        ID of your Cognito Identity Pool<br><br>
