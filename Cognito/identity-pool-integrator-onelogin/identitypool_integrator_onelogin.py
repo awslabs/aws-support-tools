@@ -52,7 +52,7 @@ def main():
     identitypoolid = args["identitypoolid"]
 
     try:
-        # Get the OneLogin App Client ID and App Client Secret. This is stored in a secrets manager
+        # Get the OneLogin App Client ID and App Client Secret. This is stored in AWS systems manager(ssm).
         ssm_client = boto3.client("ssm")
 
         app_credentials = ssm_client.get_parameter(Name="OneLoginAppCredentials")
