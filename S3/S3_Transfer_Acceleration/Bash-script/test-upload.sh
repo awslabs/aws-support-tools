@@ -35,6 +35,15 @@ if command -v gdate >/dev/null; then
     date() { command gdate "$@"; }
 fi
 
+nanos_test=$(date +%N)
+if [ "${nanos_test%N}" != "$nanos_test" ]; then
+    {
+        echo '`date` command does not support nanoseconds.'
+        echo 'If you are on Mac OS, please install coreutils via homebrew.'
+        exit 1
+    } >&2
+fi
+
 # Taking Input parameters from the user
 read -p "Enter the local path of the file you want to upload: " filename
 read -p "Enter the destination file name: " s3_filename
