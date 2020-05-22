@@ -16,14 +16,15 @@ END
 
 
 # Error handling of the script.This comamnd makes sure that the script will stop and exit if there is an error.
-set -e
+# set -e
+trap 'exit' ERR
 
 # Taking Input parameters from the user
 echo -n "Enter the local path of the file you want to upload: "
 read FILENAME
 echo -n "Enter the destination file name: "
 read S3_FILENAME
-echo -n "Enter the name of the bucket:"
+echo -n "Enter the name of the bucket: "
 read bucketname
 echo -n "Enter the region of your Bucket (e.g. us-west-2): "
 read region
