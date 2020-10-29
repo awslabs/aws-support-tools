@@ -1,0 +1,2 @@
+AWS Device Farm test output downloader tool/script
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. 
