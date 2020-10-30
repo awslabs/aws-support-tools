@@ -7,7 +7,7 @@ The downloaded output file can be shared to AWS support for troubleshooting issu
 It works with these types of URLs from AWS Device Farm console:
 
   - Andorid and iOS device tests, i.e. the console URL of a run, a job, a suite or a specific test.
-  - Browser/test-grid tests
+  - Browser/test-grid tests (Please ensure the latest version of AWSCLI is installed, as some older versions of AWSCLI does not support Device Farm Desktop Browser testing projects)
 
 ## Usage
 
