@@ -75,7 +75,7 @@ const verifyPromised = promisify(jsonwebtoken.verify.bind(jsonwebtoken));
 const handler = async (request: ClaimVerifyRequest): Promise<ClaimVerifyResult> => {
   let result: ClaimVerifyResult;
   try {
-    console.log(`user claim verfiy invoked for ${JSON.stringify(request)}`);
+    console.log(`user claim verify invoked for ${JSON.stringify(request)}`);
     const token = request.token;
     const tokenSections = (token || '').split('.');
     if (tokenSections.length < 2) {
