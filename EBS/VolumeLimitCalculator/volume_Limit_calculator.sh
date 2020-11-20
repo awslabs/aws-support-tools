@@ -53,10 +53,10 @@ fi
 calculate_gp2_limits () {       # Calculating limits for Gp2 volume type
 
 
-if [[ $volumeSize -lt 1 || $volumeSize -gt 16000 ]]
+if [[ $volumeSize -lt 1 || $volumeSize -gt 16384 ]]
     then
         echo -e "+----------------------------------------------------+\n"
-        echo -e "> Volume size for $volumeType can not be less than 1GiB or greater than 16000GiB"
+        echo -e "> Volume size for $volumeType can not be less than 1GiB or greater than 16384GiB"
         echo -e "\n+----------------------------------------------------+"
         exit 1
 fi
@@ -128,7 +128,7 @@ if [ $volumeIOPS -le 32000 ]
 fi
 echo -e "+----------------------------------------------------+\n"
 echo -e "> Maximum available IOPS are equal to the provisioned IOPS i.e $volumeIOPS"
-echo -e "> Maximum Available throughput is $baseline_throughput "
+echo -e "> Maximum Available throughput is $baseline_throughput MiB/s"
 echo -e "\n+----------------------------------------------------+"
 }
 
@@ -136,10 +136,10 @@ echo -e "\n+----------------------------------------------------+"
 
 calculate_st1_limits () {
 
-if [[ $volumeSize -lt 500 || $volumeSize -gt 16000 ]]
+if [[ $volumeSize -lt 500 || $volumeSize -gt 16384 ]]
         then
                 echo -e "+----------------------------------------------------+\n"
-                echo -e "> Volume size for $volumeType can not be less than 500GiB or greater than 16000GiB"
+                echo -e "> Volume size for $volumeType can not be less than 500GiB or greater than 16384GiB"
                 echo -e "\n+----------------------------------------------------+"
                 exit 1
 fi
