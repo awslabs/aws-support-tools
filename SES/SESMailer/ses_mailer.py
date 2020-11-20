@@ -114,14 +114,13 @@ def lambda_handler(event, context):
             raise ValueError('Cannot continue without a text or html message file.')
 
         # Send in parallel using several threads
-        e = concurrent.futures.ThreadPoolExecutor(max_workers=max_threads)
-        for row in reader:
-            from_address = row['from_address'].strip()
-            to_address = row['to_address'].strip()
-            subject = row['subject'].strip()
-            message = mime_email(subject, from_address, to_address, mime_message_text, mime_message_html)
-            e.submit(send_mail, from_address, to_address, message)
-        e.shutdown()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as e:
+            for row in reader:
+                from_address = row['from_address'].strip()
+                to_address = row['to_address'].strip()
+                subject = row['subject'].strip()
+                message = mime_email(subject, from_address, to_address, mime_message_text, mime_message_html)
+                e.submit(send_mail, from_address, to_address, message)
     except Exception as e:
         print(e.message + ' Aborting...')
         raise e

@@ -1,5 +1,5 @@
 #cloud-config
-repo_releasever: 2017.03
+repo_releasever: 2018.03
 resize_rootfs:   noblock
 
 runcmd:
@@ -17,33 +17,31 @@ runcmd:
   # let ec2-user read logs
   setfacl -R -m g:wheel:rx,g:adm:rx /var/log/
 
-  # install aws-sam-local and dependencies
-  yum -y install docker make
-  sudo usermod -a -G docker ec2-user
+  yum -q -y install docker
+  usermod -a -G docker ec2-user
   service docker start
-  # http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-up-node-on-ec2-instance.html
-  cd /tmp
-  curl -O https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh
-  su -l ec2-user /tmp/install.sh
-  su -l ec2-user -c 'nvm install 8'
-  cat > ntmp.sh << EOF
-  npm --quiet --silent -g install aws-sam-local
-  npm --quiet --silent -g install standard
-  npm --quiet --silent -g install @angular/cli
-  EOF
-  su -l ec2-user /tmp/ntmp.sh
 
-  # update AWS CLI to latest from pip
-  yum -y remove aws-cli
-  yum -y install gcc git unzip zip vim-enhanced wget screen
-  curl -O https://bootstrap.pypa.io/get-pip.py
-  python get-pip.py
-  /usr/local/bin/pip install awscli -U
+  # aws-sam-cli dependencies
+  cd /tmp
+  echo -e 'enum34\npathlib2\nsetuptools\nboto3\nawscli\nfaker\ncookiecutter\nvirtualenv' > requirements-to-freeze.txt
+  curl -O -L --silent --show-error --fail --connect-timeout 2 --retry-delay 10 --retry 5 https://raw.githubusercontent.com/awslabs/aws-sam-cli/develop/requirements/base.txt
+  echo 'aws-sam-cli' > sam.txt
+
+  # update from pip
+  yum -q -y remove aws-cli python27-boto python27-botocore
+  yum -q -y install gcc git python36-pip python36-devel
+  yum -q -y update --security
+  pip-3.6 -q install -r requirements-to-freeze.txt -U
+  pip-3.6 -q install -r base.txt -U
+  # must be done after setuptools upgrade
+  pip-3.6 -q install -r sam.txt -U
 
   # code samples
-  cd /tmp
-  git clone https://github.com/awslabs/aws-sam-local
-  su -l ec2-user -c 'cp -r /tmp/aws-sam-local/samples $HOME ; cd $HOME/samples/hello-world/node/ ; sam local invoke -e event.json'
+  git clone https://github.com/aws-samples/serverless-app-examples
+  echo '{"key1":"value1","key2":"value2","key3":"value3"}' > /tmp/serverless-app-examples/event.json
+  region=$(curl -sSf --connect-timeout 2 --retry-delay 10 --retry 5 http://169.254.169.254/latest/dynamic/instance-identity/document | grep region |sed -e 's/.*: "\(.*\)".*/\1/')
+  su -l ec2-user -c "aws configure set default.region $region"
+  su -l ec2-user -c 'cp -r /tmp/serverless-app-examples $HOME ; cd $HOME/serverless-app-examples/python/hello-world-python3/ ; sam local invoke -e ~/serverless-app-examples/event.json '
 
   echo END
   date +'%Y-%m-%dT%H:%M:00Z' --utc

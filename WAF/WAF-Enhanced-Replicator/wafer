@@ -1,0 +1,21 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+#!/usr/bin/env python3
+
+# Modules Importing
+from __future__ import print_function
+import sys
+import waffun as function
+import wafget as get
+
+if __name__ == '__main__':
+
+    function.header()
+    
+    returnValidation = function.validateArguments()
+
+    if returnValidation[0] < 0:
+        sys.exit(returnValidation[0])
+    else:
+        get.getWaf(returnValidation)    

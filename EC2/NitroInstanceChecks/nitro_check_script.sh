@@ -79,6 +79,7 @@ check_fstab () {
     if [ -s /tmp/device_names ]; then
 
         echo -e "\n\nERROR  Your fstab file contains device names. Mount the partitions using UUID's before changing an instance type to Nitro."                                                         # Outputs the new fstab file
+
         printf "\nEnter y to replace device names with UUID in /etc/fstab file to make it compatible for NVMe block device names.\nEnter n to keep the file as-is with no modification (y/n) "
         read RESPONSE;
         case "$RESPONSE" in

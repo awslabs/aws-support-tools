@@ -48,7 +48,7 @@ struct process {
 	//ppid of the process
 	pid_t ppid;
 	//start time (unix timestamp)
-	int starttime;
+	time_t starttime;
 	//cputime used by the process (in milliseconds)
 	int cputime;
 	//actual cpu usage estimation (value in range 0-1)
@@ -66,7 +66,7 @@ struct process_filter {
 struct process_iterator {
 #ifdef __linux__
 	DIR *dip;
-	int boot_time;
+	time_t boot_time;
 #elif defined __FreeBSD__
 	kvm_t *kd;
 	struct kinfo_proc *procs;
