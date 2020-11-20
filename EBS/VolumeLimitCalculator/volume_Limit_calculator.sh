@@ -163,7 +163,7 @@ if [ $volumeSize -gt 12800 ]
                         else
                                 burst_tp=500
                                 calculate_baseline_throughput=$(echo "scale=2; $volumeSize*40/1024;" | bc)
-                                baseline_throughput=$(min $calculate_baseline_throughput $max_available_throughput)     # Baseline can not be more than max_available_throughput
+                                baseline_throughput=$calculate_baseline_throughput 
                                 baseline_iops=$baseline_throughput
 
                 fi
