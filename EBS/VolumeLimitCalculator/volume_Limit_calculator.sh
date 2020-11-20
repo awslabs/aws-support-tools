@@ -37,7 +37,30 @@ max () { printf '                # calculating maximum of two floating numbers
 
 ############################################################
 
+verify_input_as_integers () { 
+if ! [[ "$1" =~ ^[0-9]+$ ]]
+    then
+        echo -e "+----------------------------------------------------+\n"
+        echo "> Sorry, volume Size and provisioned IOPS needs to be an interger value."
+        echo -e "\n+----------------------------------------------------+"
+        exit 1
+fi
+}
+
+############################################################
+
+
 calculate_gp2_limits () {       # Calculating limits for Gp2 volume type
+
+
+if [[ $volumeSize -lt 1 || $volumeSize -gt 16000 ]]
+    then
+        echo -e "+----------------------------------------------------+\n"
+        echo -e "> Volume size for $volumeType can not be less than 1GiB or greater than 16000GiB"
+        echo -e "\n+----------------------------------------------------+"
+        exit 1
+fi
+
 
 if [ $volumeSize -gt 1000 ]
         then
@@ -83,6 +106,15 @@ fi
 
 calculate_io_limits () {
 
+if [[ $volumeIOPS -lt 100 || $volumeIOPS -gt 64000 ]]
+    then
+        echo -e "+----------------------------------------------------+\n"
+        echo -e "> Provisioned IOPS can not be less than 100 or greater than 64000."
+        echo -e "\n+----------------------------------------------------+"
+        exit 1
+fi
+
+
 if [ $volumeIOPS -le 32000 ]
         then
                 max_available_throughput=500                            # io1/io2 Volumes with less than equal to 32000 provisioned IOPS can achieve 500MiB/s of throughput at max. 
@@ -104,6 +136,14 @@ echo -e "\n+----------------------------------------------------+"
 
 calculate_st1_limits () {
 
+if [[ $volumeSize -lt 500 || $volumeSize -gt 16000 ]]
+        then
+                echo -e "+----------------------------------------------------+\n"
+                echo -e "> Volume size for $volumeType can not be less than 500GiB or greater than 16000GiB"
+                echo -e "\n+----------------------------------------------------+"
+                exit 1
+fi
+
 if [ $volumeSize -gt 12800 ]
         then
                 max_available_iops=500
@@ -116,13 +156,6 @@ if [ $volumeSize -gt 12800 ]
         else
                 if [ $volumeSize -lt 2048 ]
                         then
-                                if [ $volumeSize -lt 500 ]
-                                        then
-                                                echo -e "+----------------------------------------------------+\n"
-                                                echo -e "> Volume size for st1 can not be less than 500GiB"
-                                                echo -e "\n+----------------------------------------------------+"
-                                                exit 1
-                                fi
                                 calculate_burst_tp=$(echo "scale=2; $volumeSize*250/1024;" | bc)                # Calculating burst throughput i.e 250MiB/s per TiB. 
                                 burst_tp=$calculate_burst_tp
                                 baseline_throughput=$(echo "scale=2; $volumeSize*40/1024;" | bc)                # Calculating baseline throughput i.e 40MiB/s per TiB. 
@@ -145,15 +178,16 @@ fi
 
 calculate_sc1_limits () {
 
+if [[ $volumeSize -lt 500 || $volumeSize -gt 16000 ]]
+        then
+                echo -e "+----------------------------------------------------+\n"
+                echo -e "> Volume size for $volumeType can not be less than 500GiB or greater than 16000GiB"
+                echo -e "\n+----------------------------------------------------+"
+                exit 1
+fi
+
 if [ $volumeSize -lt 3200 ]
         then
-                if [ $volumeSize -lt 500 ]
-                        then
-                                echo -e "+----------------------------------------------------+\n"
-                                echo -e "> Volume size for sc1 can not be less than 500GiB"c
-                                echo -e "\n+----------------------------------------------------+"
-                                exit 1
-                fi
                 calculate_burst_tp=$(echo "scale=2; $volumeSize*80/1024;" | bc)                 # Calculating burst throughput i.e 80MiB/s per TiB. 
                 burst_tp=$calculate_burst_tp
                 baseline_throughput=$(echo "scale=2; $volumeSize*12/1024;" | bc)                # Calculating burst throughput i.e 12MiB/s per TiB. 
@@ -182,21 +216,25 @@ case "$volumeType" in
         [gG][pP][2])                           # If answer is gp2
         echo -e "Enter Volume Size in GiB:"
         read volumeSize
+        verify_input_as_integers $volumeSize
         calculate_gp2_limits                    # Calling gp2 function to calculate maximum limits.
         ;;
         [iI][oO][12])                           # If answer is io1
         echo -e "Enter Provisioned IOPS:"
-        read volumeIOPS                        # No need to ask for size for io1/io2 volumes. 
+        read volumeIOPS
+        verify_input_as_integers $volumeIOPS                        # No need to ask for size for io1/io2 volumes. 
         calculate_io_limits                    # Calling io1 function to calculate maximum limits.
         ;;
         [sS][tT][1])                           # If answer is st1
         echo -e "Enter Volume Size in GiB:"
         read volumeSize
+        verify_input_as_integers $volumeSize
         calculate_st1_limits                    # Calling st1 function to calculate maximum limits.
         ;;
         [sS][cC][1])                           # If answer is sc1
         echo -e "Enter Volume Size in GiB:"
         read volumeSize
+        verify_input_as_integers $volumeSize
         calculate_sc1_limits                    # Calling sc1 function to calculate maximum limits.
         ;;
         *)
