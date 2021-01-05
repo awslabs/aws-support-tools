@@ -2,11 +2,11 @@
 
 The SSMAgent-Toolkit is a set of PowerShell scripts developed to run multiple checks to determined why an Windows EC2 instance does not come online. It will go through the following walkthrough
 
-![Flowchart](https://code.amazon.com/packages/SSMAgent-Toolkit/blobs/mainline/--/SSMAgent-Toolkit_Flowchart.png?raw=1)
+![SSMAgent-Toolkit Flowchart](SSMAgent-Toolkit_Flowchart.png?raw=true)
 
 ## Output
 
-![Output](https://code.amazon.com/packages/SSMAgent-Toolkit/blobs/mainline/--/SSMAgent-Toolkit_Output.png?raw=1)
+![SSMAgent-Toolkit Output](SSMAgent-Toolkit_Output.png?raw=true
 
 
 ```
