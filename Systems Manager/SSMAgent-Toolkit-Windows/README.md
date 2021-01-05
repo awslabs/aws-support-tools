@@ -6,7 +6,7 @@ The SSMAgent-Toolkit is a set of PowerShell scripts developed to run multiple ch
 
 ## Output
 
-![SSMAgent-Toolkit Output](SSMAgent-Toolkit_Output.png?raw=true
+![SSMAgent-Toolkit Output](SSMAgent-Toolkit_Output.png?raw=true)
 
 
 ```
