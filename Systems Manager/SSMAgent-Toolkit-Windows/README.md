@@ -71,5 +71,5 @@ PowerShell 5.1
 
 ## Authors
 
-* Ali Alzand (aaalzand@)
-* Thanks to Taka Matsumoto (takakima@) and Adam Creech (adcreech@) for your contribution.
+* Ali Alzand
+* Thanks to Taka Matsumoto and Adam Creech for your contribution.
