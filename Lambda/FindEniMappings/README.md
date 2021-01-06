@@ -7,7 +7,6 @@ Requirements:
 - The [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 - An IAM role configured with the AWS CLI that has permissions to query Lambda and EC2/VPC/ENIs
 
-Arguements:
+Arguments:
 - `--eni` the id of the ENI to check, __required__
 - `--region` the region to search lambda for, __required__
-
