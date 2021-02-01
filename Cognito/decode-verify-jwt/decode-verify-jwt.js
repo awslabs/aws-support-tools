@@ -63,7 +63,7 @@ module.exports.handler = async (event) => {
     try {
         const token = await extractToken(event);
         keyStore = await getPublicKeysIfNotCached(keyStore);
-        const decryptedToken = await verifyIdToken(token, keyStore, cognitoIssuer, cognitoClientId);
+        decryptedToken = await verifyIdToken(token, keyStore, cognitoIssuer, cognitoClientId);
         console.log('decryptedToken', JSON.stringify(decryptedToken));
     } catch (e) {
         console.error(e);
