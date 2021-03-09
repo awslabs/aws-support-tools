@@ -2,11 +2,11 @@
 
 The SSMAgent-Toolkit is a set of PowerShell scripts developed to run multiple checks to determined why an Windows EC2 instance does not come online. It will go through the following walkthrough
 
-![Flowchart](https://code.amazon.com/packages/SSMAgent-Toolkit/blobs/mainline/--/SSMAgent-Toolkit_Flowchart.png?raw=1)
+![Flowchart](https://github.com/awslabs/aws-support-tools/raw/master/Systems%20Manager/SSMAgent-Toolkit-Windows/SSMAgent-Toolkit_Flowchart.png?raw=1)
 
 ## Output
 
-![Output](https://code.amazon.com/packages/SSMAgent-Toolkit/blobs/mainline/--/SSMAgent-Toolkit_Output.png?raw=1)
+![Output](https://github.com/awslabs/aws-support-tools/raw/master/Systems%20Manager/SSMAgent-Toolkit-Windows/SSMAgent-Toolkit_Output.png?raw=1)
 
 
 ```
@@ -49,12 +49,32 @@ LocalSystem account user Internet Explorer proxy    N/A                         
 
 ## Usage
 
-Simply download the ZIP file included in this package and extract. Run the one of the followings as administrator in PowerShell.
+Simply download the ZIP file included in this package and extract. Run one of the followings as an administrator in PowerShell.
 
 ```
-PowerShell
 Import-Module .\SSMAgent-Toolkit.psm1;Invoke-SSMChecks
 Import-Module .\SSMAgent-Toolkit.psm1;Invoke-SSMChecks -GridView "False"
+```
+
+Or run the following sample code as an administrator in PowerShel to download the ZIP file included in this package, extract and execute the toolkit. 
+
+```
+#SSMAgent-Toolkit-Windows - https://github.com/awslabs/aws-support-tools/tree/master/Systems%20Manager/SSMAgent-Toolkit-Windows
+$uri = 'https://github.com/awslabs/aws-support-tools/raw/master/Systems%20Manager/SSMAgent-Toolkit-Windows/SSMAgent-Toolkit.zip'
+$destination = (Get-Location).Path
+if ((Test-Path -Path "$destination\SSMAgent-Toolkit.zip" -PathType Leaf) -or (Test-Path -Path "$destination\SSMAgent-Toolkit")) { 
+    write-host "File $destination\SSMAgent-Toolkit.zip or folder $destination\SSMAgent-Toolkit found, exiting" 
+}
+else {
+    # Enable TLS 1.2 for this PowerShell session only.
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $webClient = New-Object System.Net.WebClient
+    $webClient.DownloadFile($uri, "$destination\SSMAgent-Toolkit.zip")
+    Write-host "SSMAgent-Toolkit.zip"
+    Expand-Archive -Path "$destination\SSMAgent-Toolkit.zip" -DestinationPath "$destination\SSMAgent-Toolkit"
+    Write-host "Extracting SSMAgent-Toolkit.zip complete successfully"
+    Import-Module "$destination\SSMAgent-Toolkit\SSMAgent-Toolkit.psm1"; Invoke-SSMChecks -GridView "False"
+}
 ```
 
 ### Prerequisites
@@ -71,5 +91,5 @@ PowerShell 5.1
 
 ## Authors
 
-* Ali Alzand (aaalzand@)
-* Thanks to Taka Matsumoto (takakima@) and Adam Creech (adcreech@) for your contribution.
+* Ali Alzand
+* Thanks to Taka Matsumoto and Adam Creech for your contribution.
