@@ -1,5 +1,20 @@
 A Python Lambda function to iterate over the API Gateway REST API vpclinks and list the associated NLB and associated API/Resource/Method/Integration using the vpclink.
 
+To make sure Lambda Function is able to run successfully you would need to provide your function a minimum of following permissions
+
+```
+"Effect": "Allow",
+"Action": [
+    "apigateway:GET"
+],
+"Resource": [
+    "arn:aws:apigateway:REGION::/restapis",
+    "arn:aws:apigateway:REGION::/restapis/*",
+    "arn:aws:apigateway:REGION::/vpclinks"
+]
+``` 
+
+
 Output will look like following:
 ```
 LISTING Resources attached to VPClINK ID mtc1oo 
