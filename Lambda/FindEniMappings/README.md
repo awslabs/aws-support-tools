@@ -10,3 +10,6 @@ Requirements:
 Arguments:
 - `--eni` the id of the ENI to check, __required__
 - `--region` the region to search lambda for, __required__
+
+ Usage:
+ ```./findEniAssociations --eni eni-0123456789abcef01 --region us-east-1```
