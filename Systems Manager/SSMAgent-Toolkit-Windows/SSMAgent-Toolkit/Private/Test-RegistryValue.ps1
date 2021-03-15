@@ -21,8 +21,7 @@ function Test-RegistryValue {
   )
 
   try {
-    if (Test-Path -Path "$Path\$Value") {
-      Get-ItemProperty -Path $Path | Select-Object -ExpandProperty $Value -ErrorAction Stop | Out-Null
+    if (Get-ItemProperty -Path $Path | Select-Object -ExpandProperty $Value -ErrorAction Stop) {
       return $true
     }
     else {
