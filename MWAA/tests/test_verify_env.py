@@ -64,7 +64,7 @@ def test_validate_envname():
 
 
 def test_check_ingress_acls():
-    ''' goes through the following senarios
+    ''' goes through the following scenarios
     * if no acls are passed
     * if there is an allow
     * if there is a deny but no allow
@@ -106,7 +106,7 @@ def test_check_ingress_acls():
 
 
 def test_check_egress_acls():
-    ''' goes through the following senarios
+    ''' goes through the following scenarios
     * if no acls are passed
     * if there is an allow
     * if there is a deny but no allow
