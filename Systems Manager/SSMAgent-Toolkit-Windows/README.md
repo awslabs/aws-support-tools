@@ -8,7 +8,7 @@ The SSMAgent-Toolkit is a set of PowerShell scripts developed to run multiple ch
 
 ![Output](https://github.com/awslabs/aws-support-tools/raw/master/Systems%20Manager/SSMAgent-Toolkit-Windows/SSMAgent-Toolkit_Output.png?raw=1)
 
-```
+```powershell
 PS C:\SSMAgent-Toolkit> Import-Module .\SSMAgent-Toolkit.psm1;Invoke-SSMChecks
 [2020-12-28T19:51:40.9309935-05:00] [INFO] Log available at C:\SSMAgent-Toolkit\log\SSMCheck_2020-12-28-07-51-40.log
 [2020-12-28T19:51:40.9330057-05:00] [INFO] Report available at C:\SSMAgent-Toolkit\report\SSMCheck_2020-12-28-07-51-40.txt
@@ -50,14 +50,14 @@ LocalSystem account user Internet Explorer proxy    N/A                         
 
 Simply download the ZIP file included in this package and extract. Run one of the followings as an administrator in PowerShell.
 
-```
+```powershell
 Import-Module .\SSMAgent-Toolkit.psm1;Invoke-SSMChecks
 Import-Module .\SSMAgent-Toolkit.psm1;Invoke-SSMChecks -GridView "False"
 ```
 
 Or run the following sample code as an administrator in PowerShel to download the ZIP file included in this package, extract and execute the toolkit. 
 
-```
+```powershell
 #SSMAgent-Toolkit-Windows - https://github.com/awslabs/aws-support-tools/tree/master/Systems%20Manager/SSMAgent-Toolkit-Windows
 $uri = 'https://github.com/awslabs/aws-support-tools/raw/master/Systems%20Manager/SSMAgent-Toolkit-Windows/SSMAgent-Toolkit.zip'
 $destination = (Get-Location).Path
