@@ -15,7 +15,7 @@ Function Get-IEProxySettings {
   param (
     [String]$Skip = $false
   )
-  $Key = "Registry::HKEY_USERS\S-1-5-18\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings"
+  $Key = "Registry::HKEY_USERS\.DEFAULT\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings"
 
   $check = "LocalSystem account user Internet Explorer proxy"
   Write-Log -Message "New check....."
