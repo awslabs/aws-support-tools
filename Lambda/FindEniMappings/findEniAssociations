@@ -75,7 +75,7 @@ done
 # check if we got any functions with this subnet at all
 if [ $(echo "${#Functions[@]}") -eq 0 ]
 then
-  printf "\nNo Lambda functions or versions found that were using the same subnet as this ENI.\nIf this ENI is not deleted automatically in the next 24 hours then it may be 'stuck'. If the ENI will not allow you to delete it manually after 24 hours then please contact AWS support and send them the output of this script."
+  printf "\nNo Lambda functions or versions found that were using the same subnet as this ENI.\nIf this ENI is not deleted automatically in the next 24 hours then it may be 'stuck'. If the ENI will not allow you to delete it manually after 24 hours then please contact AWS support and send them the output of this script.\n"
   exit 0
 fi
 Results=()
