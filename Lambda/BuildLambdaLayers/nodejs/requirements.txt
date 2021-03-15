@@ -1,2 +1,2 @@
-aws-sdk
+boto3
 aws-xray-sdk
