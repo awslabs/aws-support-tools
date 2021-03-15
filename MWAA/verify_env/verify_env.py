@@ -537,7 +537,6 @@ def check_ingress_acls(acls, src_port_from, src_port_to):
     '''
     same as check_egress_acls but for ingress
     '''
-    print(acls)
     for acl in acls:
         # check ipv4 acl rule only
         if acl.get('CidrBlock'):
@@ -553,7 +552,7 @@ def check_ingress_acls(acls, src_port_from, src_port_to):
 
 def check_nacl(input_subnets, input_subnet_ids, ec2_client):
     '''
-    check to see if the nacls for the subnets have port 443 and 5432 if they're even listing any specific ports
+    check to see if the nacls for the subnets have port 5432 if they're even listing any specific ports
     '''
     nacls = ec2_client.describe_network_acls(
         Filters=[

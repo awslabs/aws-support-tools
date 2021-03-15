@@ -8,16 +8,17 @@ def test_validation_region():
     test various inputs for regions and all valid MWAA regions
     https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/
     '''
-    regions = ['us-east-2',
-               'us-east-1',
-               'us-west-2',
-               'ap-southeast-1',
-               'ap-southeast-2',
-               'ap-northeast-1',
-               'eu-central-1',
-               'eu-west-1',
-               'eu-north-1'
-               ]
+    regions = [
+        'us-east-2',
+        'us-east-1',
+        'us-west-2',
+        'ap-southeast-1',
+        'ap-southeast-2',
+        'ap-northeast-1',
+        'eu-central-1',
+        'eu-west-1',
+        'eu-north-1'
+    ]
     for region in regions:
         assert verify_env.validation_region(region) == region
     unsupport_regions = [
@@ -90,7 +91,7 @@ def test_check_ingress_acls():
         }
     ]
     result = verify_env.check_ingress_acls(acls, src_port_from, src_port_to)
-    assert result == True
+    assert result
     acls = [
         {
             'CidrBlock': '0.0.0.0/0',
@@ -101,7 +102,7 @@ def test_check_ingress_acls():
         }
     ]
     result = verify_env.check_ingress_acls(acls, src_port_from, src_port_to)
-    assert result == False
+    assert not result
 
 
 def test_check_egress_acls():
@@ -131,7 +132,7 @@ def test_check_egress_acls():
         }
     ]
     result = verify_env.check_egress_acls(acls, dest_port)
-    assert result == True
+    assert result
     acls = [
         {
             'CidrBlock': '0.0.0.0/0',
@@ -142,4 +143,4 @@ def test_check_egress_acls():
         }
     ]
     result = verify_env.check_egress_acls(acls, dest_port)
-    assert result == False
+    assert not result

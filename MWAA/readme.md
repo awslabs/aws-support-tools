@@ -29,7 +29,7 @@ Specifically it will:
 - Call SSM with the document [AWSSupport-ConnectivityTroubleshooter](https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-awssupport-connectivitytroubleshooter.html) to confirm connectivity between MWAA and different services
 - search logs for any errors and print those to standard output
 
-**Note**: SSM automation is charged to the AWS account. For more information [please follow this link](https://aws.amazon.com/systems-manager/pricing/#Automation).
+**Note: SSM automation is charged to the AWS account. For more information [please follow this link](https://aws.amazon.com/systems-manager/pricing/#Automation)**.
 
 This script requires permission to the following API calls:
 - [ec2:DescribeNetworkAcls](https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkAcls.html)
@@ -62,8 +62,9 @@ optional arguments:
   --region REGION    region, Ex: us-east-1
 ```
 
+### example output:
+
 `python3 verify_env.py --envname test --region us-east-1`
-**Example output**
 ```
 please send support the following information
 If a case is not opened you may open one here https://console.aws.amazon.com/support/home#/case/create
@@ -171,4 +172,4 @@ Found the following failing logs in cloudwatch:
 ### Development
 
 #### Unit tests
-run test using the command [`python3 -m pytest`](https://docs.pytest.org/en/stable/usage.html#calling-pytest-through-python-m-pytest)
+run the unit tests using the command [`python3 -m pytest`](https://docs.pytest.org/en/stable/usage.html#calling-pytest-through-python-m-pytest)
