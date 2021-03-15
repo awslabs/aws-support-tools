@@ -167,3 +167,8 @@ no enis found for MWAA, exiting test for  env.airflow.us-east-1.amazonaws.com
 ### Checking CloudWatch logs for any errors less than 1 day old
 Found the following failing logs in cloudwatch:
 ```
+
+### Development
+
+#### Unit tests
+run test using the command [`python3 -m pytest`](https://docs.pytest.org/en/stable/usage.html#calling-pytest-through-python-m-pytest)

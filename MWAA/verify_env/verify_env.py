@@ -25,6 +25,8 @@ from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
 from boto3.session import Session
+ENV_NAME = ""
+REGION = ""
 
 
 def validate_envname(env_name):
@@ -48,29 +50,13 @@ def validation_region(input_region):
     raise argparse.ArgumentTypeError("%s is an invalid REGION value" % input_region)
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--envname', type=validate_envname, required=True, help="name of the MWAA environment")
-parser.add_argument('--region', type=validation_region, default=boto3.session.Session().region_name,
-                    required=False, help="region, Ex: us-east-1")
-args, _ = parser.parse_known_args()
-ENV_NAME = args.envname
-REGION = args.region
-mwaa = boto3.client('mwaa', region_name=REGION)
-ec2 = boto3.client('ec2', region_name=REGION)
-s3 = boto3.client('s3', region_name=REGION)
-logs = boto3.client('logs', region_name=REGION)
-kms = boto3.client('kms', region_name=REGION)
-cloudtrail = boto3.client('cloudtrail', region_name=REGION)
-ssm = boto3.client('ssm', region_name=REGION)
-iam = boto3.client('iam', region_name=REGION)
-
-
 def get_ip_address(hostname, vpc):
     '''
     method to get the hostname's IP address. This will first check to see if there is a VPC endpoint.
     If so, it will use that VPC endpoint's private IP. Sometimes hostnames don't resolve for various DNS reasons.
     This method retries 10 times and sleeps 1 second in between
     '''
+    ec2 = boto3.client('ec2', region_name=REGION)
     endpoint = ec2.describe_vpc_endpoints(Filters=[
         {
             'Name': 'service-name',
@@ -128,23 +114,24 @@ def get_enis(input_subnet_ids, vpc, security_groups):
     return enis
 
 
-def check_iam_permissions(input_env):
+def check_iam_permissions(input_env, iam_client):
     '''uses iam simulation to check permissions of the role assigned to the environment'''
-    print('### Checking the IAM role', input_env['ExecutionRoleArn'], 'using iam policy simulation')
+    print('### Checking the IAM execution role', input_env['ExecutionRoleArn'], 'using iam policy simulation')
     account_num = input_env['Arn'].split(":")[4]
-    policies = iam.list_attached_role_policies(
+    policies = iam_client.list_attached_role_policies(
         RoleName=input_env['ExecutionRoleArn'].split("/")[-1]
     )['AttachedPolicies']
     policy_list = []
     for policy in policies:
         policy_arn = policy['PolicyArn']
-        policy_version = iam.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
-        policy_doc = iam.get_policy_version(PolicyArn=policy_arn, VersionId=policy_version)['PolicyVersion']['Document']
+        policy_version = iam_client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
+        policy_doc = iam_client.get_policy_version(PolicyArn=policy_arn, 
+                                                   VersionId=policy_version)['PolicyVersion']['Document']
         policy_list.append(json.dumps(policy_doc))
     eval_results = []
     if "KmsKey" in input_env:
         print('Found Customer managed CMK')
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "airflow:PublishMetrics"
@@ -154,7 +141,7 @@ def check_iam_permissions(input_env):
             ]
         )['EvaluationResults']
         # this next test should be denied
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "s3:ListAllMyBuckets"
@@ -164,7 +151,7 @@ def check_iam_permissions(input_env):
                 input_env['SourceBucketArn'] + '/'
             ]
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "s3:GetObject*",
@@ -176,7 +163,7 @@ def check_iam_permissions(input_env):
                 input_env['SourceBucketArn'] + '/'
             ]
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "logs:CreateLogStream",
@@ -189,7 +176,7 @@ def check_iam_permissions(input_env):
                 "arn:aws:logs:" + REGION + ":" + account_num + ":log-group:airflow-" + ENV_NAME + "-*"
             ]
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "logs:DescribeLogGroups"
@@ -198,7 +185,7 @@ def check_iam_permissions(input_env):
                 "*"
             ]
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "cloudwatch:PutMetricData"
@@ -207,7 +194,7 @@ def check_iam_permissions(input_env):
                 "*"
             ]
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "sqs:ChangeMessageVisibility",
@@ -221,7 +208,7 @@ def check_iam_permissions(input_env):
                 "arn:aws:sqs:" + REGION + ":*:airflow-celery-*"
             ]
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "kms:GenerateDataKey*"
@@ -239,7 +226,7 @@ def check_iam_permissions(input_env):
                 }
             ],
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "kms:GenerateDataKey*"
@@ -257,7 +244,7 @@ def check_iam_permissions(input_env):
                 }
             ],
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "kms:Decrypt",
@@ -277,7 +264,7 @@ def check_iam_permissions(input_env):
                 }
             ],
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "kms:Decrypt",
@@ -299,7 +286,7 @@ def check_iam_permissions(input_env):
         )['EvaluationResults']
     else:
         print('Using AWS CMK')
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "airflow:PublishMetrics"
@@ -309,7 +296,7 @@ def check_iam_permissions(input_env):
             ]
         )['EvaluationResults']
         # this action should be denied
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "s3:ListAllMyBuckets"
@@ -319,7 +306,7 @@ def check_iam_permissions(input_env):
                 input_env['SourceBucketArn'] + '/'
             ]
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "s3:GetObject*",
@@ -331,7 +318,7 @@ def check_iam_permissions(input_env):
                 input_env['SourceBucketArn'] + '/'
             ]
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "logs:CreateLogStream",
@@ -344,7 +331,7 @@ def check_iam_permissions(input_env):
                 "arn:aws:logs:" + REGION + ":" + account_num + ":log-group:airflow-" + ENV_NAME + "-*"
             ]
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "logs:DescribeLogGroups"
@@ -353,7 +340,7 @@ def check_iam_permissions(input_env):
                 "*"
             ]
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "cloudwatch:PutMetricData"
@@ -362,7 +349,7 @@ def check_iam_permissions(input_env):
                 "*"
             ]
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "sqs:ChangeMessageVisibility",
@@ -377,7 +364,7 @@ def check_iam_permissions(input_env):
             ]
         )['EvaluationResults']
         # tests role to allow any kms all for resources not in this account and that are from the sqs service
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "kms:Decrypt",
@@ -397,7 +384,7 @@ def check_iam_permissions(input_env):
                 }
             ],
         )['EvaluationResults']
-        eval_results = eval_results + iam.simulate_custom_policy(
+        eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
             ActionNames=[
                 "kms:GenerateDataKey*"
@@ -438,32 +425,33 @@ def check_iam_permissions(input_env):
     print('https://docs.aws.amazon.com/mwaa/latest/userguide/mwaa-create-role.html#mwaa-create-role-json\n')
 
 
-def prompt_user_and_print_info(input_env_name):
+def prompt_user_and_print_info(input_env_name, ec2_client):
     '''method to get environment, print that information to stdout, and prompt the use to send it to support'''
     print('please send support the following information')
     print('If a case is not opened you may open one here https://console.aws.amazon.com/support/home#/case/create')
     print('Please make sure to NOT include any personally identifiable information in the case\n')
     # get mwaa environment
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/mwaa.html#MWAA.Client.get_environment
+    mwaa = boto3.client('mwaa', region_name=REGION)
     environment = mwaa.get_environment(
         Name=input_env_name
     )['Environment']
     network_subnet_ids = environment['NetworkConfiguration']['SubnetIds']
-    network_subnets = ec2.describe_subnets(SubnetIds=network_subnet_ids)['Subnets']
+    network_subnets = ec2_client.describe_subnets(SubnetIds=network_subnet_ids)['Subnets']
     for key in environment.keys():
         print(key, ': ', environment[key])
     print('VPC: ', network_subnets[0]['VpcId'], "\n")
     return environment, network_subnets, network_subnet_ids
 
 
-def check_kms_key_policy(input_env):
+def check_kms_key_policy(input_env, kms_client):
     '''
     check kms key and if its customer managed if it has a policy like this
     https://docs.aws.amazon.com/mwaa/latest/userguide/mwaa-create-role.html#mwaa-create-role-json
     '''
     if "KmsKey" in input_env:
         print("### Checking the kms key policy and if it includes reference to airflow")
-        policy = kms.get_key_policy(
+        policy = kms_client.get_key_policy(
             KeyId=env['KmsKey'],
             PolicyName='default'
         )['Policy']
@@ -476,9 +464,9 @@ def check_kms_key_policy(input_env):
             print("KMS includes text 'airflow' and 'logs'", "✅")
 
 
-def check_log_groups(input_env, env_name):
+def check_log_groups(input_env, env_name, logs_client, cloudtrail_client):
     '''check if cloudwatch log groups exists, if not check cloudtrail to see why they weren't created'''
-    loggroups = logs.describe_log_groups(
+    loggroups = logs_client.describe_log_groups(
         logGroupNamePrefix='airflow-'+env_name
     )['logGroups']
     num_of_enabled_log_groups = sum(
@@ -490,7 +478,7 @@ def check_log_groups(input_env, env_name):
     if num_of_found_log_groups < num_of_enabled_log_groups:
         print('The number of log groups is less than the number of enabled suggesting an error creating', "🚫")
         print('checking cloudtrail for CreateLogGroup/DeleteLogGroup requests...\n')
-        events = cloudtrail.lookup_events(
+        events = cloudtrail_client.lookup_events(
             LookupAttributes=[
                 {
                     'AttributeKey': 'EventName',
@@ -500,7 +488,7 @@ def check_log_groups(input_env, env_name):
             StartTime=input_env['CreatedAt'] - timedelta(minutes=15),
             EndTime=input_env['CreatedAt']
         )['Events']
-        events = events + cloudtrail.lookup_events(
+        events = events + cloudtrail_client.lookup_events(
             LookupAttributes=[
                 {
                     'AttributeKey': 'EventName',
@@ -510,7 +498,7 @@ def check_log_groups(input_env, env_name):
             StartTime=input_env['CreatedAt'] - timedelta(minutes=15),
             EndTime=input_env['CreatedAt']
         )['Events']
-        events = events + cloudtrail.lookup_events(
+        events = events + cloudtrail_client.lookup_events(
             LookupAttributes=[
                 {
                     'AttributeKey': 'EventName',
@@ -549,24 +537,25 @@ def check_ingress_acls(acls, src_port_from, src_port_to):
     '''
     same as check_egress_acls but for ingress
     '''
+    print(acls)
     for acl in acls:
         # check ipv4 acl rule only
         if acl.get('CidrBlock'):
             # Check Port
-            test_range = range(src_port_from, src_port_to + 1)
+            test_range = range(src_port_from, src_port_to)
             set_test_range = set(test_range)
             if ((acl.get('Protocol') == '-1') or
                set_test_range.issubset(range(acl['PortRange']['From'], acl['PortRange']['To'] + 1))):
                 # Check Action
-                return ['RuleAction'] == 'allow'
+                return acl['RuleAction'] == 'allow'
     return ""
 
 
-def check_nacl(input_subnets, input_subnet_ids):
+def check_nacl(input_subnets, input_subnet_ids, ec2_client):
     '''
     check to see if the nacls for the subnets have port 443 and 5432 if they're even listing any specific ports
     '''
-    nacls = ec2.describe_network_acls(
+    nacls = ec2_client.describe_network_acls(
         Filters=[
             {
                 'Name': 'vpc-id',
@@ -595,13 +584,13 @@ def check_nacl(input_subnets, input_subnet_ids):
     print("")
 
 
-def check_routes(input_env, input_subnets, input_subnet_ids):
+def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
     '''
     method to check and make sure routes have access to the internet if public and subnets are private
     '''
     access_mode = input_env['WebserverAccessMode']
     # vpc should be the same so I just took the first one
-    routes = ec2.describe_route_tables(Filters=[
+    routes = ec2_client.describe_route_tables(Filters=[
             {
                 'Name': 'vpc-id',
                 'Values': [input_subnets[0]['VpcId']]
@@ -612,7 +601,7 @@ def check_routes(input_env, input_subnets, input_subnet_ids):
             }
     ])
     # make sure that VPC endpoints are created for the service
-    vpc_endpoints = ec2.describe_vpc_endpoints(Filters=[
+    vpc_endpoints = ec2_client.describe_vpc_endpoints(Filters=[
         {
             'Name': 'service-name',
             'Values': [
@@ -629,7 +618,7 @@ def check_routes(input_env, input_subnets, input_subnet_ids):
         }
     ])
     if len(vpc_endpoints['VpcEndpoints']) != 3:
-        print('missing VPC endpoints, only found', '🚫')
+        print('missing VPC endpoints, only found', len(vpc_endpoints['VpcEndpoints']), '🚫')
         for endpoint in vpc_endpoints['VpcEndpoints']:
             print(endpoint['ServiceName'])
     else:
@@ -659,11 +648,11 @@ def check_routes(input_env, input_subnets, input_subnet_ids):
                 print('Route Table: ', route_table['RouteTableId'], 'does have a route to a NAT Gateway', '✅', '\n')
 
 
-def check_s3_block_public_access(input_env):
+def check_s3_block_public_access(input_env, s3_client):
     '''check s3 bucket and make sure "block public access" is enabled'''
     print("### Verifying 'block public access' is enabled on the s3 bucket...")
     bucket = input_env['SourceBucketArn']
-    public_access = s3.get_public_access_block(
+    public_access = s3_client.get_public_access_block(
         Bucket=bucket.split(':')[-1]
     )['PublicAccessBlockConfiguration']
     for access in public_access:
@@ -673,7 +662,7 @@ def check_s3_block_public_access(input_env):
             print('s3 bucket', bucket, 'blocks public access:', access, "✅")
 
 
-def check_security_groups(input_env):
+def check_security_groups(input_env, ec2_client):
     '''
     check MWAA environment's security groups for:
         - have at least 1 rule
@@ -682,7 +671,7 @@ def check_security_groups(input_env):
     '''
     print("")
     security_groups = input_env['NetworkConfiguration']['SecurityGroupIds']
-    groups = ec2.describe_security_groups(
+    groups = ec2_client.describe_security_groups(
         GroupIds=security_groups
     )['SecurityGroups']
     # have a sanity check on ingress and egress to make sure it allows something
@@ -706,12 +695,12 @@ def check_security_groups(input_env):
                     break
 
 
-def wait_for_ssm_step_one_to_finish(ssm_execution_id):
+def wait_for_ssm_step_one_to_finish(ssm_execution_id, ssm_client):
     '''
     check if the first step finished because that will do the test on the IP to get the eni.
     The eni changes to quickly that sometimes this fails so I retry till it works
     '''
-    execution = ssm.get_automation_execution(
+    execution = ssm_client.get_automation_execution(
         AutomationExecutionId=ssm_execution_id
     )['AutomationExecution']['StepExecutions'][0]['StepStatus']
     while True:
@@ -719,12 +708,12 @@ def wait_for_ssm_step_one_to_finish(ssm_execution_id):
             break
         else:
             time.sleep(5)
-            execution = ssm.get_automation_execution(
+            execution = ssm_client.get_automation_execution(
                 AutomationExecutionId=ssm_execution_id
             )['AutomationExecution']['StepExecutions'][0]['StepStatus']
 
 
-def check_connectivity_to_dep_services(input_env, input_subnets):
+def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm_client):
     '''
     uses ssm document AWSSupport-ConnectivityTroubleshooter to check connectivity between MWAA's enis
     and a list of services. More information on this document can be found here
@@ -750,12 +739,12 @@ def check_connectivity_to_dep_services(input_env, input_subnets):
                     print("no enis found for MWAA, exiting test for ", service)
                     break
                 eni = list(enis.values())[0]
-                interface_ip = ec2.describe_network_interfaces(
+                interface_ip = ec2_client.describe_network_interfaces(
                     NetworkInterfaceIds=[eni]
                 )['NetworkInterfaces'][0]['PrivateIpAddress']
                 ssm_execution_id = ''
                 if 'airflow' in service:
-                    ssm_execution_id = ssm.start_automation_execution(
+                    ssm_execution_id = ssm_client.start_automation_execution(
                         DocumentName='AWSSupport-ConnectivityTroubleshooter',
                         DocumentVersion='$DEFAULT',
                         Parameters={
@@ -768,7 +757,7 @@ def check_connectivity_to_dep_services(input_env, input_subnets):
                         }
                     )['AutomationExecutionId']
                 else:
-                    ssm_execution_id = ssm.start_automation_execution(
+                    ssm_execution_id = ssm_client.start_automation_execution(
                         DocumentName='AWSSupport-ConnectivityTroubleshooter',
                         DocumentVersion='$DEFAULT',
                         Parameters={
@@ -780,8 +769,8 @@ def check_connectivity_to_dep_services(input_env, input_subnets):
                             'SourcePortRange': ["0-65535"]
                         }
                     )['AutomationExecutionId']
-                wait_for_ssm_step_one_to_finish(ssm_execution_id)
-                execution = ssm.get_automation_execution(
+                wait_for_ssm_step_one_to_finish(ssm_execution_id, ssm_client)
+                execution = ssm_client.get_automation_execution(
                     AutomationExecutionId=ssm_execution_id
                 )['AutomationExecution']
                 # check if the failure is due to not finding the eni. If it is, retry testing the service again
@@ -796,13 +785,13 @@ def check_connectivity_to_dep_services(input_env, input_subnets):
     print("")
 
 
-def check_for_failing_logs(loggroups):
+def check_for_failing_logs(loggroups, logs_client):
     '''look for any failing logs from CloudWatch in the past day'''
     print("### Checking CloudWatch logs for any errors less than 1 day old")
     past_day = datetime.today() - timedelta(days=1)
     log_events = []
     for log in loggroups:
-        events = logs.filter_log_events(
+        events = logs_client.filter_log_events(
             logGroupName=log['logGroupName'],
             startTime=datetime.now().microsecond,
             endTime=past_day.microsecond,
@@ -818,22 +807,36 @@ def check_for_failing_logs(loggroups):
 def print_err_msg(c_err):
     '''short method to handle printing an error message if there is one'''
     print('Error Message: {}'.format(c_err.response['Error']['Message']))
-    # print('Request ID: {}'.format(c_err.response['ResponseMetadata']['RequestId']))
-    # print('Http code: {}'.format(c_err.response['ResponseMetadata']['HTTPStatusCode']))
+    print('Request ID: {}'.format(c_err.response['ResponseMetadata']['RequestId']))
+    print('Http code: {}'.format(c_err.response['ResponseMetadata']['HTTPStatusCode']))
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--envname', type=validate_envname, required=True, help="name of the MWAA environment")
+    parser.add_argument('--region', type=validation_region, default=boto3.session.Session().region_name,
+                        required=False, help="region, Ex: us-east-1")
+    args, _ = parser.parse_known_args()
+    ENV_NAME = args.envname
+    REGION = args.region
+    ec2 = boto3.client('ec2', region_name=REGION)
+    s3 = boto3.client('s3', region_name=REGION)
+    logs = boto3.client('logs', region_name=REGION)
+    kms = boto3.client('kms', region_name=REGION)
+    cloudtrail = boto3.client('cloudtrail', region_name=REGION)
+    ssm = boto3.client('ssm', region_name=REGION)
+    iam = boto3.client('iam', region_name=REGION)
     try:
-        env, subnets, subnet_ids = prompt_user_and_print_info(ENV_NAME)
-        check_iam_permissions(env)
-        check_kms_key_policy(env)
-        log_groups = check_log_groups(env, ENV_NAME)
-        check_nacl(subnets, subnet_ids)
-        check_routes(env, subnets, subnet_ids)
-        check_s3_block_public_access(env)
-        check_security_groups(env)
-        check_connectivity_to_dep_services(env, subnets)
-        check_for_failing_logs(log_groups)
+        env, subnets, subnet_ids = prompt_user_and_print_info(ENV_NAME, ec2)
+        check_iam_permissions(env, iam)
+        check_kms_key_policy(env, kms)
+        log_groups = check_log_groups(env, ENV_NAME, logs, cloudtrail)
+        check_nacl(subnets, subnet_ids, ec2)
+        check_routes(env, subnets, subnet_ids, ec2)
+        check_s3_block_public_access(env, s3)
+        check_security_groups(env, ec2)
+        check_connectivity_to_dep_services(env, subnets, ec2, ssm)
+        check_for_failing_logs(log_groups, logs)
     except ClientError as client_error:
         if client_error.response['Error']['Code'] == 'LimitExceededException':
             print_err_msg(client_error)
