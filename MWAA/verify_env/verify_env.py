@@ -23,7 +23,7 @@ import re
 from datetime import timedelta
 from datetime import datetime
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ProfileNotFound
 from boto3.session import Session
 ENV_NAME = ""
 REGION = ""
@@ -48,6 +48,15 @@ def validation_region(input_region):
     if input_region in mwaa_regions:
         return input_region
     raise argparse.ArgumentTypeError("%s is an invalid REGION value" % input_region)
+
+
+def validation_profile(profile_name):
+    '''
+    verify profile name doesn't have path to files or unexpected input
+    '''
+    if re.match(r"^[a-zA-Z][0-9a-zA-Z-_]*$", profile_name):
+        return profile_name
+    raise argparse.ArgumentTypeError("%s is an invalid profile name value" % profile_name)
 
 
 def get_ip_address(hostname, vpc):
@@ -815,17 +824,21 @@ if __name__ == '__main__':
     parser.add_argument('--envname', type=validate_envname, required=True, help="name of the MWAA environment")
     parser.add_argument('--region', type=validation_region, default=boto3.session.Session().region_name,
                         required=False, help="region, Ex: us-east-1")
+    parser.add_argument('--profile', type=validation_profile, default='default',
+                        required=False, help="profile, Ex: dev")
     args, _ = parser.parse_known_args()
     ENV_NAME = args.envname
     REGION = args.region
-    ec2 = boto3.client('ec2', region_name=REGION)
-    s3 = boto3.client('s3', region_name=REGION)
-    logs = boto3.client('logs', region_name=REGION)
-    kms = boto3.client('kms', region_name=REGION)
-    cloudtrail = boto3.client('cloudtrail', region_name=REGION)
-    ssm = boto3.client('ssm', region_name=REGION)
-    iam = boto3.client('iam', region_name=REGION)
+    PROFILE = args.profile
     try:
+        boto3.setup_default_session(profile_name=PROFILE)
+        ec2 = boto3.client('ec2', region_name=REGION)
+        s3 = boto3.client('s3', region_name=REGION)
+        logs = boto3.client('logs', region_name=REGION)
+        kms = boto3.client('kms', region_name=REGION)
+        cloudtrail = boto3.client('cloudtrail', region_name=REGION)
+        ssm = boto3.client('ssm', region_name=REGION)
+        iam = boto3.client('iam', region_name=REGION)
         env, subnets, subnet_ids = prompt_user_and_print_info(ENV_NAME, ec2)
         check_iam_permissions(env, iam)
         check_kms_key_policy(env, kms)
@@ -848,7 +861,8 @@ if __name__ == '__main__':
             print('please retry the script')
         else:
             print_err_msg(client_error)
+    except ProfileNotFound as profile_not_found:
+        print('profile', PROFILE, 'does not exist, please doublecheck the profile name')
     except IndexError as error:
         print("Found index error suggesting there are no ENIs for MWAA")
         print("Error:", error)
-        # print("Traceback:", traceback.print_exc())
