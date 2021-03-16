@@ -6,26 +6,32 @@ An environment can fail to create for the following reasons [documented here](ht
 The `verify_env.py` script will print information support needs to debug these issues. Additionally it will perform checks along with the documented reasons on a best effort basis to help identify the failure. If encountering the error 
 
 ```
-The scheduler does not appear to be running. Last heartbeat was received 1 month ago.
+The scheduler does not appear to be running. Last heartbeat was received XXXXXX ago.
 
 The DAGs list may not update, and new tasks will not be scheduled.
 ```
 
-This script may identify why
+This script may identify why.
 
-Specifically it will:
+### Prerequisites
+- Python3 is required to run this script
 
-- confirm that the Amazon VPC network includes 2 private subnets that can access the Internet(if public environment) for creating containers. If its a private environment it'll verify the number of VPC endpoint for MWAA
-- confirm the security groups have at least 1 rule associated with them
-- confirm the security groups allow ingress to itself or all traffic
-- confirm the security groups allow egress to 5432 and 443 to all traffic
-- confirm that the log groups were created for the environment
-    - if not it will check CloudTrail for the failing CreateLogGroup API call.
-- confirm that the KMS key has a resource policy allowing airflow environments to use it
-- confirm the route tables have a route to a NAT gateway if the environment is public
-- confirm if the VPC endpoints were created if the environment is private
+### Logic and api calls
+The following actions will be performed in this order:
+
+- print out MWAA environment details to be copies to a support case
 - confirm if the role's policies are valid using [IAM policy simulation](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_testing-policies.html)
+- confirm that the KMS CMK has a resource policy allowing airflow's CloudWatch log groups
+- confirm that the log groups were created for the environment
+    - if the number of current log groups is less than the configured number, the script will check CloudTrail for the failing CreateLogGroup API call.
+- confirm that the nACLs allow port 5432 ingress and egress traffic
+- confirm the route tables have a route to a NAT gateway if the environment is public
+- confirm if the MWAA VPC endpoints(api, ops, env) were created if the environment is public/private?
+- confirm that the Amazon VPC network includes 2 private subnets that can access the Internet(if public environment) for creating containers.
 - confirm the s3 bucket is blocking public access
+- confirm the security groups have
+  - at least 1 rule
+  - an ingress rule that allows itself
 - Call SSM with the document [AWSSupport-ConnectivityTroubleshooter](https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-awssupport-connectivitytroubleshooter.html) to confirm connectivity between MWAA and different services
 - search logs for any errors and print those to standard output
 
@@ -55,11 +61,13 @@ This script requires permission to the following API calls:
 `python3 verify_env.py -h`
 ```
 usage: verify_env.py [-h] --envname ENVNAME [--region REGION]
+                     [--profile PROFILE]
 
 optional arguments:
   -h, --help         show this help message and exit
   --envname ENVNAME  name of the MWAA environment
   --region REGION    region, Ex: us-east-1
+  --profile PROFILE  profile, Ex: dev
 ```
 
 ### example output:
