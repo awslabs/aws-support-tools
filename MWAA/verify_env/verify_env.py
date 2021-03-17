@@ -630,7 +630,7 @@ def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
         for endpoint in vpc_endpoints['VpcEndpoints']:
             print(endpoint['ServiceName'])
     else:
-        print("number of VPC endpoints is correct for MWAA(3)", "✅", "\n")
+        print("The number of VPC endpoints are correct for MWAA(3)", "✅", "\n")
     # check subnets are private
     print("### Trying to verify if route tables are valid...")
     for route_table in routes['RouteTables']:
@@ -684,23 +684,33 @@ def check_security_groups(input_env, ec2_client):
     )['SecurityGroups']
     # have a sanity check on ingress and egress to make sure it allows something
     print('### Trying to verifying ingress on security groups...')
+    valid = True
     for security_group in groups:
         ingress = security_group['IpPermissions']
         egress = security_group['IpPermissionsEgress']
-        if not ingress:
-            print('ingress for security group: ', security_group['GroupId'], ' requires at least one rule')
-        if not egress:
-            print('egress for security group: ', security_group['GroupId'], ' requires at least one rule')
+        if not ingress and not egress:
+            print('ingress and egress for security group: ', security_group['GroupId'], ' requires at least one rule', "🚫")
+            valid = False
+            break
+        elif not ingress:
+            print('ingress for security group: ', security_group['GroupId'], ' requires at least one rule', "🚫")
+            valid = False
+            break
+        elif not egress:
+            print('egress for security group: ', security_group['GroupId'], ' requires at least one rule', "🚫")
+            break
         # check security groups to ensure port at least the same security group or everything is allowed ingress
         for rule in ingress:
             if rule['IpProtocol'] == "-1":
                 if rule['UserIdGroupPairs'] and not (
                     any(x['GroupId'] == security_group['GroupId'] for x in rule['UserIdGroupPairs'])
                 ):
-                    print('ingress for security group: ', security_group['GroupId'], " does not allow itself", "🚫")
-                else:
-                    print('ingress for security group: ', security_group['GroupId'], " does allow itself", "✅", "\n")
+                    valid = False
                     break
+    if valid:
+        print("ingress for security groups have at least 1 rule to allow itself", "✅", "\n")
+    else:
+        print("ingress for security groups do not have at least 1 rule to allow itself", "🚫", "\n")
 
 
 def wait_for_ssm_step_one_to_finish(ssm_execution_id, ssm_client):
