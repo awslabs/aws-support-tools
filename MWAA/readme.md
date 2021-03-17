@@ -26,7 +26,7 @@ The following actions will be performed in this order:
     - if the number of current log groups is less than the configured number, the script will check CloudTrail for the failing CreateLogGroup API call.
 - confirm that the nACLs allow port 5432 ingress and egress traffic
 - confirm the route tables have a route to a NAT gateway if the environment is public
-- confirm if the MWAA VPC endpoints(api, ops, env) were created if the environment is public/private?
+- confirm if the MWAA VPC endpoints(api, ops, env) exist in the MWAA VPC
 - confirm that the Amazon VPC network includes 2 private subnets that can access the Internet(if public environment) for creating containers.
 - confirm the s3 bucket is blocking public access
 - confirm the security groups have
