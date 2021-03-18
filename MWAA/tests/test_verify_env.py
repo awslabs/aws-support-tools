@@ -63,6 +63,23 @@ def test_validate_envname():
     assert result == env_name
 
 
+def test_validate_profile():
+    '''
+    test invalid and valid names for MWAA environment
+    '''
+    with pytest.raises(argparse.ArgumentTypeError) as excinfo:
+        profile_name = '42'
+        verify_env.validation_profile(profile_name)
+    assert ("%s is an invalid profile name value" % profile_name) in str(excinfo.value)
+    with pytest.raises(argparse.ArgumentTypeError) as excinfo:
+        profile_name = 'test space'
+        verify_env.validation_profile(profile_name)
+    assert ("%s is an invalid profile name value" % profile_name) in str(excinfo.value)
+    profile_name = 'test'
+    result = verify_env.validation_profile(profile_name)
+    assert result == profile_name
+
+
 def test_check_ingress_acls():
     ''' goes through the following scenarios
     * if no acls are passed
