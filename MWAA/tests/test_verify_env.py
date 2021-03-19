@@ -3,6 +3,21 @@ import pytest
 from verify_env import verify_env
 
 
+def test_verify_dependencies():
+    '''
+    test version equal to 1.16.25
+    test various version numbers below
+    '''
+    assert verify_env.verify_dependencies('1.17.4')
+    assert verify_env.verify_dependencies('1.16.27')
+    assert verify_env.verify_dependencies('1.16.26')
+    assert verify_env.verify_dependencies('1.16.25')
+    assert not verify_env.verify_dependencies('1.16.24')
+    assert not verify_env.verify_dependencies('1.16.23')
+    assert not verify_env.verify_dependencies('1.16.22')
+    assert not verify_env.verify_dependencies('1.16.21')
+
+
 def test_validation_region():
     '''
     test various inputs for regions and all valid MWAA regions

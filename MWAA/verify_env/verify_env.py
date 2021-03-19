@@ -20,6 +20,7 @@ import json
 import socket
 import time
 import re
+import sys
 from datetime import timedelta
 from datetime import datetime
 import boto3
@@ -27,6 +28,26 @@ from botocore.exceptions import ClientError, ProfileNotFound
 from boto3.session import Session
 ENV_NAME = ""
 REGION = ""
+
+
+def verify_dependencies(boto3_current_version):
+    '''
+    check if boto3 version is valid, must be 1.16.25 and up
+    verify any additional future dependency is on the system here
+    return true if all dependenceis are valid, false otherwise
+    prints message while reviewing logic for failing dependencies
+    '''
+    valid_starting_version = '1.16.25'
+    if boto3_current_version == valid_starting_version:
+        return True
+    ver1 = boto3_current_version.split('.')
+    ver2 = valid_starting_version.split('.')
+    for i in range(max(len(ver1), len(ver2))):
+        num1 = int(ver1[i]) if i < len(ver1) else 0
+        num2 = int(ver2[i]) if i < len(ver2) else 0
+        if num1 > num2:
+            return True
+    return False
 
 
 def validate_envname(env_name):
@@ -689,7 +710,8 @@ def check_security_groups(input_env, ec2_client):
         ingress = security_group['IpPermissions']
         egress = security_group['IpPermissionsEgress']
         if not ingress and not egress:
-            print('ingress and egress for security group: ', security_group['GroupId'], ' requires at least one rule', "🚫")
+            print('ingress and egress for security group: ', security_group['GroupId'], ' requires at least one rule', 
+                  "🚫")
             valid = False
             break
         elif not ingress:
@@ -830,6 +852,9 @@ def print_err_msg(c_err):
 
 
 if __name__ == '__main__':
+    if not verify_dependencies(boto3.__version__):
+        print("boto3 version ", boto3.__version__, "is not valid for this script. Need 1.16.25 or higher")
+        sys.exit(1)
     parser = argparse.ArgumentParser()
     parser.add_argument('--envname', type=validate_envname, required=True, help="name of the MWAA environment")
     parser.add_argument('--region', type=validation_region, default=boto3.session.Session().region_name,
