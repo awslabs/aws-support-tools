@@ -1,5 +1,8 @@
 import argparse
 import pytest
+import botocore.session
+from botocore.stub import Stubber
+import boto3
 from verify_env import verify_env
 
 
@@ -9,6 +12,7 @@ def test_verify_dependencies():
     test various version numbers below
     '''
     assert verify_env.verify_dependencies('1.17.4')
+    assert verify_env.verify_dependencies('1.17.33')
     assert verify_env.verify_dependencies('1.16.27')
     assert verify_env.verify_dependencies('1.16.26')
     assert verify_env.verify_dependencies('1.16.25')
@@ -16,6 +20,9 @@ def test_verify_dependencies():
     assert not verify_env.verify_dependencies('1.16.23')
     assert not verify_env.verify_dependencies('1.16.22')
     assert not verify_env.verify_dependencies('1.16.21')
+    assert not verify_env.verify_dependencies('1.7.65')
+    assert not verify_env.verify_dependencies('1.9.105')
+    assert not verify_env.verify_dependencies('1.10.33')
 
 
 def test_validation_region():
@@ -83,14 +90,19 @@ def test_validate_profile():
     test invalid and valid names for MWAA environment
     '''
     with pytest.raises(argparse.ArgumentTypeError) as excinfo:
-        profile_name = '42'
-        verify_env.validation_profile(profile_name)
-    assert ("%s is an invalid profile name value" % profile_name) in str(excinfo.value)
-    with pytest.raises(argparse.ArgumentTypeError) as excinfo:
         profile_name = 'test space'
         verify_env.validation_profile(profile_name)
     assert ("%s is an invalid profile name value" % profile_name) in str(excinfo.value)
     profile_name = 'test'
+    result = verify_env.validation_profile(profile_name)
+    assert result == profile_name
+    profile_name = '42'
+    result = verify_env.validation_profile(profile_name)
+    assert result == profile_name
+    profile_name = '4HelloWorld2'
+    result = verify_env.validation_profile(profile_name)
+    assert result == profile_name
+    profile_name = 'HelloWorld'
     result = verify_env.validation_profile(profile_name)
     assert result == profile_name
 

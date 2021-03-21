@@ -1,3 +1,4 @@
+# This Python file uses the following encoding: utf-8
 '''
 Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 SPDX-License-Identifier: MIT-0
@@ -15,6 +16,7 @@ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTIO
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
+from __future__ import print_function
 import argparse
 import json
 import socket
@@ -47,6 +49,8 @@ def verify_dependencies(boto3_current_version):
         num2 = int(ver2[i]) if i < len(ver2) else 0
         if num1 > num2:
             return True
+        elif num1 < num2:
+            return False
     return False
 
 
@@ -75,7 +79,7 @@ def validation_profile(profile_name):
     '''
     verify profile name doesn't have path to files or unexpected input
     '''
-    if re.match(r"^[a-zA-Z][0-9a-zA-Z-_]*$", profile_name):
+    if re.match(r"^[a-zA-Z0-9]*$", profile_name):
         return profile_name
     raise argparse.ArgumentTypeError("%s is an invalid profile name value" % profile_name)
 
@@ -613,6 +617,34 @@ def check_nacl(input_subnets, input_subnet_ids, ec2_client):
     print("")
 
 
+def check_service_vpc_endpoints(ec2_client, subnets):
+    '''
+    should be used if the environment does not have internet access
+    '''
+    vpc_endpoints = ec2_client.describe_vpc_endpoints(Filters=[
+        {
+            'Name': 'service-name',
+            'Values': [
+                'com.amazonaws.' + REGION + '.airflow.api',
+                'com.amazonaws.' + REGION + '.airflow.env',
+                'com.amazonaws.' + REGION + '.airflow.ops'
+            ]
+        },
+        {
+            'Name': 'vpc-id',
+            'Values': [
+                subnets[0]['VpcId']
+            ]
+        }
+    ])
+    if len(vpc_endpoints['VpcEndpoints']) != 3:
+        print('missing MWAA VPC endpoints(api,env,ops), only found:', len(vpc_endpoints['VpcEndpoints']), '🚫')
+        for endpoint in vpc_endpoints['VpcEndpoints']:
+            print(endpoint['ServiceName'])
+    else:
+        print("The number of VPC endpoints are correct for MWAA(3)", "✅", "\n")
+
+
 def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
     '''
     method to check and make sure routes have access to the internet if public and subnets are private
@@ -629,29 +661,6 @@ def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
                 'Values': input_subnet_ids
             }
     ])
-    # make sure that VPC endpoints are created for the service
-    vpc_endpoints = ec2_client.describe_vpc_endpoints(Filters=[
-        {
-            'Name': 'service-name',
-            'Values': [
-                'com.amazonaws.' + REGION + '.airflow.api',
-                'com.amazonaws.' + REGION + '.airflow.env',
-                'com.amazonaws.' + REGION + '.airflow.ops'
-            ]
-        },
-        {
-            'Name': 'vpc-id',
-            'Values': [
-                input_subnets[0]['VpcId']
-            ]
-        }
-    ])
-    if len(vpc_endpoints['VpcEndpoints']) != 3:
-        print('missing VPC endpoints, only found', len(vpc_endpoints['VpcEndpoints']), '🚫')
-        for endpoint in vpc_endpoints['VpcEndpoints']:
-            print(endpoint['ServiceName'])
-    else:
-        print("The number of VPC endpoints are correct for MWAA(3)", "✅", "\n")
     # check subnets are private
     print("### Trying to verify if route tables are valid...")
     for route_table in routes['RouteTables']:
@@ -672,7 +681,9 @@ def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
                 if 'NatGatewayId' in route:
                     nat_check = True
             if not nat_check:
+                # TODO decide how to handle if not having a NAT is bad or not. needs internet access somehow
                 print('Route Table: ', route_table['RouteTableId'], 'does not have a route to a NAT Gateway', '🚫', '\n')
+                check_service_vpc_endpoints(ec2_client, input_subnets)
             else:
                 print('Route Table: ', route_table['RouteTableId'], 'does have a route to a NAT Gateway', '✅', '\n')
 
@@ -828,13 +839,14 @@ def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm
 def check_for_failing_logs(loggroups, logs_client):
     '''look for any failing logs from CloudWatch in the past day'''
     print("### Checking CloudWatch logs for any errors less than 1 day old")
-    past_day = datetime.today() - timedelta(days=1)
+    now = int(time.time() * 1000)
+    past_day = now - 86400000
     log_events = []
     for log in loggroups:
         events = logs_client.filter_log_events(
             logGroupName=log['logGroupName'],
-            startTime=datetime.now().microsecond,
-            endTime=past_day.microsecond,
+            startTime=now,
+            endTime=past_day,
             filterPattern='?ERROR ?Error ?error ?traceback ?Traceback ?exception ?Exception ?fail ?Fail'
         )['events']
         events = sorted(events, key=lambda i: i['timestamp'])
@@ -852,8 +864,11 @@ def print_err_msg(c_err):
 
 
 if __name__ == '__main__':
+    if sys.version_info[0] < 3:
+        print("python2 detected, please use python3. Will try to run anyway")
     if not verify_dependencies(boto3.__version__):
         print("boto3 version ", boto3.__version__, "is not valid for this script. Need 1.16.25 or higher")
+        print("please run pip install boto3 --upgrade --user")
         sys.exit(1)
     parser = argparse.ArgumentParser()
     parser.add_argument('--envname', type=validate_envname, required=True, help="name of the MWAA environment")
