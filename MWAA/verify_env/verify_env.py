@@ -32,12 +32,10 @@ ENV_NAME = ""
 REGION = ""
 
 
-def verify_dependencies(boto3_current_version):
+def verify_boto3(boto3_current_version):
     '''
     check if boto3 version is valid, must be 1.16.25 and up
-    verify any additional future dependency is on the system here
     return true if all dependenceis are valid, false otherwise
-    prints message while reviewing logic for failing dependencies
     '''
     valid_starting_version = '1.16.25'
     if boto3_current_version == valid_starting_version:
@@ -866,7 +864,7 @@ def print_err_msg(c_err):
 if __name__ == '__main__':
     if sys.version_info[0] < 3:
         print("python2 detected, please use python3. Will try to run anyway")
-    if not verify_dependencies(boto3.__version__):
+    if not verify_boto3(boto3.__version__):
         print("boto3 version ", boto3.__version__, "is not valid for this script. Need 1.16.25 or higher")
         print("please run pip install boto3 --upgrade --user")
         sys.exit(1)

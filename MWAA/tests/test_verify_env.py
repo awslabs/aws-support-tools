@@ -1,28 +1,25 @@
 import argparse
 import pytest
-import botocore.session
-from botocore.stub import Stubber
-import boto3
 from verify_env import verify_env
 
 
-def test_verify_dependencies():
+def test_verify_boto3():
     '''
     test version equal to 1.16.25
     test various version numbers below
     '''
-    assert verify_env.verify_dependencies('1.17.4')
-    assert verify_env.verify_dependencies('1.17.33')
-    assert verify_env.verify_dependencies('1.16.27')
-    assert verify_env.verify_dependencies('1.16.26')
-    assert verify_env.verify_dependencies('1.16.25')
-    assert not verify_env.verify_dependencies('1.16.24')
-    assert not verify_env.verify_dependencies('1.16.23')
-    assert not verify_env.verify_dependencies('1.16.22')
-    assert not verify_env.verify_dependencies('1.16.21')
-    assert not verify_env.verify_dependencies('1.7.65')
-    assert not verify_env.verify_dependencies('1.9.105')
-    assert not verify_env.verify_dependencies('1.10.33')
+    assert verify_env.verify_boto3('1.17.4')
+    assert verify_env.verify_boto3('1.17.33')
+    assert verify_env.verify_boto3('1.16.27')
+    assert verify_env.verify_boto3('1.16.26')
+    assert verify_env.verify_boto3('1.16.25')
+    assert not verify_env.verify_boto3('1.16.24')
+    assert not verify_env.verify_boto3('1.16.23')
+    assert not verify_env.verify_boto3('1.16.22')
+    assert not verify_env.verify_boto3('1.16.21')
+    assert not verify_env.verify_boto3('1.7.65')
+    assert not verify_env.verify_boto3('1.9.105')
+    assert not verify_env.verify_boto3('1.10.33')
 
 
 def test_validation_region():
