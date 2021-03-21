@@ -786,6 +786,7 @@ def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm
                 enis = get_enis(subnet_ids, vpc, security_groups)
                 if not enis:
                     print("no enis found for MWAA, exiting test for ", service)
+                    print("please try accessing the airflow UI and trying running this script again")
                     break
                 eni = list(enis.values())[0]
                 interface_ip = ec2_client.describe_network_interfaces(
