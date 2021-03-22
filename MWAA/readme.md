@@ -15,6 +15,7 @@ This script may identify why.
 
 ### Prerequisites
 - Python3 is required to run this script
+- boto3 1.16.25 or newer
 
 ### Logic and api calls
 The following actions will be performed in this order:
