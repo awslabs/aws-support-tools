@@ -769,12 +769,16 @@ def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm
     https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-awssupport-connectivitytroubleshooter.html
     '''
     print("### Testing connectivity to the following service endpoints from MWAA enis...")
-    mwaa_utilized_services = ['sqs.' + REGION + '.amazonaws.com',
-                              'ecr.' + REGION + '.amazonaws.com',
-                              'monitoring.' + REGION + '.amazonaws.com',
-                              'kms.' + REGION + '.amazonaws.com',
-                              's3.' + REGION + '.amazonaws.com',
-                              'env.airflow.' + REGION + '.amazonaws.com']
+    top_level_domain = '.amazonaws.com'
+    mwaa_utilized_services = [{"service": 'sqs.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 'api.ecr.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 'monitoring.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 'kms.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 's3.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 'env.airflow.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 'env.airflow.' + REGION + top_level_domain, "port": "5432"},
+                              {"service": 'ops.airflow.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 'api.airflow.' + REGION + top_level_domain, "port": "443"}]
     print(mwaa_utilized_services)
     vpc = subnets[0]['VpcId']
     security_groups = input_env['NetworkConfiguration']['SecurityGroupIds']
@@ -785,7 +789,7 @@ def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm
                 # get ENIs used by MWAA
                 enis = get_enis(subnet_ids, vpc, security_groups)
                 if not enis:
-                    print("no enis found for MWAA, exiting test for ", service)
+                    print("no enis found for MWAA, exiting test for ", service['service'])
                     print("please try accessing the airflow UI and then try running this script again")
                     break
                 eni = list(enis.values())[0]
@@ -793,40 +797,27 @@ def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm
                     NetworkInterfaceIds=[eni]
                 )['NetworkInterfaces'][0]['PrivateIpAddress']
                 ssm_execution_id = ''
-                if 'airflow' in service:
-                    ssm_execution_id = ssm_client.start_automation_execution(
-                        DocumentName='AWSSupport-ConnectivityTroubleshooter',
-                        DocumentVersion='$DEFAULT',
-                        Parameters={
-                            'SourceIP': [interface_ip],
-                            'DestinationIP': [get_ip_address(service, input_subnets[0]['VpcId'])],
-                            'DestinationPort': ["5432"],
-                            'SourceVpc': [vpc],
-                            'DestinationVpc': [vpc],
-                            'SourcePortRange': ["0-65535"]
-                        }
-                    )['AutomationExecutionId']
-                else:
-                    ssm_execution_id = ssm_client.start_automation_execution(
-                        DocumentName='AWSSupport-ConnectivityTroubleshooter',
-                        DocumentVersion='$DEFAULT',
-                        Parameters={
-                            'SourceIP': [interface_ip],
-                            'DestinationIP': [get_ip_address(service, input_subnets[0]['VpcId'])],
-                            'DestinationPort': ["443"],
-                            'SourceVpc': [vpc],
-                            'DestinationVpc': [vpc],
-                            'SourcePortRange': ["0-65535"]
-                        }
-                    )['AutomationExecutionId']
+                ssm_execution_id = ssm_client.start_automation_execution(
+                    DocumentName='AWSSupport-ConnectivityTroubleshooter',
+                    DocumentVersion='$DEFAULT',
+                    Parameters={
+                        'SourceIP': [interface_ip],
+                        'DestinationIP': [get_ip_address(service['service'], input_subnets[0]['VpcId'])],
+                        'DestinationPort': [service['port']],
+                        'SourceVpc': [vpc],
+                        'DestinationVpc': [vpc],
+                        'SourcePortRange': ["0-65535"]
+                    }
+                )['AutomationExecutionId']
                 wait_for_ssm_step_one_to_finish(ssm_execution_id, ssm_client)
                 execution = ssm_client.get_automation_execution(
                     AutomationExecutionId=ssm_execution_id
                 )['AutomationExecution']
                 # check if the failure is due to not finding the eni. If it is, retry testing the service again
                 if execution['StepExecutions'][0]['StepStatus'] != 'Failed':
-                    print('Testing connectivity between eni ', eni, " with private ip of ",
-                          interface_ip, " and ", service)
+                    print('Testing connectivity between eni', eni, "with private ip of",
+                          interface_ip, "and", service['service'], "on port", service['port'])
+                    print("Please follow this link to view the results of the test:")
                     print("https://console.aws.amazon.com/systems-manager/automation/execution/" + ssm_execution_id +
                           "?REGION=" + REGION + "\n")
                     break
@@ -849,6 +840,7 @@ def check_for_failing_logs(loggroups, logs_client):
             filterPattern='?ERROR ?Error ?error ?traceback ?Traceback ?exception ?Exception ?fail ?Fail'
         )['events']
         events = sorted(events, key=lambda i: i['timestamp'])
+        print('Log group: ', log['logGroupName'])
         for event in events:
             print(str(event['timestamp']) + " " + event['message'], end='')
 
