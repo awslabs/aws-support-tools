@@ -157,7 +157,7 @@ def check_iam_permissions(input_env, iam_client):
     for policy in policies:
         policy_arn = policy['PolicyArn']
         policy_version = iam_client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
-        policy_doc = iam_client.get_policy_version(PolicyArn=policy_arn, 
+        policy_doc = iam_client.get_policy_version(PolicyArn=policy_arn,
                                                    VersionId=policy_version)['PolicyVersion']['Document']
         policy_list.append(json.dumps(policy_doc))
     eval_results = []
@@ -836,23 +836,21 @@ def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm
 
 
 def check_for_failing_logs(loggroups, logs_client):
-    '''look for any failing logs from CloudWatch in the past day'''
-    print("### Checking CloudWatch logs for any errors less than 1 day old")
+    '''look for any failing logs from CloudWatch in the past hour'''
+    print("### Checking CloudWatch logs for any errors less than 1 hour old")
     now = int(time.time() * 1000)
-    past_day = now - 86400000
-    log_events = []
+    past_day = now - 3600000
+    print('Found the following failing logs in cloudwatch: ')
     for log in loggroups:
         events = logs_client.filter_log_events(
             logGroupName=log['logGroupName'],
-            startTime=now,
-            endTime=past_day,
+            startTime=past_day,
+            endTime=now,
             filterPattern='?ERROR ?Error ?error ?traceback ?Traceback ?exception ?Exception ?fail ?Fail'
         )['events']
         events = sorted(events, key=lambda i: i['timestamp'])
         for event in events:
-            log_events.append(event['timestamp'] + " " + event['message'])
-    print('Found the following failing logs in cloudwatch: ')
-    print(*log_events, sep="\n")
+            print(str(event['timestamp']) + " " + event['message'], end='')
 
 
 def print_err_msg(c_err):
