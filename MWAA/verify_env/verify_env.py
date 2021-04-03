@@ -617,16 +617,23 @@ def check_nacl(input_subnets, input_subnet_ids, ec2_client):
 
 def check_service_vpc_endpoints(ec2_client, subnets):
     '''
-    should be used if the environment does not have internet access
+    should be used if the environment does not have internet access through NAT Gateway
     '''
+    top_level_domain = "com.amazonaws."
+    service_endpoints = [
+        top_level_domain + REGION + '.airflow.api',
+        top_level_domain + REGION + '.airflow.env',
+        top_level_domain + REGION + '.airflow.ops',
+        top_level_domain + REGION + '.sqs',
+        top_level_domain + REGION + '.ecr.api',
+        top_level_domain + REGION + '.kms',
+        top_level_domain + REGION + '.s3',
+        top_level_domain + REGION + '.monitoring'
+    ]
     vpc_endpoints = ec2_client.describe_vpc_endpoints(Filters=[
         {
             'Name': 'service-name',
-            'Values': [
-                'com.amazonaws.' + REGION + '.airflow.api',
-                'com.amazonaws.' + REGION + '.airflow.env',
-                'com.amazonaws.' + REGION + '.airflow.ops'
-            ]
+            'Values': service_endpoints
         },
         {
             'Name': 'vpc-id',
@@ -634,20 +641,33 @@ def check_service_vpc_endpoints(ec2_client, subnets):
                 subnets[0]['VpcId']
             ]
         }
-    ])
-    if len(vpc_endpoints['VpcEndpoints']) != 3:
-        print('missing MWAA VPC endpoints(api,env,ops), only found:', len(vpc_endpoints['VpcEndpoints']), '🚫')
-        for endpoint in vpc_endpoints['VpcEndpoints']:
+    ])['VpcEndpoints']
+    # filter by subnet ids here, if the vpc endpoints include the env's subnet ids then check those
+    s_ids = [subnet['SubnetId'] for subnet in subnets]
+    # check = all(item in subnets[:]['SubnetId'] for item in vpc_endpoints['VpcEndpoints'][:]['SubnetIds'])
+    vpc_endpoints = [endpoint for endpoint in vpc_endpoints if all(subnet in s_ids for subnet in
+                     endpoint['SubnetIds'])]
+    
+    if len(vpc_endpoints) != 8:
+        print("The route for the subnets do not have a NAT gateway." +
+              "This suggests vpc endpoints are needed to connect to:")
+        print('s3, ecr, kms, sqs, monitoring, airflow.api, airflow.env, airflow.ops')
+        print("The environment's subnets currently have these endpoints: ")
+        for endpoint in vpc_endpoints:
             print(endpoint['ServiceName'])
+        print("The environment's subnets do not have these endpoints: ")
+        vpc_service_endpoints = [e['ServiceName'] for e in vpc_endpoints]
+        for i, service_endpoint in enumerate(service_endpoints):
+            if service_endpoint not in vpc_service_endpoints:
+                print(service_endpoint)
     else:
-        print("The number of VPC endpoints are correct for MWAA(3)", "✅", "\n")
+        print("The route for the subnets do not have a NAT Gateway. However, there are sufficient VPC endpoints")
 
 
 def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
     '''
     method to check and make sure routes have access to the internet if public and subnets are private
     '''
-    access_mode = input_env['WebserverAccessMode']
     # vpc should be the same so I just took the first one
     routes = ec2_client.describe_route_tables(Filters=[
             {
@@ -662,28 +682,25 @@ def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
     # check subnets are private
     print("### Trying to verify if route tables are valid...")
     for route_table in routes['RouteTables']:
+        has_nat = False
         for route in route_table['Routes']:
             if route['State'] == "blackhole":
-                print("Route: ", route_table['RouteTableId'], ' has a state of blackhole')
+                print("Route:", route_table['RouteTableId'], 'has a state of blackhole')
             if 'GatewayId' in route and route['GatewayId'].startswith('igw'):
-                print('route: ', route_table['RouteTableId'],
+                print('Route:', route_table['RouteTableId'],
                       'has a route to IGW making it public. Needs to be private', '🚫')
                 print('please review ',
                       'https://docs.aws.amazon.com/mwaa/latest/userguide/vpc-create.html#vpc-create-required')
-                print('\n')
-    if access_mode == "PUBLIC_ONLY":
-        # make sure routes point to a nat gateway
-        for route_table in routes['RouteTables']:
-            nat_check = False
-            for route in route_table['Routes']:
-                if 'NatGatewayId' in route:
-                    nat_check = True
-            if not nat_check:
-                # TODO decide how to handle if not having a NAT is bad or not. needs internet access somehow
-                print('Route Table: ', route_table['RouteTableId'], 'does not have a route to a NAT Gateway', '🚫', '\n')
-                check_service_vpc_endpoints(ec2_client, input_subnets)
-            else:
-                print('Route Table: ', route_table['RouteTableId'], 'does have a route to a NAT Gateway', '✅', '\n')
+                print("")
+            if 'NatGatewayId' in route:
+                has_nat = True
+        if has_nat:
+            print('Route Table:', route_table['RouteTableId'], 'does have a route to a NAT Gateway', '✅')
+        if not has_nat:
+            print('Route Table:', route_table['RouteTableId'], 'does not have a route to a NAT Gateway')
+            print('checking for VPC endpoints to airflow, s3, sqs, kms, ecr, and monitoring')
+            check_service_vpc_endpoints(ec2_client, input_subnets)
+    print("")
 
 
 def check_s3_block_public_access(input_env, s3_client):
