@@ -615,6 +615,15 @@ def check_nacl(input_subnets, input_subnet_ids, ec2_client):
     print("")
 
 
+def check_vpc_endpoint_private_dns_enabled(vpc_endpnts):
+    '''short method to check if the interface's private dns option is set to true'''
+    for vpc_endpnt in vpc_endpnts:
+        if not vpc_endpnt['PrivateDnsEnabled'] and vpc_endpnt['VpcEndpointType'] == 'Interface':
+            print('VPC endpoint:', vpc_endpnt['VpcEndpointId'], "does not have private dns enabled")
+            print('this means that the public dns name for the service will resolve to its public IP and not')
+            print('the vpc endpoint private ip. You should enabled this for use with MWAA')
+
+
 def check_service_vpc_endpoints(ec2_client, subnets):
     '''
     should be used if the environment does not have internet access through NAT Gateway
@@ -660,6 +669,7 @@ def check_service_vpc_endpoints(ec2_client, subnets):
         for i, service_endpoint in enumerate(service_endpoints):
             if service_endpoint not in vpc_service_endpoints:
                 print(service_endpoint)
+        check_vpc_endpoint_private_dns_enabled(vpc_endpoints)
     else:
         print("The route for the subnets do not have a NAT Gateway. However, there are sufficient VPC endpoints")
 
