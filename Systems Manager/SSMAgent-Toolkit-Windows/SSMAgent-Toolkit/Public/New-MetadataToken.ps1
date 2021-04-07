@@ -12,9 +12,12 @@
 #>
 
 Function New-MetadataToken {
+  [CmdletBinding()]
+  param (
+    [String]$Uri = "http://169.254.169.254/latest/api/token"
+  )
   # This function to check if the instance have an access to the instance Metadata
   try {
-    $Uri = "http://169.254.169.254/latest/api/token"
     $Method = "PUT"
     [System.Collections.IDictionary]$Headers = @{"X-aws-ec2-metadata-token-ttl-seconds" = "300" }
     $token = Invoke-CustomHTTPRequest -Uri $Uri -Method $Method -Headers $Headers

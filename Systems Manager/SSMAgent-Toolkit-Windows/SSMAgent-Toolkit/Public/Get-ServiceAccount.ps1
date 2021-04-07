@@ -14,7 +14,7 @@
 Function Get-ServiceAccount {
   [CmdletBinding()]
   param (
-    [String]$ServiceName,
+    [String]$ServiceName = "amazonssmagent",
     [String]$Skip = $false
   )
   $check = "Amazon SSM service account"

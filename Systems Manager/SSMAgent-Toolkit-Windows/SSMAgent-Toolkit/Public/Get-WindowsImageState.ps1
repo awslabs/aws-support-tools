@@ -11,12 +11,15 @@
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 #>
 Function Get-WindowsImageState {
+  [CmdletBinding()]
+  param (
+    [String]$Key = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\State" #https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-setup-states
+  ) 
+
   $check = "Windows sysprep image state complete"
   Write-Log -Message "New check....."
   Write-Log -Message "$check"
   
-  $Key = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\State" #https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-setup-states
-
   Write-Log -Message "Checking Windows image state in this registry location $Key."
   Write-Log -Message "For more information check - https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-setup-states"
   $ImageState = (Get-Item -Path $Key).GetValue("ImageState")

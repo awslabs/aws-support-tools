@@ -20,8 +20,15 @@ Function Get-Region {
     $Uri = "http://169.254.169.254/latest/dynamic/instance-identity/document" 
     [System.Collections.IDictionary]$Headers = @{"X-aws-ec2-metadata-token" = $Token }
     $Region = (Invoke-CustomHTTPRequest -Uri $Uri -Headers $Headers) | ConvertFrom-Json
-    Write-Log -Message "Region from metadata is $($Region.region)"
-    return $Region.region
+    if ($Region -ne 0) {
+      Write-Log -Message "Region from metadata is $($Region.region)"
+      return $Region.region
+    }
+    else {
+      Write-Log -Message ("Unable to retrieve the region from the metadata") -LogLevel "ERROR"
+      Write-Log -Message "Make sure the instance has access to metadata path http://169.254.169.254/latest/dynamic/instance-identity/document" -LogLevel "ERROR"
+      return 0
+    }
   }
   catch {
     Write-Log -Message ("Unable to retrieve the region from the metadata: " + $($PSitem.ToString())) -LogLevel "ERROR"

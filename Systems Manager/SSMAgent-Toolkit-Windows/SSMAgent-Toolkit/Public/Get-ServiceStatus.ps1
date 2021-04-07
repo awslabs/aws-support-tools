@@ -14,7 +14,7 @@
 Function Get-ServiceStatus {
   [CmdletBinding()]
   param (
-    [String]$ServiceName,
+    [String]$ServiceName = "amazonssmagent",
     [String]$ServiceStatus
   )
    

@@ -53,7 +53,7 @@ Function Test-EndpointsNetworkAccess {
                 Write-Log -Message "Ping Reply Details: $($result.PingReplyDetails)"
                 Write-Log -Message "Tcp Test Succeeded: $($result.TcpTestSucceeded)"
                 # Check if the connection is successful or not
-                if ($result.TcpTestSucceeded = "True" ) {
+                if ($result.TcpTestSucceeded -eq "True" ) {
                     $value = "Pass"
                     $note = "Endpoint IP address is $($result.RemoteAddress.IPAddressToString)"
                     Write-Log -Message "$Endpoint.$Region.amazonaws.com is reachable via port 443. Endpoint IP address is $($result.RemoteAddress.IPAddressToString)"

@@ -27,7 +27,7 @@ Function Test-IAMInstanceProfile {
     
   if (($NoMetadataAccess -eq $true)) {
     $value = "Skip"
-    $note = "This test skipped since EC2 instance metadata is not accessible"
+    $note = "This test skipped since the EC2 instance metadata is not accessible"
     Write-Log -Message "Unable to retrieve the IAM instance profile from the EC2 instance metadata" -LogLevel "ERROR"
   }
   elseif (($ManagedInstance -eq $true)) {
@@ -41,10 +41,17 @@ Function Test-IAMInstanceProfile {
       $Uri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/"
       [System.Collections.IDictionary]$Headers = @{"X-aws-ec2-metadata-token" = $Token }
       $IAMInstanceProfile = Invoke-CustomHTTPRequest -Uri $Uri -Headers $Headers
-      $value = "$IAMInstanceProfile"
-      $note = "IAM instance profile $IAMInstanceProfile is attached to the instance"
-      Write-Log -Message "$IAMInstanceProfile is the instance profile name retrieved from the metadata."
-      Write-Log -Message "Make sure it does have enough permission - https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-profile.html"
+      if ($IAMInstanceProfile -ne 0) {
+        $value = "$IAMInstanceProfile"
+        $note = "IAM instance profile $IAMInstanceProfile is attached to the instance"
+        Write-Log -Message "$IAMInstanceProfile is the instance profile name retrieved from the metadata."
+        Write-Log -Message "Make sure it does have enough permission - https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-profile.html"
+      }
+      else {
+        $value = "N/A"
+        $note = "Please make sure IAM Role is attach to the instance,Stop and start the instance"
+        Write-Log -Message ("Unable to retrieve the IAM instance profile") -LogLevel "ERROR"
+      }
     }
     catch {
       $value = "N/A"
