@@ -1,0 +1,10 @@
+.vscode
+__pycache__
+*.swp
+.DS_Store
+launch.json
+.idea
+.classpath
+.project
+.settings
+.pyc

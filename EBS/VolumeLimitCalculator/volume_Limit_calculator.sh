@@ -41,7 +41,7 @@ verify_input_as_integers () {
 if ! [[ "$1" =~ ^[0-9]+$ ]]
     then
         echo -e "+----------------------------------------------------+\n"
-        echo "> Sorry, volume Size and provisioned IOPS needs to be an interger value."
+        echo "> Sorry, volume Size, provisioned IOPS and provisioned throughput needs to be an interger value."
         echo -e "\n+----------------------------------------------------+"
         exit 1
 fi
@@ -102,6 +102,63 @@ fi
 
 }
 
+############################################################
+
+calculate_gp3_limits () {       # Calculating limits for Gp3 volume type
+
+if [[ $volumeSize -lt 1 || $volumeSize -gt 16384 ]]
+    then
+        echo -e "+----------------------------------------------------+\n"
+        echo -e "> Volume size for $volumeType can not be less than 1GiB or greater than 16384GiB"
+        echo -e "\n+----------------------------------------------------+"
+        exit 1
+fi
+
+if [[ -z $volumeIOPS ]]
+    then
+        volumeIOPS=3000               # Set IOPS as Baseline(3000) for gp3 volume if it was created using CLI without provisioned IOPS . 
+else
+    verify_input_as_integers $volumeIOPS
+    if [[ $volumeIOPS -lt 3000 || $volumeIOPS -gt 64000 ]]
+        then
+            echo -e "+----------------------------------------------------+\n"
+            echo -e "> Provisioned IOPS can not be less than 3000 or greater than 16000 for Gp3 volume type.."
+            echo -e "\n+----------------------------------------------------+"
+            exit 1
+    elif [[ $((volumeIOPS / volumeSize)) -gt 500 ]]
+        then
+            echo -e "+----------------------------------------------------+\n"
+            echo -e "> Maximum ratio of 500:1 is permitted between IOPS and volume size for Gp3 volume type."
+            echo -e "\n+----------------------------------------------------+"
+            exit 1
+    fi
+fi
+
+if [[ -z $volumeThroughput ]]
+    then
+        volumeThroughput=125               # Set Throughput as Baseline(125MiB/s) for gp3 volume if it was created using CLI without provisioned Throughput . 
+else
+    verify_input_as_integers $volumeThroughput
+    if [[ $volumeThroughput -lt 125 || $volumeThroughput -gt 1000 ]]
+        then
+            echo -e "+----------------------------------------------------+\n"
+            echo -e "> Provisioned throughput can not be less than 125MiB/s or greater than 1000MiB/s for Gp3 volume type.."
+            echo -e "\n+----------------------------------------------------+"
+            exit 1
+    elif [[ $((volumeIOPS / volumeThroughput)) -lt 4 ]]
+        then
+            echo -e "+----------------------------------------------------+\n"
+            echo -e "> Maximum ratio of 0.25:1 is permitted between Throughput (MiBps) and IOPS for Gp3 volume type."
+            echo -e "\n+----------------------------------------------------+"
+            exit 1
+    fi
+fi
+
+echo -e "+----------------------------------------------------+\n"
+echo -e "> Maximum available IOPS for your volume are $volumeIOPS"
+echo -e "> Maximum Available throughput is $volumeThroughput MiB/s"
+echo -e "\n+----------------------------------------------------+"
+}
 ############################################################
 
 calculate_io_limits () {
@@ -218,6 +275,16 @@ case "$volumeType" in
         read volumeSize
         verify_input_as_integers $volumeSize
         calculate_gp2_limits                    # Calling gp2 function to calculate maximum limits.
+        ;;
+        [gG][pP][3])                           # If answer is gp2
+        echo -e "Enter Volume Size in GiB:"
+        read volumeSize
+        verify_input_as_integers $volumeSize
+        echo -e "Enter Provisioned IOPS, if volume was created via CLI without provisioned IOPS please press Enter:"
+        read volumeIOPS
+        echo -e "Enter Provisioned Throughput, if volume was created via CLI without provisioned Throughput please press Enter:"
+        read volumeThroughput
+        calculate_gp3_limits                    # Calling gp2 function to calculate maximum limits.
         ;;
         [iI][oO][12])                           # If answer is io1
         echo -e "Enter Provisioned IOPS:"
