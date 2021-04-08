@@ -35,7 +35,7 @@ Function Get-LocalSystemAccountSTSCallerIdentity {
       $ScheduledTaskAction = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-NoProfile -WindowStyle Hidden -command `"$ScheduledTaskCommand`""
       $ScheduledTaskSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 5) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
         
-      Register-ScheduledTask -Action $ScheduledTaskAction -TaskName $ScheduledTaskName -Description $ScheduledTaskNameDescription -Settings $ScheduledTaskSettings -User "System" -ErrorAction Stop > $null
+      Register-ScheduledTask -Action $ScheduledTaskAction -TaskName $ScheduledTaskName -Description $ScheduledTaskNameDescription -Settings $ScheduledTaskSettings -User "System" -ErrorAction Stop -Force > $null
       Start-ScheduledTask -TaskName $ScheduledTaskName
 
       While ((Get-ScheduledTask -TaskName $ScheduledTaskName).State -ne 'Ready') {}

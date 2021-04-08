@@ -4,13 +4,13 @@
   .Description
     This is a public function used to retrieve the IAM instance profile expiration and last update time from the metadata using Invoke-CustomHTTPRequest function.
   .Example
-    Test-IAMInstanceProfileCredentialLastUpdate -Token $token -IAMInstanceProfile $profilename -NoMetadataAccess $false -ManagedInstance $false -NoIAMattched $false
+    Test-IAMInstanceProfileCredentialLastUpdate -Token $token -IAMInstanceProfile $profilename -NoMetadataAccess $false -ManagedInstance $false -NoIAMattached $false
   .INPUTS
     $Token
     $IAMInstanceProfile
     $NoMetadataAccess = $false
     $ManagedInstance = $false
-    $NoIAMattched = $false
+    $NoIAMattached = $false
   .OUTPUTS                                                                            
     Return the IAM instance profile.
 #>
@@ -22,7 +22,7 @@ Function Test-IAMInstanceProfileCredentialLastUpdate {
     [String]$IAMInstanceProfile,
     [String]$NoMetadataAccess = $false,
     [String]$ManagedInstance = $false,
-    [String]$NoIAMattched = $false
+    [String]$NoIAMattached = $false
   )
   $check = "IAM profile credential valid"
   Write-Log -Message "New check....."
@@ -33,7 +33,7 @@ Function Test-IAMInstanceProfileCredentialLastUpdate {
     $note = "This test skipped since the EC2 instance metadata is not accessible"
     Write-Log -Message "Unable to retrieve the IAM instance profile's LastUpdated and Expiration time stamp from the EC2 instance metadata or no IAM instance profile attached to the instance" -LogLevel "ERROR"
   }
-  elseif (($NoIAMattched -eq $true)) {
+  elseif (($NoIAMattached -eq $true)) {
     $value = "Skip"
     $note = "This test skipped since there is no IAM instance profile attached to the instance"
     Write-Log -Message "There is no IAM instance profile attached to the instance" -LogLevel "ERROR"
@@ -47,7 +47,8 @@ Function Test-IAMInstanceProfileCredentialLastUpdate {
     #LastUpdate time of the IAM instance profile
     $Uri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/$IAMInstanceProfile"
     [System.Collections.IDictionary]$Headers = @{"X-aws-ec2-metadata-token" = $Token }
-    $IAMMetadata = Invoke-RestMethod -Uri $Uri -Headers $Headers
+    $IAMMetadata = Invoke-CustomHTTPRequest -Uri $Uri -Headers $Headers | ConvertFrom-Json
+    
     [DateTime]$LastUpdatedUTC = $IAMMetadata.LastUpdated
     [DateTime]$ExpirationUTC = $IAMMetadata.Expiration
 

@@ -14,7 +14,7 @@
 Function Get-AgentProxySettings {
   [CmdletBinding()]
   param (
-    [String]$Key,
+    [String]$Key = "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\AmazonSSMAgent",
     [String]$Skip = $false
   )
   $check = "SSM Agent Proxy Setting"

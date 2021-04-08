@@ -13,7 +13,7 @@
 Function Get-ServiceAvailability {
   [CmdletBinding()]
   param (
-    [String]$ServiceName
+    [String]$ServiceName = "amazonssmagent"
   )
   $check = "Amazon SSM agent service running"
   Write-Log -Message "New check....."

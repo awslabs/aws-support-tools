@@ -13,14 +13,13 @@
 Function Get-IEProxySettings {
   [CmdletBinding()]
   param (
+    [String]$Key = "Registry::HKEY_USERS\.DEFAULT\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings",
     [String]$Skip = $false
   )
-  $Key = "Registry::HKEY_USERS\.DEFAULT\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings"
-
+  
   $check = "LocalSystem account user Internet Explorer proxy"
   Write-Log -Message "New check....."
   Write-Log -Message "$check"
-
 
   Write-Log -Message "Checking IE proxy settings settings from registry location $Key."
   Write-Log -Message "For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows."
@@ -29,8 +28,8 @@ Function Get-IEProxySettings {
   if ($Skip -ne $true) {
     If (((Get-Item -Path $Key).GetValue("ProxyEnable") -eq 0) -Or (-not (Test-RegistryValue -Path $Key -Value 'ProxyEnable'))) {
       $value = "N/A"
-      $note = "There is no ProxyServer configured. Note: If the instance behind a proxy and PowerShell via run command has a command which needs access to the internet would fail if there are no Internet Explorer proxy settings"
-      Write-Log -Message "There is noProxyServer configured for LocalSystem account user Internet Explorer proxy."
+      $note = "There is no ProxyServer configured. Note: If the instance behind a proxy and PowerShell via run command has a command which needs access to the internet would fail if there are no Internet Explorer proxy settings."
+      Write-Log -Message "There is noProxyServer configured for $check."
       Write-Log -Message "Note: If the instance behind a proxy and PowerShell via run command has a command which needs access to the internet would fail if there are no Internet Explorer proxy settings"
     }
     else {
@@ -42,7 +41,7 @@ Function Get-IEProxySettings {
   else {
     $value = "Skip"
     $note = "This test skipped since the service is not available"
-    Write-Log -Message "The LocalSystem account user Internet Explorer proxy check skipped since the service is not available" -LogLevel "WARN"
+    Write-Log -Message "The $check check skipped since the service is not available" -LogLevel "WARN"
   }
   return New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 }

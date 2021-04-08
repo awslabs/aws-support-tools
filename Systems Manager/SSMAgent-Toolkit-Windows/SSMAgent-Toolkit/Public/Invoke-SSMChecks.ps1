@@ -8,8 +8,6 @@
   	PS C:\> Invoke-SSMChecks -GridView "False"
 .INPUTS
 	endpoints = default as endpoints for AWS Systems Manager
-	servicename = default as "amazonssmagent"
-	AgentRegistryPath = SSM Agent registry path
 	GridView = To have the gridview in the output on or off. default is true. 
 .OUTPUTS                                                                            
 	[2020-10-19T17:48:21.9526299-04:00] [INFO] Log available at C:\Users\Administrator\Desktop\xxxx\xxxxxxx\log\SSMCheck_2020-10-19-05-48-21.log
@@ -61,10 +59,6 @@ function Invoke-SSMChecks {
 			"kms",
 			"logs"
 		),
-		# The Windows Service name of the Agent
-		[String]$servicename = "amazonssmagent",
-		# SSM Agent registry path
-		[String]$AgentRegistryPath = "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\AmazonSSMAgent",
 		# Set the default file path and log location, all errors should function as STOP errors for logging purposes
 		[String]$GridView = "True"
 	)
@@ -117,17 +111,17 @@ function Invoke-SSMChecks {
 		
 		# Calling each check in order
 		$Output.Add((Get-WindowsImageState 6>> $LogDestination)) | Out-Null
-		$serviceavalibility = Get-ServiceAvailability -ServiceName $servicename 6>> $LogDestination
+		$serviceavalibility = Get-ServiceAvailability 6>> $LogDestination
 		# Make more checks if the amazonssmagent is available 
 		if ($serviceavalibility[0] -eq 1) {
-			Write-Log -Message "$servicename is available. Checking the service running status and the account uses to run the service" 6>> $LogDestination
-			$Output.Add((Get-ServiceStatus -ServiceName $servicename -ServiceStatus $serviceavalibility[1] 6>> $LogDestination)) | Out-Null
-			$Output.Add((Get-ServiceAccount -ServiceName $servicename 6>> $LogDestination)) | Out-Null
+			Write-Log -Message "The service is available. Checking the service running status and the account uses to run the service" 6>> $LogDestination
+			$Output.Add((Get-ServiceStatus -ServiceStatus $serviceavalibility[1] 6>> $LogDestination)) | Out-Null
+			$Output.Add((Get-ServiceAccount 6>> $LogDestination)) | Out-Null
 		}
 		else {
-			Write-Log -Message "$servicename is not available. Skipping the check for account uses to run the service" -LogLevel "ERROR" 6>> $LogDestination
+			Write-Log -Message "The service is not available. Skipping the check for account uses to run the service" -LogLevel "ERROR" 6>> $LogDestination
 			$Output.Add($serviceavalibility) | Out-Null
-			$Output.Add((Get-ServiceAccount -ServiceName $servicename -Skip $true 6>> $LogDestination)) | Out-Null
+			$Output.Add((Get-ServiceAccount -Skip $true 6>> $LogDestination)) | Out-Null
 		}
 		#Check if the instance have a registration file exit. If does, means the instance is configured as Managed(hybrid) instance and will skip the metadata check.
 		
@@ -158,7 +152,7 @@ function Invoke-SSMChecks {
 				}
 				else {
 					Write-Log -Message "IAM instance profile is not attached to the instance. Skipping the checks for IAM instance profile last update and STS caller identity" -LogLevel "ERROR" 6>> $LogDestination
-					$Output.Add((Test-IAMInstanceProfileCredentialLastUpdate -Token "N/A" -IAMInstanceProfile "N/A" -NoIAMattched $true 6>> $LogDestination)) | Out-Null
+					$Output.Add((Test-IAMInstanceProfileCredentialLastUpdate -Token "N/A" -IAMInstanceProfile "N/A" -NoIAMattached $true 6>> $LogDestination)) | Out-Null
 					$Output.Add((Get-LocalSystemAccountSTSCallerIdentity -ParentDirectoryLocation $ParentDirectory -Skip $true 6>> $LogDestination)) | Out-Null
 				}
 			}	
@@ -184,16 +178,16 @@ function Invoke-SSMChecks {
 	
 		#Check proxy settings if the amazonssmagent is available
 		if ($serviceavalibility -eq 1) {
-			Write-Log -Message "$servicename is available. Going through all proxy checks" 6>> $LogDestination
-			$Output.Add((Get-AgentProxySettings -Key $AgentRegistryPath 6>> $LogDestination)) | Out-Null
+			Write-Log -Message "The service is available. Going through all proxy checks" 6>> $LogDestination
+			$Output.Add((Get-AgentProxySettings 6>> $LogDestination)) | Out-Null
 			$Output.Add((Get-SystemWideEnvironmentVariablesProxy 6>> $LogDestination)) | Out-Null
 			$Output.Add((Get-LocalSystemAccountEnvironmentVariablesProxy 6>> $LogDestination)) | Out-Null
 			$Output.Add((Get-SystemWideProxy 6>> $LogDestination)) | Out-Null
 			$Output.Add((Get-IEProxySettings 6>> $LogDestination)) | Out-Null
 		}
 		else {
-			Write-Log -Message "$servicename is not available. Skipping all proxy checks" -LogLevel "ERROR" 6>> $LogDestination
-			$Output.Add((Get-AgentProxySettings -Key $AgentRegistryPath -Skip $true 6>> $LogDestination)) | Out-Null
+			Write-Log -Message "The service is not available. Skipping all proxy checks" -LogLevel "ERROR" 6>> $LogDestination
+			$Output.Add((Get-AgentProxySettings -Skip $true 6>> $LogDestination)) | Out-Null
 			$Output.Add((Get-SystemWideEnvironmentVariablesProxy -Skip $true 6>> $LogDestination)) | Out-Null
 			$Output.Add((Get-LocalSystemAccountEnvironmentVariablesProxy -Skip $true 6>> $LogDestination)) | Out-Null
 			$Output.Add((Get-SystemWideProxy -Skip $true 6>> $LogDestination)) | Out-Null

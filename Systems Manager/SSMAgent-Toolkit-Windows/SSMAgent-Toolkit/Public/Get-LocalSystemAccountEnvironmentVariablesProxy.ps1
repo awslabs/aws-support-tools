@@ -12,6 +12,7 @@
 #>
 Function Get-LocalSystemAccountEnvironmentVariablesProxy {
     param (
+        [String]$Key = "Registry::HKEY_USERS\.DEFAULT\Environment", #https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables
         [String]$Skip = $false
     )
     
@@ -19,56 +20,22 @@ Function Get-LocalSystemAccountEnvironmentVariablesProxy {
     Write-Log -Message "New check....."
     Write-Log -Message "$check"
 
-    $key = "Registry::HKEY_USERS\.DEFAULT\Environment" #https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables
-
     Write-Log -Message "Checking LocalSystem account user environment variable proxy settings from registry location $key."
     Write-Log -Message "For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables."
     Write-Log -Message "LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints"
 
     if ($Skip -ne $true) {
-        #Check if there is a http_proxy value
-        If (-not (Test-RegistryValue -Path $key -Value 'http_proxy')) {
-            $http_proxy_check = 0
-            $note = "There is no http_proxy configured for LocalSystem account user environment variable proxy."
-            Write-Log -Message "There is no http_proxy configured for LocalSystem account user environment variable proxy."
-        }
-        else {
-            $http_proxy_value = (Get-Item -Path $key).GetValue("http_proxy")
-            $note = "http_proxy = $http_proxy_value."
-            $value = "http_proxy = $http_proxy_value."
-            Write-Log -Message "Checking LocalSystem account user environment variable proxy.http_proxy = $http_proxy_value." -LogLevel "WARN"
-        }
+        $http_proxy_check = New-ProxyOutput -Path $Key -Value 'http_proxy' -SettingName $check
+        $https_proxy_check = New-ProxyOutput -Path $Key -Value 'https_proxy' -SettingName $check
+        $no_proxy_check = New-ProxyOutput -Path $Key -Value 'no_proxy' -SettingName $check
 
-        #Check if there is a https_proxy value
-        If (-not (Test-RegistryValue -Path $key -Value 'https_proxy')) {
-            $https_proxy_check = 0
-            $note += " There is no https_proxy configured for LocalSystem account user environment variable proxy."
-            Write-Log -Message "There is no https_proxy configured for LocalSystem account user environment variable proxy."
-        }
-        else {
-            $https_proxy_value = (Get-Item -Path $key).GetValue("https_proxy")
-            $note += " https_proxy = $https_proxy_value."
-            $value += " https_proxy = $https_proxy_value."
-            Write-Log -Message "Checking LocalSystem account user environment variable proxy.https_proxy = $https_proxy_value." -LogLevel "WARN"
-        }
-
-        #Check if there is a no_proxy value
-        If (-not (Test-RegistryValue -Path $key -Value 'no_proxy')) {
-            $no_proxy_check = 0
-            $note += " There is no no_proxy configured for LocalSystem account user environment variable proxy."
-            Write-Log -Message "There is no no_proxy configured for LocalSystem account user environment variable proxy."
-        }
-        else {
-            $no_proxy_value = (Get-Item -Path $key).GetValue("no_proxy")
-            $note += " no_proxy = $no_proxy_value."
-            $value += " no_proxy = $no_proxy_value."
-            Write-Log -Message "Checking LocalSystem account user environment variable proxy.no_proxy = $no_proxy_value." -LogLevel "WARN"
-        }
-
-        If (($no_proxy_check -eq 0) -and ($https_proxy_check -eq 0) -and ($http_proxy_check -eq 0)) {
+        If (($no_proxy_check[0] -eq $false) -and ($https_proxy_check[0] -eq $false) -and ($http_proxy_check[0] -eq $false)) {
             $value = "N/A"
-            $note = "There is no http_proxy, https_proxy or no_proxy configured for LocalSystem account user environment variable proxy."
-            Write-Log -Message "There is no http_proxy, https_proxy or no_proxy configured for LocalSystem account user environment variable proxy."
+            $note = "There is no http_proxy, https_proxy or no_proxy configured."
+        }
+        else {
+            $value = $http_proxy_check[1] + " " + $https_proxy_check[1] + " " + $no_proxy_check[1]
+            $note = $http_proxy_check[2] + " " + $https_proxy_check[2] + " " + $no_proxy_check[2]
         }
     }
     else {
