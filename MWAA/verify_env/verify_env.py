@@ -911,7 +911,7 @@ if __name__ == '__main__':
     parser.add_argument('--region', type=validation_region, default=boto3.session.Session().region_name,
                         required=False, help="region, Ex: us-east-1")
     parser.add_argument('--profile', type=validation_profile, default='default',
-                        required=False, help="profile, Ex: dev")
+                        required=False, help="AWS CLI profile, Ex: dev")
     args, _ = parser.parse_known_args()
     ENV_NAME = args.envname
     REGION = args.region
