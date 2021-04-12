@@ -17,6 +17,21 @@ This script may identify why.
 - Python3 is required to run this script
 - boto3 1.16.25 or newer
 
+### How to install and run
+```
+pip3 install boto3 --upgrade --user
+git clone https://github.com/awslabs/aws-support-tools.git
+python3 aws-support-tools/MWAA/verify_env/verify_env.py --envname YOUR_ENV_NAME_HERE
+```
+
+#### How can I send the output to a file automatically?
+
+##### Use a redirection operator
+python3 aws-support-tools/MWAA/verify_env/verify_env.py --envname YOUR_ENV_NAME_HERE > output.log
+
+##### Use vscode or codium
+python3 aws-support-tools/MWAA/verify_env/verify_env.py --envname YOUR_ENV_NAME_HERE | code -
+
 ### Logic and api calls
 The following actions will be performed in this order:
 

@@ -157,7 +157,7 @@ def check_iam_permissions(input_env, iam_client):
     for policy in policies:
         policy_arn = policy['PolicyArn']
         policy_version = iam_client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
-        policy_doc = iam_client.get_policy_version(PolicyArn=policy_arn, 
+        policy_doc = iam_client.get_policy_version(PolicyArn=policy_arn,
                                                    VersionId=policy_version)['PolicyVersion']['Document']
         policy_list.append(json.dumps(policy_doc))
     eval_results = []
@@ -615,18 +615,36 @@ def check_nacl(input_subnets, input_subnet_ids, ec2_client):
     print("")
 
 
+def check_vpc_endpoint_private_dns_enabled(vpc_endpnts):
+    '''short method to check if the interface's private dns option is set to true'''
+    for vpc_endpnt in vpc_endpnts:
+        if not vpc_endpnt['PrivateDnsEnabled'] and vpc_endpnt['VpcEndpointType'] == 'Interface':
+            print('VPC endpoint:', vpc_endpnt['VpcEndpointId'], "does not have private dns enabled")
+            print('this means that the public dns name for the service will resolve to its public IP and not')
+            print('the vpc endpoint private ip. You should enabled this for use with MWAA')
+
+
 def check_service_vpc_endpoints(ec2_client, subnets):
     '''
-    should be used if the environment does not have internet access
+    should be used if the environment does not have internet access through NAT Gateway
     '''
+    top_level_domain = "com.amazonaws."
+    service_endpoints = [
+        top_level_domain + REGION + '.airflow.api',
+        top_level_domain + REGION + '.airflow.env',
+        top_level_domain + REGION + '.airflow.ops',
+        top_level_domain + REGION + '.sqs',
+        top_level_domain + REGION + '.ecr.api',
+        top_level_domain + REGION + '.ecr.dkr',
+        top_level_domain + REGION + '.kms',
+        top_level_domain + REGION + '.s3',
+        top_level_domain + REGION + '.monitoring',
+        top_level_domain + REGION + '.logs'
+    ]
     vpc_endpoints = ec2_client.describe_vpc_endpoints(Filters=[
         {
             'Name': 'service-name',
-            'Values': [
-                'com.amazonaws.' + REGION + '.airflow.api',
-                'com.amazonaws.' + REGION + '.airflow.env',
-                'com.amazonaws.' + REGION + '.airflow.ops'
-            ]
+            'Values': service_endpoints
         },
         {
             'Name': 'vpc-id',
@@ -634,20 +652,32 @@ def check_service_vpc_endpoints(ec2_client, subnets):
                 subnets[0]['VpcId']
             ]
         }
-    ])
-    if len(vpc_endpoints['VpcEndpoints']) != 3:
-        print('missing MWAA VPC endpoints(api,env,ops), only found:', len(vpc_endpoints['VpcEndpoints']), '🚫')
-        for endpoint in vpc_endpoints['VpcEndpoints']:
+    ])['VpcEndpoints']
+    # filter by subnet ids here, if the vpc endpoints include the env's subnet ids then check those
+    s_ids = [subnet['SubnetId'] for subnet in subnets]
+    vpc_endpoints = [endpoint for endpoint in vpc_endpoints if all(subnet in s_ids for subnet in
+                     endpoint['SubnetIds'])]
+    if len(vpc_endpoints) != 9:
+        print("The route for the subnets do not have a NAT gateway." +
+              "This suggests vpc endpoints are needed to connect to:")
+        print('s3, ecr, kms, sqs, monitoring, airflow.api, airflow.env, airflow.ops')
+        print("The environment's subnets currently have these endpoints: ")
+        for endpoint in vpc_endpoints:
             print(endpoint['ServiceName'])
+        print("The environment's subnets do not have these endpoints: ")
+        vpc_service_endpoints = [e['ServiceName'] for e in vpc_endpoints]
+        for i, service_endpoint in enumerate(service_endpoints):
+            if service_endpoint not in vpc_service_endpoints:
+                print(service_endpoint)
+        check_vpc_endpoint_private_dns_enabled(vpc_endpoints)
     else:
-        print("The number of VPC endpoints are correct for MWAA(3)", "✅", "\n")
+        print("The route for the subnets do not have a NAT Gateway. However, there are sufficient VPC endpoints")
 
 
 def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
     '''
     method to check and make sure routes have access to the internet if public and subnets are private
     '''
-    access_mode = input_env['WebserverAccessMode']
     # vpc should be the same so I just took the first one
     routes = ec2_client.describe_route_tables(Filters=[
             {
@@ -662,28 +692,25 @@ def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
     # check subnets are private
     print("### Trying to verify if route tables are valid...")
     for route_table in routes['RouteTables']:
+        has_nat = False
         for route in route_table['Routes']:
             if route['State'] == "blackhole":
-                print("Route: ", route_table['RouteTableId'], ' has a state of blackhole')
+                print("Route:", route_table['RouteTableId'], 'has a state of blackhole')
             if 'GatewayId' in route and route['GatewayId'].startswith('igw'):
-                print('route: ', route_table['RouteTableId'],
-                      'has a route to IGW making it public. Needs to be private', '🚫')
+                print('Route:', route_table['RouteTableId'],
+                      'has a route to IGW making the subnet public. Needs to be private', '🚫')
                 print('please review ',
                       'https://docs.aws.amazon.com/mwaa/latest/userguide/vpc-create.html#vpc-create-required')
-                print('\n')
-    if access_mode == "PUBLIC_ONLY":
-        # make sure routes point to a nat gateway
-        for route_table in routes['RouteTables']:
-            nat_check = False
-            for route in route_table['Routes']:
-                if 'NatGatewayId' in route:
-                    nat_check = True
-            if not nat_check:
-                # TODO decide how to handle if not having a NAT is bad or not. needs internet access somehow
-                print('Route Table: ', route_table['RouteTableId'], 'does not have a route to a NAT Gateway', '🚫', '\n')
-                check_service_vpc_endpoints(ec2_client, input_subnets)
-            else:
-                print('Route Table: ', route_table['RouteTableId'], 'does have a route to a NAT Gateway', '✅', '\n')
+                print("")
+            if 'NatGatewayId' in route:
+                has_nat = True
+        if has_nat:
+            print('Route Table:', route_table['RouteTableId'], 'does have a route to a NAT Gateway', '✅')
+        if not has_nat:
+            print('Route Table:', route_table['RouteTableId'], 'does not have a route to a NAT Gateway')
+            print('checking for VPC endpoints to airflow, s3, sqs, kms, ecr, and monitoring')
+            check_service_vpc_endpoints(ec2_client, input_subnets)
+    print("")
 
 
 def check_s3_block_public_access(input_env, s3_client):
@@ -719,7 +746,7 @@ def check_security_groups(input_env, ec2_client):
         ingress = security_group['IpPermissions']
         egress = security_group['IpPermissionsEgress']
         if not ingress and not egress:
-            print('ingress and egress for security group: ', security_group['GroupId'], ' requires at least one rule', 
+            print('ingress and egress for security group: ', security_group['GroupId'], ' requires at least one rule',
                   "🚫")
             valid = False
             break
@@ -755,27 +782,19 @@ def wait_for_ssm_step_one_to_finish(ssm_execution_id, ssm_client):
     while True:
         if execution in ['Success', 'TimedOut', 'Cancelled', 'Failed']:
             break
-        else:
-            time.sleep(5)
-            execution = ssm_client.get_automation_execution(
-                AutomationExecutionId=ssm_execution_id
-            )['AutomationExecution']['StepExecutions'][0]['StepStatus']
+        time.sleep(5)
+        execution = ssm_client.get_automation_execution(
+            AutomationExecutionId=ssm_execution_id
+        )['AutomationExecution']['StepExecutions'][0]['StepStatus']
 
 
-def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm_client):
+def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm_client, mwaa_utilized_services):
     '''
     uses ssm document AWSSupport-ConnectivityTroubleshooter to check connectivity between MWAA's enis
     and a list of services. More information on this document can be found here
     https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-awssupport-connectivitytroubleshooter.html
     '''
     print("### Testing connectivity to the following service endpoints from MWAA enis...")
-    mwaa_utilized_services = ['sqs.' + REGION + '.amazonaws.com',
-                              'ecr.' + REGION + '.amazonaws.com',
-                              'monitoring.' + REGION + '.amazonaws.com',
-                              'kms.' + REGION + '.amazonaws.com',
-                              's3.' + REGION + '.amazonaws.com',
-                              'env.airflow.' + REGION + '.amazonaws.com']
-    print(mwaa_utilized_services)
     vpc = subnets[0]['VpcId']
     security_groups = input_env['NetworkConfiguration']['SecurityGroupIds']
     for service in mwaa_utilized_services:
@@ -785,7 +804,7 @@ def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm
                 # get ENIs used by MWAA
                 enis = get_enis(subnet_ids, vpc, security_groups)
                 if not enis:
-                    print("no enis found for MWAA, exiting test for ", service)
+                    print("no enis found for MWAA, exiting test for ", service['service'])
                     print("please try accessing the airflow UI and then try running this script again")
                     break
                 eni = list(enis.values())[0]
@@ -793,40 +812,27 @@ def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm
                     NetworkInterfaceIds=[eni]
                 )['NetworkInterfaces'][0]['PrivateIpAddress']
                 ssm_execution_id = ''
-                if 'airflow' in service:
-                    ssm_execution_id = ssm_client.start_automation_execution(
-                        DocumentName='AWSSupport-ConnectivityTroubleshooter',
-                        DocumentVersion='$DEFAULT',
-                        Parameters={
-                            'SourceIP': [interface_ip],
-                            'DestinationIP': [get_ip_address(service, input_subnets[0]['VpcId'])],
-                            'DestinationPort': ["5432"],
-                            'SourceVpc': [vpc],
-                            'DestinationVpc': [vpc],
-                            'SourcePortRange': ["0-65535"]
-                        }
-                    )['AutomationExecutionId']
-                else:
-                    ssm_execution_id = ssm_client.start_automation_execution(
-                        DocumentName='AWSSupport-ConnectivityTroubleshooter',
-                        DocumentVersion='$DEFAULT',
-                        Parameters={
-                            'SourceIP': [interface_ip],
-                            'DestinationIP': [get_ip_address(service, input_subnets[0]['VpcId'])],
-                            'DestinationPort': ["443"],
-                            'SourceVpc': [vpc],
-                            'DestinationVpc': [vpc],
-                            'SourcePortRange': ["0-65535"]
-                        }
-                    )['AutomationExecutionId']
+                ssm_execution_id = ssm_client.start_automation_execution(
+                    DocumentName='AWSSupport-ConnectivityTroubleshooter',
+                    DocumentVersion='$DEFAULT',
+                    Parameters={
+                        'SourceIP': [interface_ip],
+                        'DestinationIP': [get_ip_address(service['service'], input_subnets[0]['VpcId'])],
+                        'DestinationPort': [service['port']],
+                        'SourceVpc': [vpc],
+                        'DestinationVpc': [vpc],
+                        'SourcePortRange': ["0-65535"]
+                    }
+                )['AutomationExecutionId']
                 wait_for_ssm_step_one_to_finish(ssm_execution_id, ssm_client)
                 execution = ssm_client.get_automation_execution(
                     AutomationExecutionId=ssm_execution_id
                 )['AutomationExecution']
                 # check if the failure is due to not finding the eni. If it is, retry testing the service again
                 if execution['StepExecutions'][0]['StepStatus'] != 'Failed':
-                    print('Testing connectivity between eni ', eni, " with private ip of ",
-                          interface_ip, " and ", service)
+                    print('Testing connectivity between eni', eni, "with private ip of",
+                          interface_ip, "and", service['service'], "on port", service['port'])
+                    print("Please follow this link to view the results of the test:")
                     print("https://console.aws.amazon.com/systems-manager/automation/execution/" + ssm_execution_id +
                           "?REGION=" + REGION + "\n")
                     break
@@ -836,23 +842,22 @@ def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm
 
 
 def check_for_failing_logs(loggroups, logs_client):
-    '''look for any failing logs from CloudWatch in the past day'''
-    print("### Checking CloudWatch logs for any errors less than 1 day old")
+    '''look for any failing logs from CloudWatch in the past hour'''
+    print("### Checking CloudWatch logs for any errors less than 1 hour old")
     now = int(time.time() * 1000)
-    past_day = now - 86400000
-    log_events = []
+    past_day = now - 3600000
+    print('Found the following failing logs in cloudwatch: ')
     for log in loggroups:
         events = logs_client.filter_log_events(
             logGroupName=log['logGroupName'],
-            startTime=now,
-            endTime=past_day,
+            startTime=past_day,
+            endTime=now,
             filterPattern='?ERROR ?Error ?error ?traceback ?Traceback ?exception ?Exception ?fail ?Fail'
         )['events']
         events = sorted(events, key=lambda i: i['timestamp'])
+        print('Log group: ', log['logGroupName'])
         for event in events:
-            log_events.append(event['timestamp'] + " " + event['message'])
-    print('Found the following failing logs in cloudwatch: ')
-    print(*log_events, sep="\n")
+            print(str(event['timestamp']) + " " + event['message'], end='')
 
 
 def print_err_msg(c_err):
@@ -860,6 +865,38 @@ def print_err_msg(c_err):
     print('Error Message: {}'.format(c_err.response['Error']['Message']))
     print('Request ID: {}'.format(c_err.response['ResponseMetadata']['RequestId']))
     print('Http code: {}'.format(c_err.response['ResponseMetadata']['HTTPStatusCode']))
+
+
+def get_mwaa_utilized_services(ec2_client, vpc):
+    '''return an array objects for the services checking for ecr.dks and if it exists add it to the array'''
+    top_level_domain = '.amazonaws.com'
+    mwaa_utilized_services = [{"service": 'sqs.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 'api.ecr.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 'monitoring.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 'kms.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 's3.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 'env.airflow.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 'env.airflow.' + REGION + top_level_domain, "port": "5432"},
+                              {"service": 'ops.airflow.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 'api.airflow.' + REGION + top_level_domain, "port": "443"},
+                              {"service": 'logs.' + REGION + top_level_domain, "port": "443"}]
+    ecr_dks_endpoint = ec2_client.describe_vpc_endpoints(Filters=[
+        {
+            'Name': 'service-name',
+            'Values': ['com.amazonaws.us-east-1.ecr.dkr']
+        },
+        {
+            'Name': 'vpc-id',
+            'Values': [vpc]
+        },
+        {
+            'Name': 'vpc-endpoint-type',
+            'Values': ['Interface']
+        }
+    ])['VpcEndpoints']
+    if ecr_dks_endpoint:
+        mwaa_utilized_services.append({"service": 'dkr.ecr.' + REGION + top_level_domain, "port": "443"})
+    return mwaa_utilized_services
 
 
 if __name__ == '__main__':
@@ -874,7 +911,7 @@ if __name__ == '__main__':
     parser.add_argument('--region', type=validation_region, default=boto3.session.Session().region_name,
                         required=False, help="region, Ex: us-east-1")
     parser.add_argument('--profile', type=validation_profile, default='default',
-                        required=False, help="profile, Ex: dev")
+                        required=False, help="AWS CLI profile, Ex: dev")
     args, _ = parser.parse_known_args()
     ENV_NAME = args.envname
     REGION = args.region
@@ -896,7 +933,8 @@ if __name__ == '__main__':
         check_routes(env, subnets, subnet_ids, ec2)
         check_s3_block_public_access(env, s3)
         check_security_groups(env, ec2)
-        check_connectivity_to_dep_services(env, subnets, ec2, ssm)
+        mwaa_services = get_mwaa_utilized_services(ec2, subnets[0]['VpcId'])
+        check_connectivity_to_dep_services(env, subnets, ec2, ssm, mwaa_services)
         check_for_failing_logs(log_groups, logs)
     except ClientError as client_error:
         if client_error.response['Error']['Code'] == 'LimitExceededException':
