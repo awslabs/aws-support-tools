@@ -1,6 +1,19 @@
 import argparse
+import boto3
+import os
 import pytest
+
+from moto import mock_s3
 from verify_env import verify_env
+
+@pytest.fixture
+def env_info():
+    '''
+    Create the minimal env info needed for testing.
+    At the moment only s3 public access tests are using this fixture
+    '''
+    return {'SourceBucketArn': TEST_BUCKET_ARN,
+            'Arn': TEST_ACCOUNT_ARN}
 
 
 def test_verify_boto3():
@@ -105,7 +118,8 @@ def test_validate_profile():
 
 
 def test_check_ingress_acls():
-    ''' goes through the following scenarios
+    '''
+    Goes through the following scenarios
     * if no acls are passed
     * if there is an allow
     * if there is a deny but no allow
@@ -147,7 +161,8 @@ def test_check_ingress_acls():
 
 
 def test_check_egress_acls():
-    ''' goes through the following scenarios
+    '''
+    Goes through the following scenarios
     * if no acls are passed
     * if there is an allow
     * if there is a deny but no allow
@@ -185,3 +200,93 @@ def test_check_egress_acls():
     ]
     result = verify_env.check_egress_acls(acls, dest_port)
     assert not result
+
+# S3 public access tests
+
+TEST_BUCKET_NAME = 'TestBucket'
+TEST_BUCKET_ARN = 'arn:aws:s3:::' + TEST_BUCKET_NAME
+TEST_ACCOUNT_REGION = 'us-east-1'
+TEST_ACCOUNT_ID = os.getenv('MOTO_ACCOUNT_ID')
+assert TEST_ACCOUNT_ID, "Please export a moto account id, see README for details"
+TEST_ACCOUNT_PARTITION = 'aws'
+TEST_ACCOUNT_ARN = ('arn:{partition}:airflow:{region}:{account_id}:environment/TestEnv'
+                    .format(region=TEST_ACCOUNT_REGION,
+                            account_id=TEST_ACCOUNT_ID,
+                            partition=TEST_ACCOUNT_PARTITION))
+# Configuration for test cases to be iterated through by pytest.mark.parameterize.
+# Each test case includes the settings for bucket and account level public
+# access config (True=public access is blocked, False=not blocked, None=no config is set
+# at all) as well as the expected output to compare with.
+# Public access must be blocked by at least one of either bucket or account, if
+# not, the test is a failure case.
+TEST_CASES = [
+    # Happy cases
+    (True, True, verify_env.S3_CHECK_SUCCESS_MSG),
+    (True, False, verify_env.S3_CHECK_SUCCESS_MSG),
+    (True, None, verify_env.S3_CHECK_SUCCESS_MSG),
+    (False, True, verify_env.S3_CHECK_SUCCESS_MSG),
+    (None, True, verify_env.S3_CHECK_SUCCESS_MSG),
+    # Unhappy cases
+    (False, False, verify_env.S3_CHECK_FAILURE_MSG),
+    (None, False, verify_env.S3_CHECK_FAILURE_MSG),
+    (False, None, verify_env.S3_CHECK_FAILURE_MSG),
+    (None, None, verify_env.S3_CHECK_FAILURE_MSG)
+]
+
+
+def create_public_access_config(is_blocked):
+    return {
+        'BlockPublicAcls': is_blocked,
+        'IgnorePublicAcls': is_blocked,
+        'BlockPublicPolicy': is_blocked,
+        'RestrictPublicBuckets': is_blocked
+    }
+
+
+@pytest.fixture(scope="function")
+def init_s3():
+    '''
+    Init the "virtual" moto aws account. Create the buckets and set access
+    permisions
+    '''
+    @mock_s3
+    def _init_s3(is_bucket_access_blocked, is_account_access_blocked):
+        s3_client = boto3.client('s3', region_name=TEST_ACCOUNT_REGION)
+        s3_client.create_bucket(Bucket=TEST_BUCKET_NAME)
+
+        if is_bucket_access_blocked is not None:
+            s3_client.put_public_access_block(
+                Bucket=TEST_BUCKET_NAME,
+                PublicAccessBlockConfiguration=create_public_access_config(
+                    is_blocked=is_bucket_access_blocked
+                )
+            )
+
+        s3_control_client = boto3.client('s3control', region_name=TEST_ACCOUNT_REGION)
+        if is_account_access_blocked is not None:
+            s3_control_client.put_public_access_block(
+                AccountId=TEST_ACCOUNT_ID,
+                PublicAccessBlockConfiguration=create_public_access_config(
+                    is_blocked=is_account_access_blocked
+                )
+            )
+
+        return s3_client, s3_control_client
+
+    return _init_s3
+
+
+@mock_s3
+# Iterate over test cases defined above
+@pytest.mark.parametrize("is_bucket_access_blocked,is_account_access_blocked,expected", TEST_CASES)
+def test_s3_public_access_block(init_s3, env_info, capfd, is_bucket_access_blocked,
+                                is_account_access_blocked, expected):
+    s3_client, s3_control_client = init_s3(is_bucket_access_blocked=is_bucket_access_blocked,
+                                           is_account_access_blocked=is_account_access_blocked)
+
+    verify_env.check_s3_block_public_access(env_info,
+                                            s3_client,
+                                            s3_control_client)
+    out, _ = capfd.readouterr()
+
+    assert expected.format(bucket_arn=TEST_BUCKET_ARN) in out

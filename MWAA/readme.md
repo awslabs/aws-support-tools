@@ -195,5 +195,12 @@ Found the following failing logs in cloudwatch:
 
 ### Development
 
+#### Dependencies
+The unit tests depend on the following Python modules, please install them with pip3 before proceeding:
+- [pytest](https://docs.pytest.org/en/stable/usage.html#calling-pytest-through-python-m-pytest) a unit testing framework.
+- [moto mock](http://docs.getmoto.org/en/latest/) a library for mocking the APIs of AWS services.
+
 #### Unit tests
-run the unit tests using the command [`python3 -m pytest`](https://docs.pytest.org/en/stable/usage.html#calling-pytest-through-python-m-pytest)
+Run the unit tests using the command: `MOTO_ACCOUNT_ID=123456789123 python3 -m pytest`
+
+Note: the account id above is used to create a "virtual" Moto account. It can be any id, but one *must* be provided.

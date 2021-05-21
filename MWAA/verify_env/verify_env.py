@@ -31,6 +31,9 @@ from boto3.session import Session
 ENV_NAME = ""
 REGION = ""
 
+S3_CHECK_SUCCESS_MSG = 's3 bucket, {bucket_arn}, or account blocks public access ✅'
+S3_CHECK_FAILURE_MSG = 's3 bucket, {bucket_arn}, or account does NOT block public access 🚫'
+
 
 def verify_boto3(boto3_current_version):
     '''
@@ -50,6 +53,14 @@ def verify_boto3(boto3_current_version):
         elif num1 < num2:
             return False
     return False
+
+
+def get_account_id(env_info):
+    '''
+    Given the environment metadata, fetch the account id from the
+    environment ARN
+    '''
+    return env_info['Arn'].split(":")[4]
 
 
 def validate_envname(env_name):
@@ -149,7 +160,7 @@ def get_enis(input_subnet_ids, vpc, security_groups):
 def check_iam_permissions(input_env, iam_client):
     '''uses iam simulation to check permissions of the role assigned to the environment'''
     print('### Checking the IAM execution role', input_env['ExecutionRoleArn'], 'using iam policy simulation')
-    account_num = input_env['Arn'].split(":")[4]
+    account_id = get_account_id(input_env)
     policies = iam_client.list_attached_role_policies(
         RoleName=input_env['ExecutionRoleArn'].split("/")[-1]
     )['AttachedPolicies']
@@ -205,7 +216,7 @@ def check_iam_permissions(input_env, iam_client):
                 "logs:GetLogGroupFields"
             ],
             ResourceArns=[
-                "arn:aws:logs:" + REGION + ":" + account_num + ":log-group:airflow-" + ENV_NAME + "-*"
+                "arn:aws:logs:" + REGION + ":" + account_id + ":log-group:airflow-" + ENV_NAME + "-*"
             ]
         )['EvaluationResults']
         eval_results = eval_results + iam_client.simulate_custom_policy(
@@ -360,7 +371,7 @@ def check_iam_permissions(input_env, iam_client):
                 "logs:GetLogGroupFields"
             ],
             ResourceArns=[
-                "arn:aws:logs:" + REGION + ":" + account_num + ":log-group:airflow-" + ENV_NAME + "-*"
+                "arn:aws:logs:" + REGION + ":" + account_id + ":log-group:airflow-" + ENV_NAME + "-*"
             ]
         )['EvaluationResults']
         eval_results = eval_results + iam_client.simulate_custom_policy(
@@ -713,18 +724,39 @@ def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
     print("")
 
 
-def check_s3_block_public_access(input_env, s3_client):
-    '''check s3 bucket and make sure "block public access" is enabled'''
-    print("### Verifying 'block public access' is enabled on the s3 bucket...")
-    bucket = input_env['SourceBucketArn']
-    public_access = s3_client.get_public_access_block(
-        Bucket=bucket.split(':')[-1]
-    )['PublicAccessBlockConfiguration']
-    for access in public_access:
-        if not public_access[access]:
-            print('s3 bucket', bucket, 'needs to block public access on permission: ', access, "🚫")
-        else:
-            print('s3 bucket', bucket, 'blocks public access:', access, "✅")
+def _check_access_blocked(block_config_type, client, **request_kwargs):
+    '''
+    Checks whether public access is blocked for <block_config_type> (either
+    bucket or account) using the client and args passed in.
+    '''
+    print('Checking if public access is blocked at the {config_type} level'.format(config_type=block_config_type))
+    try:
+        public_access_block = client.get_public_access_block(**request_kwargs)
+    except ClientError as client_error:
+        # The same client error is thrown for both account level and bucket level configs
+        print('The {config_type} level access block config is not set'.format(config_type=block_config_type))
+        if client_error.response['Error']['Code'] == 'NoSuchPublicAccessBlockConfiguration':
+            # If the config isn't set then act as if it's public
+            return False
+        # if it's any other exception scenario raise so that the user is notified
+        raise
+
+    # If we successfully got a config, check if public access is blocked or not
+    return public_access_block['PublicAccessBlockConfiguration']['BlockPublicAcls']
+
+def check_s3_block_public_access(input_env, s3_client, s3_control_client):
+    '''check s3 bucket or account and make sure "block public access" is enabled'''
+    print("### Verifying 'block public access' is enabled on the s3 bucket or account...")
+    account_id = get_account_id(input_env)
+    bucket_arn = input_env['SourceBucketArn']
+    bucket_name = bucket_arn.split(':')[-1]
+    public_access_block = None
+
+    if any([_check_access_blocked('bucket', s3_client, Bucket=bucket_name),
+            _check_access_blocked('account', s3_control_client, AccountId=account_id)]):
+        print(S3_CHECK_SUCCESS_MSG.format(bucket_arn=bucket_arn))
+    else:
+        print(S3_CHECK_FAILURE_MSG.format(bucket_arn=bucket_arn))
 
 
 def check_security_groups(input_env, ec2_client):
@@ -920,6 +952,7 @@ if __name__ == '__main__':
         boto3.setup_default_session(profile_name=PROFILE)
         ec2 = boto3.client('ec2', region_name=REGION)
         s3 = boto3.client('s3', region_name=REGION)
+        s3control = boto3.client('s3control', region_name=REGION)
         logs = boto3.client('logs', region_name=REGION)
         kms = boto3.client('kms', region_name=REGION)
         cloudtrail = boto3.client('cloudtrail', region_name=REGION)
@@ -931,7 +964,7 @@ if __name__ == '__main__':
         log_groups = check_log_groups(env, ENV_NAME, logs, cloudtrail)
         check_nacl(subnets, subnet_ids, ec2)
         check_routes(env, subnets, subnet_ids, ec2)
-        check_s3_block_public_access(env, s3)
+        check_s3_block_public_access(env, s3, s3control)
         check_security_groups(env, ec2)
         mwaa_services = get_mwaa_utilized_services(ec2, subnets[0]['VpcId'])
         check_connectivity_to_dep_services(env, subnets, ec2, ssm, mwaa_services)
