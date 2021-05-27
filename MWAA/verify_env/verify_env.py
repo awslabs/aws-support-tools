@@ -157,6 +157,17 @@ def get_enis(input_subnet_ids, vpc, security_groups):
     return enis
 
 
+def get_inline_policies(iam_client, role_arn):
+    """
+    Get inline policies in for a role
+    """
+    inline_policies = iam_client.list_role_policies(RoleName=role_arn)
+    return [
+            json.dumps(iam_client.get_role_policy(RoleName=role_arn, PolicyName=policy).get("PolicyDocument", ))
+            for policy in inline_policies.get("PolicyNames", [])
+    ]
+
+
 def check_iam_permissions(input_env, iam_client):
     '''uses iam simulation to check permissions of the role assigned to the environment'''
     print('### Checking the IAM execution role', input_env['ExecutionRoleArn'], 'using iam policy simulation')
@@ -172,6 +183,8 @@ def check_iam_permissions(input_env, iam_client):
                                                    VersionId=policy_version)['PolicyVersion']['Document']
         policy_list.append(json.dumps(policy_doc))
     eval_results = []
+    # Add inline policies
+    policy_list.extend(get_inline_policies(iam_client, input_env['ExecutionRoleArn'].split("/")[-1]))
     if "KmsKey" in input_env:
         print('Found Customer managed CMK')
         eval_results = eval_results + iam_client.simulate_custom_policy(
