@@ -494,7 +494,7 @@ def prompt_user_and_print_info(input_env_name, ec2_client):
     )['Environment']
     network_subnet_ids = environment['NetworkConfiguration']['SubnetIds']
     network_subnets = ec2_client.describe_subnets(SubnetIds=network_subnet_ids)['Subnets']
-    WebserverAccessMode = ['Environment']['WebserverAccessMode']
+    WebserverAccessMode = environment['Environment']['WebserverAccessMode']
     for key in environment.keys():
         print(key, ': ', environment[key])
     print('VPC: ', network_subnets[0]['VpcId'], "\n")
