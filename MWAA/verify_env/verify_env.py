@@ -494,10 +494,11 @@ def prompt_user_and_print_info(input_env_name, ec2_client):
     )['Environment']
     network_subnet_ids = environment['NetworkConfiguration']['SubnetIds']
     network_subnets = ec2_client.describe_subnets(SubnetIds=network_subnet_ids)['Subnets']
+    WebserverAccessMode = ['Environment']['WebserverAccessMode']
     for key in environment.keys():
         print(key, ': ', environment[key])
     print('VPC: ', network_subnets[0]['VpcId'], "\n")
-    return environment, network_subnets, network_subnet_ids
+    return environment, network_subnets, network_subnet_ids, WebserverAccessMode
 
 
 def check_kms_key_policy(input_env, kms_client):
@@ -698,7 +699,7 @@ def check_service_vpc_endpoints(ec2_client, subnets):
         print("The route for the subnets do not have a NAT Gateway. However, there are sufficient VPC endpoints")
 
 
-def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
+def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client, input_access_mode):
     '''
     method to check and make sure routes have access to the internet if public and subnets are private
     '''
@@ -732,6 +733,10 @@ def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
             print('Route Table:', route_table['RouteTableId'], 'does have a route to a NAT Gateway', '✅')
         if not has_nat:
             print('Route Table:', route_table['RouteTableId'], 'does not have a route to a NAT Gateway')
+            print('checking for VPC endpoints to airflow, s3, sqs, kms, ecr, and monitoring')
+            check_service_vpc_endpoints(ec2_client, input_subnets)
+        if input_access_mode == 'PRIVATE_ONLY':
+            print('MWAA WebServer AccessMode: Web Server Access is Private Only')
             print('checking for VPC endpoints to airflow, s3, sqs, kms, ecr, and monitoring')
             check_service_vpc_endpoints(ec2_client, input_subnets)
     print("")
@@ -971,12 +976,12 @@ if __name__ == '__main__':
         cloudtrail = boto3.client('cloudtrail', region_name=REGION)
         ssm = boto3.client('ssm', region_name=REGION)
         iam = boto3.client('iam', region_name=REGION)
-        env, subnets, subnet_ids = prompt_user_and_print_info(ENV_NAME, ec2)
+        env, subnets, subnet_ids, access_mode = prompt_user_and_print_info(ENV_NAME, ec2)
         check_iam_permissions(env, iam)
         check_kms_key_policy(env, kms)
         log_groups = check_log_groups(env, ENV_NAME, logs, cloudtrail)
         check_nacl(subnets, subnet_ids, ec2)
-        check_routes(env, subnets, subnet_ids, ec2)
+        check_routes(env, subnets, subnet_ids, ec2, access_mode)
         check_s3_block_public_access(env, s3, s3control)
         check_security_groups(env, ec2)
         mwaa_services = get_mwaa_utilized_services(ec2, subnets[0]['VpcId'])
