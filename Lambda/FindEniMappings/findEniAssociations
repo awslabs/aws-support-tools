@@ -109,7 +109,7 @@ then
       echo "$each" | jq -r '.Arn'
     done
   else
-    printf "\nNo manual changes to the ENI found. If this ENI is not deleted automatically in the next 24 hours then it may be 'stuck'. If the ENI will not allow you to delete it manually after 24 hours then please contact AWS support and send them the output of this script.\n"
+    printf "\nNo manual changes to the ENI found. ENIs may take up to 20 minutes to be deleted. If this ENI is not deleted automatically in the next 24 hours then it may be 'stuck'. If IAM roles associated with a VPC Lambda function are deleted before the ENI is deleted, Lambda will not be able to complete the clean-up of the ENI. If the ENI will not allow you to delete it manually after 24 hours then please contact AWS support and send them the output of this script.\n"
   fi
 else
   printf "\nThe following function version(s) use the same subnet and security groups as "${ENI}". They will need to be disassociated/deleted before Lambda will clean up this ENI:\n"
