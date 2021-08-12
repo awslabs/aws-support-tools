@@ -31,6 +31,11 @@ case $key in
   shift # past argument
   shift # past value
   ;;
+  --profile)
+  PROFILE="$2"
+  shift # past argument
+  shift # past value
+  ;;
 esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
@@ -50,8 +55,16 @@ then
   exit 1
 fi
 
+# Set profile options while calling aws client if --profile is passed while calling the scriot
+if [ -z $PROFILE ] ;
+then
+ PROFILE_OPT=""
+else
+ PROFILE_OPT="--profile ${PROFILE}"
+fi
+
 # search for the ENI to get the subnet and security group(s) it uses
-METADATA="$(aws ec2 describe-network-interfaces --network-interface-ids ${ENI} --filters Name=network-interface-id,Values=${ENI} --region ${REGION} --output json --query 'NetworkInterfaces[0].{Subnet:SubnetId,SecurityGroups:Groups[*].GroupId}')"
+METADATA="$(aws ec2 describe-network-interfaces --network-interface-ids ${ENI} --filters Name=network-interface-id,Values=${ENI} --region ${REGION} {PROFILE_OPT} --output json --query 'NetworkInterfaces[0].{Subnet:SubnetId,SecurityGroups:Groups[*].GroupId}')"
 
 read Subnet < <(echo $METADATA | jq -r '.Subnet')
 SecurityGroups=()
@@ -66,7 +79,7 @@ echo "Found "${ENI}" with "$Subnet" using Security Groups" ${SortedSGs[@]}
 echo "Searching for Lambda function versions using "$Subnet" and Security Groups" ${SortedSGs[@]}"..."
 
 # Get all the Lambda functions in an account that are using the same subnet, including versions
-Response="$(aws lambda list-functions --function-version ALL --region ${REGION} --output json --query 'Functions[?VpcConfig!=`null` && VpcConfig.SubnetIds!=`[]`] | [].{Arn:FunctionArn, Subnets:VpcConfig.SubnetIds, SecurityGroups: VpcConfig.SecurityGroupIds} | [?contains(Subnets, `'$Subnet'`) == `true`]')"
+Response="$(aws lambda list-functions --function-version ALL --region ${REGION} ${PROFILE_OPT} --output json --query 'Functions[?VpcConfig!=`null` && VpcConfig.SubnetIds!=`[]`] | [].{Arn:FunctionArn, Subnets:VpcConfig.SubnetIds, SecurityGroups: VpcConfig.SecurityGroupIds} | [?contains(Subnets, `'$Subnet'`) == `true`]')"
 Functions=()
 for row in $(echo $Response | jq -c -r '.[]')
 do
@@ -100,7 +113,7 @@ done
 if [ ${#Results[@]} -eq 0 ]; # if we didn't find anything then we need to check if the ENI was modified, as Lambda will still be using it, even if the SGs no longer match
 then
   printf "No functions or versions found with this subnet/security group combination. Searching for manual changes made to the ENI...\n"
-  Changes="$(aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=ModifyNetworkInterfaceAttribute --region ${REGION} --output json --query 'Events[] | [?contains(CloudTrailEvent, `'$ENI'`) == `true` && contains(CloudTrailEvent, `groupId`) == `true` && contains(CloudTrailEvent, `errorMessage`) == `false`]')"
+  Changes="$(aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=ModifyNetworkInterfaceAttribute --region ${REGION} {PROFILE_OPT} --output json --query 'Events[] | [?contains(CloudTrailEvent, `'$ENI'`) == `true` && contains(CloudTrailEvent, `groupId`) == `true` && contains(CloudTrailEvent, `errorMessage`) == `false`]')"
   if [ "$(echo $Changes | jq -r 'length')" -gt 0 ]
   then
     printf "\nChanges were made to this ENI's security group outside of the Lambda control plane. Any Lambda function that pointed to this ENI originally will still be using it, even with changes on the ENI side.\n\nThe following functions share the same subnet as this ENI. Any of them that are will need to be disassociated/deleted before Lambda will clean up this ENI. Each of these could potentially be using this ENI:\n"
