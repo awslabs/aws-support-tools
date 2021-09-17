@@ -7,8 +7,8 @@
     Test-IAMInstanceProfile -Token $token -NoMetadataAccess $false -ManagedInstance $false
   .INPUTS
     $Token
-    $NoMetadataAccess = $false,
-    $ManagedInstance = $false.
+    $NoMetadataAccess = Switch to skip this function if there is no metadata access.
+    $ManagedInstance = Switch to skip this function if the instance registered as hybrid instance.
   .OUTPUTS                                                                            
     Return the IAM instance profile.
 #>
@@ -17,20 +17,20 @@ Function Test-IAMInstanceProfile {
   [CmdletBinding()]
   param (
     [String]$Token,
-    [String]$NoMetadataAccess = $false,
-    [String]$ManagedInstance = $false
+    [Switch]$NoMetadataAccess,
+    [Switch]$ManagedInstance
   )
 
   $check = "IAM instance profile"
   Write-Log -Message "New check....."
   Write-Log -Message "$check"
     
-  if (($NoMetadataAccess -eq $true)) {
+  if ($NoMetadataAccess) {
     $value = "Skip"
     $note = "This test skipped since the EC2 instance metadata is not accessible"
     Write-Log -Message "Unable to retrieve the IAM instance profile from the EC2 instance metadata" -LogLevel "ERROR"
   }
-  elseif (($ManagedInstance -eq $true)) {
+  elseif ($ManagedInstance) {
     $value = "Skip"
     $note = "This test skipped since this server configured as Managed(hybrid) Instance"
     Write-Log -Message "Get the IAMInstanceProfile test skipped since this server configured as Managed(hybrid) Instance" -LogLevel "Info"

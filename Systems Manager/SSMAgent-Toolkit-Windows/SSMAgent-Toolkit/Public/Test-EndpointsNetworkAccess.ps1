@@ -8,7 +8,7 @@
   .INPUTS
 	Endpoint
     Region
-    Skip = Default is false. This script will be skipped if the region can't be retrieved.
+    Skip = Switch to skip this function if the region can't be retrieved.
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 #>
@@ -18,7 +18,7 @@ Function Test-EndpointsNetworkAccess {
     param (
         [String]$Endpoint,
         [String]$Region,
-        [String]$Skip = $false
+        [Switch]$Skip
     )
 
     begin {
@@ -31,7 +31,7 @@ Function Test-EndpointsNetworkAccess {
 
     process {
      
-        if ($Skip -ne $true) {
+        if (-not ($Skip)) {
             try {
                 # Sample failed response
                 # ComputerName           : amazon.com

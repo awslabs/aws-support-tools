@@ -6,21 +6,21 @@
   .Example
     Get-SystemWideProxy
   .INPUTS
-    Skip = Default is false. This script will be skipped if the agent is not installed.
+    Skip = Switch to skip this function if the agent is not installed.
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 #>
 Function Get-SystemWideProxy {
   [CmdletBinding()]
   param (
-    [String]$Skip = $false
+    [Switch]$Skip
   )
     
   $check = "WinHTTP system-wide proxy"
   Write-Log -Message "New check....."
   Write-Log -Message "$check"
   
-  if ($Skip -ne $true) {
+  if (-not ($Skip)) {
     # based on https://gist.github.com/itn3000/b414da5337b7d229d812ec3ddcffb446
     $MethodDefinition = @'
 using System.Runtime.InteropServices;

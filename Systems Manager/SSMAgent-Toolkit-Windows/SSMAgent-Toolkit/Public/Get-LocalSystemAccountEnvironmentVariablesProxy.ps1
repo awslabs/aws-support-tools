@@ -6,14 +6,14 @@
   .Example
     Get-LocalSystemAccountEnvironmentVariablesProxy
   .INPUTS
-    Skip = Default is false. This script will be skipped if the agent is not installed.
+    Skip = Switch to skip this function if the agent is not installed.
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 #>
 Function Get-LocalSystemAccountEnvironmentVariablesProxy {
     param (
         [String]$Key = "Registry::HKEY_USERS\.DEFAULT\Environment", #https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables
-        [String]$Skip = $false
+        [Switch]$Skip
     )
     
     $check = "LocalSystem account user environment variable proxy"
@@ -24,7 +24,7 @@ Function Get-LocalSystemAccountEnvironmentVariablesProxy {
     Write-Log -Message "For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables."
     Write-Log -Message "LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints"
 
-    if ($Skip -ne $true) {
+    if (-not ($Skip)) {
         $http_proxy_check = New-ProxyOutput -Path $Key -Value 'http_proxy' -SettingName $check
         $https_proxy_check = New-ProxyOutput -Path $Key -Value 'https_proxy' -SettingName $check
         $no_proxy_check = New-ProxyOutput -Path $Key -Value 'no_proxy' -SettingName $check

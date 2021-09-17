@@ -4,10 +4,10 @@
   .Description
     This is a public function used to check the if the the service running state.
   .Example
-    Get-ServiceStatus
+    Get-ServiceStatus -ServiceStatus "Running"
   .INPUTS
     ServiceName
-    Skip = Default is false. This script will be skipped if the service is not available.
+    ServiceStatus
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 #>

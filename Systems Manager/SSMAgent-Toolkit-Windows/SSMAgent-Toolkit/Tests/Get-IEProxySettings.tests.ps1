@@ -64,7 +64,7 @@ Describe "Get-IEProxySettings" {
         } 
 
         It 'When skipping Get-IEProxySettings' {
-            $output = Get-IEProxySettings -Skip $true
+            $output = Get-IEProxySettings -Skip
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"

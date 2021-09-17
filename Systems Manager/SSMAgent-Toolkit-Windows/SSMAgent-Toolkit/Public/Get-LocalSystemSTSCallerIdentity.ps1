@@ -5,10 +5,10 @@
     This is a public function will create a schedule task under system account to make GetCallerIdentity api call - https://docs.aws.amazon.com/STS/latest/APIReference/API_GetCallerIdentity.html. This to returns the IAM user or role arn whose credentials are used to call the operation under LocalSystem account.
   .Example
     Get-LocalSystemAccountSTSCallerIdentity -ParentDirectoryLocation "C:\SSMAgent-Toolkit"
-    Get-LocalSystemAccountSTSCallerIdentity -ParentDirectoryLocation "C:\SSMAgent-Toolkit" -Skip $true
+    Get-LocalSystemAccountSTSCallerIdentity -ParentDirectoryLocation "C:\SSMAgent-Toolkit" -Skip
   .INPUTS
-    $ParentDirectoryLocation - The location of the current module
-    $Skip - If this test would be skipped
+    $ParentDirectoryLocation = The location of the current module.
+    $Skip = Switch to skip this function if neither metadata or registration is accessible.
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 #>
@@ -16,14 +16,14 @@ Function Get-LocalSystemAccountSTSCallerIdentity {
   [CmdletBinding()]
   param (
     [String]$ParentDirectoryLocation,
-    [String]$Skip = $false
+    [Switch]$Skip
   )
     
   $check = "LocalSystem account user API assume role"
   Write-Log -Message "New check....."
   Write-Log -Message "$check"
 
-  if ($Skip -ne $true) {
+  if (-not ($Skip)) {
     try {
       $OutputPath = "$ParentDirectoryLocation\temp\STSCallerIdentity.xml"
 

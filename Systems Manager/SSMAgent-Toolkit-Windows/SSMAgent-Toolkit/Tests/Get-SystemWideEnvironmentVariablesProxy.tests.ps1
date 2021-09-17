@@ -107,7 +107,7 @@ Describe "Get-SystemWideEnvironmentVariablesProxy" {
         }
 
         It 'When skipping Get-SystemWideEnvironmentVariablesProxy' {
-            $output = Get-SystemWideEnvironmentVariablesProxy -Skip $true
+            $output = Get-SystemWideEnvironmentVariablesProxy -Skip
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"

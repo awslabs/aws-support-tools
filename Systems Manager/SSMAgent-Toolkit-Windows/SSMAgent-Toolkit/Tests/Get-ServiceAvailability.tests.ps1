@@ -19,7 +19,7 @@ Describe "Get-ServiceAvailability" {
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Fail"
-            $output.Note | Should -Be "Please make sure the SSM agent is installed."
+            $output.Note | Should -Be "Please make sure the SSM agent is installed"
         }  
     } 
     AfterAll {    

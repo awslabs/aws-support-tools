@@ -6,7 +6,7 @@
   .Example
     Get-IEProxySettings
   .INPUTS
-    Skip = Default is false. This script will be skipped if the agent is not installed.
+    Skip = Switch to skip this function if the agent is not installed.
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 #>
@@ -14,7 +14,7 @@ Function Get-IEProxySettings {
   [CmdletBinding()]
   param (
     [String]$Key = "Registry::HKEY_USERS\.DEFAULT\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings",
-    [String]$Skip = $false
+    [Switch]$Skip
   )
   
   $check = "LocalSystem account user Internet Explorer proxy"
@@ -25,7 +25,7 @@ Function Get-IEProxySettings {
   Write-Log -Message "For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows."
   Write-Log -Message "IE proxy settings mainly used to enable PowerShell to have access to the internet (not Windows Update service)"
 
-  if ($Skip -ne $true) {
+  if (-not ($Skip)) {
     If (((Get-Item -Path $Key).GetValue("ProxyEnable") -eq 0) -Or (-not (Test-RegistryValue -Path $Key -Value 'ProxyEnable'))) {
       $value = "N/A"
       $note = "There is no ProxyServer configured. Note: If the instance behind a proxy and PowerShell via run command has a command which needs access to the internet would fail if there are no Internet Explorer proxy settings."

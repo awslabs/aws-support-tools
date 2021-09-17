@@ -7,7 +7,7 @@
     Get-ServiceAccount
   .INPUTS
     ServiceName
-    Skip = Default is false. This script will be skipped if the service is not available.
+    Skip = Switch to skip this function if the service is not available.
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 #>
@@ -15,7 +15,7 @@ Function Get-ServiceAccount {
   [CmdletBinding()]
   param (
     [String]$ServiceName = "amazonssmagent",
-    [String]$Skip = $false
+    [Switch]$Skip
   )
   $check = "Amazon SSM service account"
   Write-Log -Message "New check....."
@@ -23,7 +23,7 @@ Function Get-ServiceAccount {
 
   $ServiceLogonAsAccount = (Get-WmiObject Win32_Service -Filter "Name='$ServiceName'").StartName
   
-  if ($Skip -ne $true) {
+  if (-not ($Skip)) {
     if ($ServiceLogonAsAccount -ne "LocalSystem") {
       $value = $ServiceLogonAsAccount
       $note = "It's recommended to use Local System Account"
@@ -37,7 +37,7 @@ Function Get-ServiceAccount {
   }
   else {
     $value = "Skip"
-    $note = "This test skipped since The $ServiceName service is not available"
+    $note = "This test skipped since the $ServiceName service is not available"
     Write-Log -Message "The Amazon SSM service account check skipped since The $ServiceName service is not available" -LogLevel "ERROR"
   }
     

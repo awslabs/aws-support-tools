@@ -38,7 +38,7 @@ Describe "Get-SystemWideProxy" {
         }
 
         It 'When skipping Get-SystemWideProxy' {
-            $output = Get-SystemWideProxy -Skip $true
+            $output = Get-SystemWideProxy -Skip
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"

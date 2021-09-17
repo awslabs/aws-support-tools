@@ -106,7 +106,7 @@ Describe "Get-LocalSystemAccountEnvironmentVariablesProxy" {
         }
 
         It 'When skipping Get-LocalSystemAccountEnvironmentVariablesProxy' {
-            $output = Get-LocalSystemAccountEnvironmentVariablesProxy -Skip $true
+            $output = Get-LocalSystemAccountEnvironmentVariablesProxy -Skip
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"

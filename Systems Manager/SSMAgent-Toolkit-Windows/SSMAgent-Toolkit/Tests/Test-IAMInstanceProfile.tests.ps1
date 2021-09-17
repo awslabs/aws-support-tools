@@ -22,7 +22,7 @@ Describe "Test-IAMInstanceProfile" {
         }
 
         It 'Metadata is not accessible - Skip' {           
-            $output = Test-IAMInstanceProfile -Token "abcdef0123456789" -NoMetadataAccess $true
+            $output = Test-IAMInstanceProfile -Token "abcdef0123456789" -NoMetadataAccess
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"
@@ -30,7 +30,7 @@ Describe "Test-IAMInstanceProfile" {
         }
 
         It 'Instance registered as hybrid instance - Skip' {
-            $output = Test-IAMInstanceProfile -Token "abcdef0123456789" -ManagedInstance $true
+            $output = Test-IAMInstanceProfile -Token "abcdef0123456789" -ManagedInstance
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"

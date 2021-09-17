@@ -7,7 +7,7 @@
     Get-AgentProxySettings -Message "Error message" -Key "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\AmazonSSMAgent"
   .INPUTS
     Key = The registry path.
-    Skip = Default is false. This script will be skipped if the agent is not installed.
+    Skip = Switch to skip this function if the agent is not installed.
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 #>
@@ -15,13 +15,13 @@ Function Get-AgentProxySettings {
   [CmdletBinding()]
   param (
     [String]$Key = "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\AmazonSSMAgent",
-    [String]$Skip = $false
+    [Switch]$Skip
   )
   $check = "SSM Agent Proxy Setting"
   Write-Log -Message "New check....."
   Write-Log -Message "$check"
 
-  if ($Skip -ne $true) {
+  if (-not ($Skip)) {
     If (-not (Test-RegistryValue -Path $Key -Value 'Environment')) {
       $value = "N/A"
       $note = "There is no proxy setting for SSM Agent"

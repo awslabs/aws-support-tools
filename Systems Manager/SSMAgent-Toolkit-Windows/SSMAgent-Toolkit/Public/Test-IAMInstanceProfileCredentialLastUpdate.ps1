@@ -8,9 +8,9 @@
   .INPUTS
     $Token
     $IAMInstanceProfile
-    $NoMetadataAccess = $false
-    $ManagedInstance = $false
-    $NoIAMattached = $false
+    $NoMetadataAccess = Switch to skip this function if there is no metadata access.
+    $ManagedInstance = Switch to skip this function if the instance registered as hybrid instance.
+    $NoIAMattached = Switch to skip this function if there is no iam attached to the instance.
   .OUTPUTS                                                                            
     Return the IAM instance profile.
 #>
@@ -20,25 +20,25 @@ Function Test-IAMInstanceProfileCredentialLastUpdate {
   param (
     [String]$Token,
     [String]$IAMInstanceProfile,
-    [String]$NoMetadataAccess = $false,
-    [String]$ManagedInstance = $false,
-    [String]$NoIAMattached = $false
+    [Switch]$NoMetadataAccess,
+    [Switch]$ManagedInstance,
+    [Switch]$NoIAMattached
   )
   $check = "IAM profile credential valid"
   Write-Log -Message "New check....."
   Write-Log -Message "$check"
 
-  if (($NoMetadataAccess -eq $true)) {
+  if ($NoMetadataAccess) {
     $value = "Skip"
     $note = "This test skipped since the EC2 instance metadata is not accessible"
     Write-Log -Message "Unable to retrieve the IAM instance profile's LastUpdated and Expiration time stamp from the EC2 instance metadata or no IAM instance profile attached to the instance" -LogLevel "ERROR"
   }
-  elseif (($NoIAMattached -eq $true)) {
+  elseif ($NoIAMattached) {
     $value = "Skip"
     $note = "This test skipped since there is no IAM instance profile attached to the instance"
     Write-Log -Message "There is no IAM instance profile attached to the instance" -LogLevel "ERROR"
   }
-  elseif (($ManagedInstance -eq $true)) {
+  elseif ($ManagedInstance) {
     $value = "Skip"
     $note = "This test skipped since this server configured as Managed(hybrid) Instance"
     Write-Log -Message "Get the IAMInstanceProfileCredentialLastUpdate test skipped since this server configured as Managed(hybrid) Instance" -LogLevel "Info"

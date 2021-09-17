@@ -6,7 +6,7 @@
   .Example
     Get-SystemWideEnvironmentVariablesProxy
   .INPUTS
-    Skip = Default is false. This script will be skipped if the agent is not installed.
+    Skip = Switch to skip this function if the agent is not installed.
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 #>
@@ -14,7 +14,7 @@ Function Get-SystemWideEnvironmentVariablesProxy {
     [CmdletBinding()]
     param (
         [String]$Key = "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment", #https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables
-        [String]$Skip = $false
+        [Switch]$Skip
     )
     $check = "System-wide environment variable proxy"
     Write-Log -Message "New check....."
@@ -23,7 +23,7 @@ Function Get-SystemWideEnvironmentVariablesProxy {
     Write-Log -Message "Checking System-wide environment variable proxy settings from registry location $Key."
     Write-Log -Message "For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables."
     Write-Log -Message "System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints"
-    if ($Skip -ne $true) { 
+    if (-not ($Skip)) { 
         $http_proxy_check = New-ProxyOutput -Path $Key -Value 'http_proxy' -SettingName $check
         $https_proxy_check = New-ProxyOutput -Path $Key -Value 'https_proxy' -SettingName $check
         $no_proxy_check = New-ProxyOutput -Path $Key -Value 'no_proxy' -SettingName $check

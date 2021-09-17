@@ -30,7 +30,7 @@ Describe "Get-MetadataAccess" {
         }  
 
         It 'When skipping Get-MetadataAccess' {
-            $output = Get-MetadataAccess -StatusCode 201 -Region $Region -EC2InstanceID $EC2InstanceID -ManagedInstance $true
+            $output = Get-MetadataAccess -StatusCode 201 -Region $Region -EC2InstanceID $EC2InstanceID -ManagedInstance
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"
