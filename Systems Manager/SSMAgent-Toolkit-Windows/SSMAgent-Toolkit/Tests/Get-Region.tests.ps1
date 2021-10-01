@@ -2,7 +2,7 @@
 
 Describe "Get-Region" {
     BeforeAll {
-        Write-Host 'This test assume there is an access to the instance metadate.' -BackgroundColor Yellow -ForegroundColor Black
+        Write-Host 'This test assume there is an access to the instance metadata.' -BackgroundColor Yellow -ForegroundColor Black
     }
 
     Context "Calling Get-Region" {

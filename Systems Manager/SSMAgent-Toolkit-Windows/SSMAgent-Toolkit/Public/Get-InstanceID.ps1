@@ -6,7 +6,7 @@
   .Example
     Get-InstanceID -Token $token
   .INPUTS
-	$Token = String.
+	  $Token = String.
   .OUTPUTS                                                                            
     Return the instance id.
 #>

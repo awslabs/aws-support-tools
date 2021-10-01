@@ -74,7 +74,7 @@ Function Test-EndpointsNetworkAccess {
     
         else {
             $value = "Skip"
-            $note = "This test skipped since EC2 instance metadata is not accessible and the instance is not configured as Managed(hybrid) Instance."
+            $note = "This test skipped since EC2 instance metadata is not accessible and the instance is not configured as Managed(hybrid) Instance"
             Write-Log -Message "The $check check skipped since the region information in the EC2 instance metadata is not accessible or under the Managed(hybrid) Instance registration file" -LogLevel "ERROR"
         }
     }

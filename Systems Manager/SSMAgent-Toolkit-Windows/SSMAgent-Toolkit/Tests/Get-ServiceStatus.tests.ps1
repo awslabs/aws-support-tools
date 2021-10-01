@@ -2,9 +2,9 @@
 
 Describe "Get-ServiceStatus" {
     BeforeAll {
+        Write-Host 'This test assume the SSM Agent installed.' -BackgroundColor Yellow -ForegroundColor Black
         $ServiceName = "AmazonSSMAgent"
         $Check = "Amazon SSM agent service running"
-        Write-Host 'This test assume the SSM Agent installed.' -BackgroundColor Yellow -ForegroundColor Black
     }
 
     Context "Calling Get-ServiceStatus" {

@@ -45,14 +45,14 @@ Function Get-LocalSystemAccountSTSCallerIdentity {
       $STSCallerIdentityARN = (Import-Clixml -Path $OutputPath).arn
 
       $value = $STSCallerIdentityARN
-      $note = "The role and the instance in the ARN should match the role in the metadata and the current instanceID"
+      $note = "The role and the instance in the ARN should match the metadata\hybrid registration"
       Write-Log -Message "The output of Get-STSCallerIdentity under the system account is $STSCallerIdentityARN."
     }
     catch {
       Write-Log -Message "Failed..." -LogLevel "ERROR"
       Write-Log -Message "$($_)" -LogLevel "ERROR"
       $value = "Fail"
-      $note = "The process of creating and running the scheduled task failed. Please check the logs for more information."
+      $note = "The process of creating and running the scheduled task failed. Please check the logs for more information"
     }
   }
   else {

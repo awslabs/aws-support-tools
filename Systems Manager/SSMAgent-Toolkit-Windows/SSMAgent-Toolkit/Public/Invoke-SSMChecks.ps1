@@ -2,22 +2,23 @@
 .SYNOPSIS
     Run checks needed for an instance to be online in SSM.
 .DESCRIPTION
-    This is tha main function to go through all checks needed for an EC2 instance to be online in SSM. Each check will be on a seprate function.
+    This is tha main function to go through all checks needed for an EC2 instance to be online in SSM. Each check will be on a separate function. For more information visit - https://github.com/awslabs/aws-support-tools/tree/master/Systems%20Manager/SSMAgent-Toolkit-Windows
 .EXAMPLE
     PS C:\> Invoke-SSMChecks
   	PS C:\> Invoke-SSMChecks -GridView
 	PS C:\> Invoke-SSMChecks -Table
 .INPUTS
 	endpoints = default as endpoints for AWS Systems Manager
-	NoGridView = Switch to disable the gridview in the output.
+	GridView = Switch to have the output as gridview.
+	GridView = Switch to have the output as table.
 .OUTPUTS
 	PS C:\SSMAgent-Toolkit> Import-Module "$destination\SSMAgent-Toolkit\SSMAgent-Toolkit.psm1";Invoke-SSMChecks -Table
 	Checking for elevated permissions...
 	Code is running as administrator - executing the script...
-	[2021-09-14T21:38:54.0585613+00:00] [INFO] Logs directory exists - C:\SSMAgent-Toolkit\logs\
-	[2021-09-14T21:38:54.0595609+00:00] [INFO] Outputs directory exists - C:\SSMAgent-Toolkit\Outputs\
-	[2021-09-14T21:38:54.0675701+00:00] [INFO] Logs available at C:\SSMAgent-Toolkit\logs\SSMCheck_2021-09-14-09-38-54.log
-	[2021-09-14T21:38:54.0685671+00:00] [INFO] Outputs available at C:\SSMAgent-Toolkit\Outputs\SSMCheck_2021-09-14-09-38-54.txt
+	[2021-10-01T13:16:05.6939670+00:00] [INFO] Logs directory exists - C:\SSMAgent-Toolkit\logs\
+	[2021-10-01T13:16:05.7095817+00:00] [INFO] Outputs directory exists - C:\SSMAgent-Toolkit\Outputs\
+	[2021-10-01T13:16:05.7095817+00:00] [INFO] Logs available at C:\SSMAgent-Toolkit\logs\SSMCheck_2021-10-01-01-16-05.log
+	[2021-10-01T13:16:05.7095817+00:00] [INFO] Outputs available at C:\SSMAgent-Toolkit\Outputs\SSMCheck_2021-10-01-01-16-05.txt
 	Running all the tests can take a few minutes...
 
 		___ _       _______    _____            __                         __  ___
@@ -35,8 +36,8 @@
 	Managed(hybrid) Instance Registration               Skip                                                                          The instance is not configured as Managed(hybrid) Instance. Metadata will be used to get the InstanceId and Region
 	EC2 instance metadata accessible                    Pass                                                                          EC2 InstanceID = i-abcdef01234567890, Region = us-east-1
 	IAM instance profile                                SSMInstanceProfile                                                            IAM instance profile SSMInstanceProfile is attached to the instance
-	IAM profile credential valid                        Pass                                                                          IAM instance profile's credential is up to date. IAM credential Expiration timestamp is 09/15/2021 04:03:48. The Last update is 09/14/2021 21:29:30 UTC
-	LocalSystem account user API assume role            arn:aws:sts::012345678901:assumed-role/SSMInstanceProfile/i-abcdef01234567890 The role and the instance in the ARN should match the role in the metadata and the current instanceID
+	IAM profile credential valid                        Pass                                                                          IAM instance profile's credential is up to date. IAM credential Expiration timestamp is 10/01/2021 18:26:44. The Last update is 10/01/2021 12:17:17 UTC
+	LocalSystem account user API assume role            arn:aws:sts::012345678901:assumed-role/SSMInstanceProfile/i-abcdef01234567890 The role and the instance in the ARN should match the metadata\hybrid registration
 	ssm.us-east-1.amazonaws.com accessible              Pass                                                                          Endpoint IP address is 52.46.141.158
 	ec2messages.us-east-1.amazonaws.com accessible      Pass                                                                          Endpoint IP address is 52.94.228.178
 	ssmmessages.us-east-1.amazonaws.com accessible      Pass                                                                          Endpoint IP address is 52.46.128.123
@@ -44,13 +45,12 @@
 	kms.us-east-1.amazonaws.com accessible              Pass                                                                          Endpoint IP address is 54.239.17.195
 	logs.us-east-1.amazonaws.com accessible             Pass                                                                          Endpoint IP address is 3.236.94.131
 	SSM Agent Proxy Setting                             N/A                                                                           There is no proxy setting for SSM Agent
-	System-wide environment variable proxy              N/A                                                                           There is no http_proxy, https_proxy or no_proxy configured.
-	LocalSystem account user environment variable proxy N/A                                                                           There is no http_proxy, https_proxy or no_proxy configured.
-	WinHTTP system-wide proxy                           N/A                                                                           There is no ProxyServer(s) configured for WinHTTP system-wide proxy. Note: This proxy settings mainly used to by Windows Update service
-	LocalSystem account user Internet Explorer proxy    N/A                                                                           There is no ProxyServer configured. Note: If the instance behind a proxy and PowerShell via run command has a command which needs access to the internet would fail
-																																	  if there are no Internet Explorer proxy settings.
-	SSMAgent version                                    Pass                                                                          SSM Agent version: 3.0.1181.0, the latest agent version in us-east-1 is 3.1.282.0.
-	Session Manager Plugin version                      Pass               															  Session Manager Plugin version is 1.2.245.0, the latest Session Manager Plugin version is 1.2.245.0.
+	System-wide environment variable proxy              N/A                                                                           There is no http_proxy, https_proxy or no_proxy configured
+	LocalSystem account user environment variable proxy N/A                                                                           There is no http_proxy, https_proxy or no_proxy configured
+	WinHTTP system-wide proxy                           N/A                                                                           There is no ProxyServer(s) configured for WinHTTP system-wide proxy
+	LocalSystem account user Internet Explorer proxy    N/A                                                                           There is no ProxyServer configured
+	SSMAgent version                                    Pass                                                                          The install and the latest agent version in us-east-1 is 3.1.338.0
+	Session Manager Plugin version                      Pass               															  The install and the latest Session Manager Plugin version is 1.2.245.0
 #>
 
 
@@ -60,6 +60,7 @@ function Invoke-SSMChecks {
 		$endpoints = @(
 			"ssm",
 			"ec2messages",
+			"ec2",
 			"ssmmessages",
 			"S3",
 			"kms",

@@ -6,7 +6,7 @@
   .Example
     Get-WindowsImageState
   .INPUTS
-    N/A
+    Key = The registry path to retrieve the image state. Default value: "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\State". Ref: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-setup-states
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 #>

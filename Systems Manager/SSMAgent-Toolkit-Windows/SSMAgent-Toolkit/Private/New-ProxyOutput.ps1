@@ -24,17 +24,17 @@ function New-ProxyOutput {
   )
   
   If (-not (Test-RegistryValue -Path $Path -Value $Value)) {
-    $Message = "$Value = N/A."
-    $Note = "There is no $Value configured."
+    $Message = "$Value = N/A"
+    $Note = "There is no $Value configured"
     Write-Log -Message "There is no http_proxy configured for $SettingName."
     return $false, $Message, $note
   }
   else {
     $Output = (Get-Item -Path $Path).GetValue($Value)
-    $Note = "$Value = $output."
+    $Note = "$Value = $output"
     $Message = $note
     Write-Log -Message "For $SettingName. $Value = $Output." -LogLevel "WARN"
-    return $true, $Message, $note
+    return $true, $Message, $Note
   }
   
 }

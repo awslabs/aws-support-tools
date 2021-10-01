@@ -1,12 +1,12 @@
 <#
   .Synopsis
-    Retrieve metadata token and statuscode to metadata url.
+    Retrieve metadata token and status code to metadata url.
   .Description
-    This is a public function used to retrieve metadata token and statuscode to metadata url by using Invoke-CustomHTTPRequest function. This will helps t know if we have metadata accessibility or not.
+    This is a public function used to retrieve metadata token and status code to metadata url by using Invoke-CustomHTTPRequest function. This will helps t know if we have metadata accessibility or not.
   .Example
     Test-MetadataToken
   .INPUTS
-	  N/A
+	  Uri = URL to retrieving the token for metadata. Default value: "http://169.254.169.254/latest/api/token". Ref: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
   .OUTPUTS                                                                            
     Return the status code.
 #>
@@ -14,7 +14,7 @@
 Function New-MetadataToken {
   [CmdletBinding()]
   param (
-    [String]$Uri = "http://169.254.169.254/latest/api/token"
+    [String]$Uri = "http://169.254.169.254/latest/api/token" #https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
   )
   # This function to check if the instance have an access to the instance Metadata
   try {

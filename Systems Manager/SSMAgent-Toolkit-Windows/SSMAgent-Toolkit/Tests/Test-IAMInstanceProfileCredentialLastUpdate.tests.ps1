@@ -2,13 +2,13 @@
   .Synopsis
     Paster unit test to test Test-IAMInstanceProfileCredentialLastUpdate function.
   .Description
-    This test assume there is an access to the instance metadate and have a profile attached with "SSMInstanceProfile" as a name.
+    This test assume there is an access to the instance metadata and have a profile attached with "SSMInstanceProfile" as a name.
 #>
 
 Describe "Test-IAMInstanceProfileCredentialLastUpdate" {
     BeforeAll {
+        Write-Host 'This test assume there is an access to the instance metadata and have a IAM instance profile attached.' -BackgroundColor Yellow -ForegroundColor Black
         $Check = "IAM profile credential valid"
-        Write-Host 'This test assume there is an access to the instance metadate and have a IAM instance profile attached.' -BackgroundColor Yellow -ForegroundColor Black
 
         $metadatainfo = New-MetadataToken
         $IAMinstanceprofile = Test-IAMInstanceProfile -Token $metadatainfo[1]

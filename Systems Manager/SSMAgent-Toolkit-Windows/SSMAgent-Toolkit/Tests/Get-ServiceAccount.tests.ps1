@@ -2,9 +2,9 @@
 
 Describe "Get-ServiceAccount" {
     BeforeAll {
+        Write-Host 'This test assume the SSM Agent installed.' -BackgroundColor Yellow -ForegroundColor Black
         $ServiceName = "AmazonSSMAgent"
         $Check = "Amazon SSM service account"
-        Write-Host 'This test assume the SSM Agent installed.' -BackgroundColor Yellow -ForegroundColor Black
     }
 
     Context "Calling Get-ServiceAccount" {

@@ -28,7 +28,7 @@ Function Get-ServiceAvailability {
   }
   else {
     $value = "Fail"
-    $note = "Please make sure the SSM agent is installed."
+    $note = "Please make sure the SSM agent is installed"
     Write-Log -Message "$ServiceName service is not available. Please make sure the SSM agent is installed." -LogLevel "ERROR"
   }
   return New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"

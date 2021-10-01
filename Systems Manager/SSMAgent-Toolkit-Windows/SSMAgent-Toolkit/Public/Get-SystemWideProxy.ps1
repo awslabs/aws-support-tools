@@ -49,12 +49,12 @@ public class WinHttp
     $ret = [WinHttp]::WinHttpGetDefaultProxyConfiguration([ref]$object)
     if ($object.AccessType -eq "NoProxy") {
       $value = "N/A"
-      $note = "There is no ProxyServer(s) configured for WinHTTP system-wide proxy. Note: This proxy settings mainly used to by Windows Update service"
+      $note = "There is no ProxyServer(s) configured for WinHTTP system-wide proxy"
       Write-Log -Message "$note. Note: This proxy settings mainly used to by Windows Update service"
     }
     else {
       $value = "ProxyServer(s) = " + $object.Proxy + ". Bypass list = " + $object.Bypass
-      $note = "Current WinHTTP system-wide proxy settings for LocalSystem account is " + $object.Proxy + " as ProxyServer(s), and " + $object.Bypass + " as Bypass list. Windows Update service would use these settings."
+      $note = "Current WinHTTP system-wide proxy settings for LocalSystem account is " + $object.Proxy + " as ProxyServer(s), and " + $object.Bypass + " as Bypass list. Windows Update service would use these settings"
       Write-Log -Message $note -LogLevel "WARN"
     }
   }

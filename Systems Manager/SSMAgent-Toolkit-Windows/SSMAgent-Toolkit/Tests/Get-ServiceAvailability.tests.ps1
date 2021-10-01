@@ -2,8 +2,8 @@
 
 Describe "Get-ServiceAvailability" {
     BeforeAll {
-        $Check = "Amazon SSM agent service running"
         Write-Host 'This test assume the SSM Agent installed.' -BackgroundColor Yellow -ForegroundColor Black
+        $Check = "Amazon SSM agent service running"        
     }
 
     Context "Calling Get-ServiceAvailability" {

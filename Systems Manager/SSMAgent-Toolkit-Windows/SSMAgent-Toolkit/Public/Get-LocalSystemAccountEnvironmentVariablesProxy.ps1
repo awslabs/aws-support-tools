@@ -6,6 +6,7 @@
   .Example
     Get-LocalSystemAccountEnvironmentVariablesProxy
   .INPUTS
+    Key = The path for the Local System Account Environment Variables proxy in the registry. Default value: "Registry::HKEY_USERS\.DEFAULT\Environment". Ref:https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables
     Skip = Switch to skip this function if the agent is not installed.
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
@@ -31,11 +32,11 @@ Function Get-LocalSystemAccountEnvironmentVariablesProxy {
 
         If (($no_proxy_check[0] -eq $false) -and ($https_proxy_check[0] -eq $false) -and ($http_proxy_check[0] -eq $false)) {
             $value = "N/A"
-            $note = "There is no http_proxy, https_proxy or no_proxy configured."
+            $note = "There is no http_proxy, https_proxy or no_proxy configured"
         }
         else {
-            $value = $http_proxy_check[1] + " " + $https_proxy_check[1] + " " + $no_proxy_check[1]
-            $note = $http_proxy_check[2] + " " + $https_proxy_check[2] + " " + $no_proxy_check[2]
+            $value = $http_proxy_check[1] + ". " + $https_proxy_check[1] + ". " + $no_proxy_check[1]
+            $note = $http_proxy_check[2] + ". " + $https_proxy_check[2] + ". " + $no_proxy_check[2]
         }
     }
     else {

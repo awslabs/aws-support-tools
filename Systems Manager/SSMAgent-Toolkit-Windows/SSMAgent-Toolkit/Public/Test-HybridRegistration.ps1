@@ -6,7 +6,7 @@
   .Example
     Test-HybridRegistration
   .INPUTS
-	N/A
+	  RegistrationFilePath = The file location of the hybrid registration. Default value: "$Env:ProgramData\Amazon\SSM\InstanceData\registration"
   .OUTPUTS                                                                            
     Return the region and mi- id.
 #>

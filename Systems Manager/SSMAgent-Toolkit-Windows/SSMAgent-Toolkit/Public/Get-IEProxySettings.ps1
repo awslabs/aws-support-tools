@@ -6,6 +6,7 @@
   .Example
     Get-IEProxySettings
   .INPUTS
+    Key = The path for the Internet Explorer proxy in the registry. Default value: "Registry::HKEY_USERS\.DEFAULT\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings".
     Skip = Switch to skip this function if the agent is not installed.
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
@@ -28,13 +29,13 @@ Function Get-IEProxySettings {
   if (-not ($Skip)) {
     If (((Get-Item -Path $Key).GetValue("ProxyEnable") -eq 0) -Or (-not (Test-RegistryValue -Path $Key -Value 'ProxyEnable'))) {
       $value = "N/A"
-      $note = "There is no ProxyServer configured. Note: If the instance behind a proxy and PowerShell via run command has a command which needs access to the internet would fail if there are no Internet Explorer proxy settings."
+      $note = "There is no ProxyServer configured"
       Write-Log -Message "There is noProxyServer configured for $check."
       Write-Log -Message "Note: If the instance behind a proxy and PowerShell via run command has a command which needs access to the internet would fail if there are no Internet Explorer proxy settings"
     }
     else {
       $value = "ProxyServer = " + (Get-Item -Path $Key).GetValue("ProxyServer") + ". ProxyOverride list = " + (Get-Item -Path $Key).GetValue("ProxyOverride")
-      $note = "Current IE proxy settings for LocalSystem account is " + (Get-Item -Path $Key).GetValue("ProxyServer") + " ProxyServer, and " + (Get-Item -Path $Key).GetValue("ProxyOverride") + " as ProxyOverride list. PowerShell would use these settings."
+      $note = "Current IE proxy settings for LocalSystem account is " + (Get-Item -Path $Key).GetValue("ProxyServer") + " ProxyServer, and " + (Get-Item -Path $Key).GetValue("ProxyOverride") + " as ProxyOverride list. PowerShell would use these settings"
       Write-Log -Message $note -LogLevel "WARN"
     }
   }
