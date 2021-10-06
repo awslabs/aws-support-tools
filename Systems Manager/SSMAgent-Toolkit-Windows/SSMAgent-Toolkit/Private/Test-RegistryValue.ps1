@@ -35,5 +35,4 @@ function Test-RegistryValue {
     Write-Log -Message $($PSitem) -LogLevel "ERROR"
     return $false
   }
-
 }

@@ -12,7 +12,7 @@ Describe "Get-IEProxySettings" {
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "N/A"
-            $output.Note | Should -Be "There is no ProxyServer configured. Note: If the instance behind a proxy and PowerShell via run command has a command which needs access to the internet would fail if there are no Internet Explorer proxy settings." 
+            $output.Note | Should -Be "There is no ProxyServer configured" 
         }
 
         It 'When no proxy set, ProxyEnable equal 0' {
@@ -22,7 +22,7 @@ Describe "Get-IEProxySettings" {
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "N/A"
-            $output.Note | Should -Be "There is no ProxyServer configured. Note: If the instance behind a proxy and PowerShell via run command has a command which needs access to the internet would fail if there are no Internet Explorer proxy settings." 
+            $output.Note | Should -Be "There is no ProxyServer configured" 
         }
 
         It 'When only ProxyServer is set' {
@@ -35,7 +35,7 @@ Describe "Get-IEProxySettings" {
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "ProxyServer = $ProxyServer. ProxyOverride list = "
-            $output.Note | Should -Be "Current IE proxy settings for LocalSystem account is $ProxyServer ProxyServer, and  as ProxyOverride list. PowerShell would use these settings."
+            $output.Note | Should -Be "Current IE proxy settings for LocalSystem account is $ProxyServer ProxyServer, and  as ProxyOverride list. PowerShell would use these settings"
         }   
         
         It 'When both ProxyServer and ProxyOverride are set' {
@@ -48,7 +48,7 @@ Describe "Get-IEProxySettings" {
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "ProxyServer = $ProxyServer. ProxyOverride list = $ProxyOverride"
-            $output.Note | Should -Be "Current IE proxy settings for LocalSystem account is $ProxyServer ProxyServer, and $ProxyOverride as ProxyOverride list. PowerShell would use these settings."
+            $output.Note | Should -Be "Current IE proxy settings for LocalSystem account is $ProxyServer ProxyServer, and $ProxyOverride as ProxyOverride list. PowerShell would use these settings"
         } 
 
         It 'When only ProxyServer is set' {
@@ -60,11 +60,11 @@ Describe "Get-IEProxySettings" {
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "ProxyServer = . ProxyOverride list = $ProxyOverride"
-            $output.Note | Should -Be "Current IE proxy settings for LocalSystem account is  ProxyServer, and $ProxyOverride as ProxyOverride list. PowerShell would use these settings."
+            $output.Note | Should -Be "Current IE proxy settings for LocalSystem account is  ProxyServer, and $ProxyOverride as ProxyOverride list. PowerShell would use these settings"
         } 
 
         It 'When skipping Get-IEProxySettings' {
-            $output = Get-IEProxySettings -Skip $true
+            $output = Get-IEProxySettings -Skip
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"

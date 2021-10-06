@@ -6,7 +6,7 @@ Describe "Test-HybridRegistration" {
         $Region = "us-east-1"
         $Check = "Managed(hybrid) Instance Registration"
 
-        #create a here-string and write the contents to the testdrive
+        #create a here-string and write the contents to the test drive
         @"
 {
     "ManagedInstanceID":"$ManagedInstanceID",
@@ -33,5 +33,6 @@ Describe "Test-HybridRegistration" {
         }  
     } 
     AfterAll {    
+        Remove-Item -Path TestDrive:\testregistration
     }
 }

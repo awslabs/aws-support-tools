@@ -2,13 +2,13 @@
   .Synopsis
     Paster unit test to test Test-IAMInstanceProfileCredentialLastUpdate function.
   .Description
-    This test assume there is an access to the instance metadate and have a profile attached with "SSMInstanceProfile" as a name.
+    This test assume there is an access to the instance metadata and have a profile attached with "SSMInstanceProfile" as a name.
 #>
 
 Describe "Test-IAMInstanceProfileCredentialLastUpdate" {
     BeforeAll {
+        Write-Host 'This test assume there is an access to the instance metadata and have a IAM instance profile attached.' -BackgroundColor Yellow -ForegroundColor Black
         $Check = "IAM profile credential valid"
-        Write-Host 'This test assume there is an access to the instance metadate and have a IAM instance profile attached.' -BackgroundColor Yellow -ForegroundColor Black
 
         $metadatainfo = New-MetadataToken
         $IAMinstanceprofile = Test-IAMInstanceProfile -Token $metadatainfo[1]
@@ -28,7 +28,7 @@ Describe "Test-IAMInstanceProfileCredentialLastUpdate" {
         }
 
         It 'Metadata is not accessible - Skip' {           
-            $output = Test-IAMInstanceProfileCredentialLastUpdate -Token "abcdef0123456789" -IAMInstanceProfile "any" -NoMetadataAccess $true
+            $output = Test-IAMInstanceProfileCredentialLastUpdate -Token "abcdef0123456789" -IAMInstanceProfile "any" -NoMetadataAccess
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"
@@ -36,7 +36,7 @@ Describe "Test-IAMInstanceProfileCredentialLastUpdate" {
         }
 
         It 'Instance registered as hybrid instance - Skip' {
-            $output = Test-IAMInstanceProfileCredentialLastUpdate -Token "abcdef0123456789" -IAMInstanceProfile "any" -ManagedInstance $true
+            $output = Test-IAMInstanceProfileCredentialLastUpdate -Token "abcdef0123456789" -IAMInstanceProfile "any" -ManagedInstance
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"
@@ -44,7 +44,7 @@ Describe "Test-IAMInstanceProfileCredentialLastUpdate" {
         }
 
         It 'IAM instance profile is not attached to the instance' {
-            $output = Test-IAMInstanceProfileCredentialLastUpdate -Token "abcdef0123456789" -IAMInstanceProfile "any" -NoIAMattached $true
+            $output = Test-IAMInstanceProfileCredentialLastUpdate -Token "abcdef0123456789" -IAMInstanceProfile "any" -NoIAMattached
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"

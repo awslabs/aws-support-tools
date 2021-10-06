@@ -2,7 +2,7 @@
 
 Describe "Get-InstanceID" {
     BeforeAll {
-        Write-Host 'This test assume there is an access to the instance metadateand.' -BackgroundColor Yellow -ForegroundColor Black
+        Write-Host 'This test assume there is an access to the instance metadata.' -BackgroundColor Yellow -ForegroundColor Black
     }
 
     Context "Calling Get-InstanceID" {

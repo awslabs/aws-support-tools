@@ -2,9 +2,9 @@
 
 Describe "Get-AgentProxySettings" {
     BeforeAll {
+        Write-Host 'This test assume the SSM agent is install.' -BackgroundColor Yellow -ForegroundColor Black
         New-Item -Path TestRegistry:\ -Name AgentProxySettings
         $Check = "SSM Agent Proxy Setting"
-        Write-Host 'This test assume the SSM agent is install.' -BackgroundColor Yellow -ForegroundColor Black
     }
   
     Context "Calling Get-AgentProxySettings" {
@@ -28,7 +28,7 @@ Describe "Get-AgentProxySettings" {
         }       
         
         It 'When skipping Get-AgentProxySettings' {
-            $output = Get-AgentProxySettings -Skip $true
+            $output = Get-AgentProxySettings -Skip
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"

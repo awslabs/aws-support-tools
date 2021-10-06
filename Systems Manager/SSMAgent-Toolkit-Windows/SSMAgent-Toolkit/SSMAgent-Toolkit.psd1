@@ -7,7 +7,7 @@
 #
 # Update and maintained by: aaalzand@
 #
-# Last Update 12/28/2020
+# Last Update 09/17/2021
 
 @{
 
@@ -39,7 +39,7 @@
     PowerShellVersion = '5.1'
     
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-    FunctionsToExport = @("Get-AgentProxySettings","Get-IEProxySettings","Get-InstanceID","Get-LocalSystemAccountEnvironmentVariablesProxy","Get-MetadataAccess","Get-Region","Get-ServiceAvailability","Get-ServiceAccount","Get-ServiceStatus","Get-LocalSystemAccountSTSCallerIdentity","Get-SystemWideEnvironmentVariablesProxy","Get-SystemWideProxy","Get-WindowsImageState","Invoke-SSMChecks","New-MetadataToken","Test-EndpointsNetworkAccess","Test-IAMInstanceProfile","Test-IAMInstanceProfileCredentialLastUpdate","Test-HybridRegistration")
+    FunctionsToExport = @("Get-AgentProxySettings","Get-IEProxySettings","Get-InstanceID","Get-LocalSystemAccountEnvironmentVariablesProxy","Get-MetadataAccess","Get-Region","Get-ServiceAvailability","Get-ServiceAccount","Get-ServiceStatus","Get-LocalSystemAccountSTSCallerIdentity","Get-SystemWideEnvironmentVariablesProxy","Get-SystemWideProxy","Get-WindowsImageState","Invoke-SSMChecks","New-MetadataToken","Test-EndpointsNetworkAccess","Test-IAMInstanceProfile","Test-IAMInstanceProfileCredentialLastUpdate","Test-HybridRegistration","Get-SSMAgentVersion","Get-SessionManagerPluginVersion")
     
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
     CmdletsToExport = @()

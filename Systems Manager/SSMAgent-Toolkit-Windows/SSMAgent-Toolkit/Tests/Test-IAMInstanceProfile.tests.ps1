@@ -2,13 +2,13 @@
   .Synopsis
     Paster unit test to test Test-IAMInstanceProfile function.
   .Description
-    This test assume there is an access to the instance metadate and have a profile attached with "SSMInstanceProfile" as a name.
+    This test assume there is an access to the instance metadata and have a profile attached with "SSMInstanceProfile" as a name.
 #>
 
 Describe "Test-IAMInstanceProfile" {
     BeforeAll {
+        Write-Host 'This test assume there is an access to the instance metadata and have a profile attached with "SSMInstanceProfile" as a name.' -BackgroundColor Yellow -ForegroundColor Black
         $Check = "IAM instance profile"
-        Write-Host 'This test assume there is an access to the instance metadate and have a profile attached with "SSMInstanceProfile" as a name.' -BackgroundColor Yellow -ForegroundColor Black
     }
     Context "Calling Test-IAMInstanceProfile" {
         It 'IAM instance profile "SSMInstanceProfile" exist' {
@@ -22,7 +22,7 @@ Describe "Test-IAMInstanceProfile" {
         }
 
         It 'Metadata is not accessible - Skip' {           
-            $output = Test-IAMInstanceProfile -Token "abcdef0123456789" -NoMetadataAccess $true
+            $output = Test-IAMInstanceProfile -Token "abcdef0123456789" -NoMetadataAccess
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"
@@ -30,7 +30,7 @@ Describe "Test-IAMInstanceProfile" {
         }
 
         It 'Instance registered as hybrid instance - Skip' {
-            $output = Test-IAMInstanceProfile -Token "abcdef0123456789" -ManagedInstance $true
+            $output = Test-IAMInstanceProfile -Token "abcdef0123456789" -ManagedInstance
             
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Skip"

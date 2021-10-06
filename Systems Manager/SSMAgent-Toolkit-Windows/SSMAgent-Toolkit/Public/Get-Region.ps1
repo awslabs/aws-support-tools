@@ -2,7 +2,7 @@
   .Synopsis
     Retrive the region from the metadata.
   .Description
-    This is a public function used to retrive the region from the metadata using Invoke-CustomHTTPRequest function.
+    This is a public function used to retrieve the region from the metadata using Invoke-CustomHTTPRequest function.
   .Example
     Get-Region -Token $token
   .INPUTS

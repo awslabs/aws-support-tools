@@ -9,7 +9,7 @@
     StatusCode
     Region
     EC2InstanceID
-    ManagedInstance = Default is $false, if call the function with $true value will skip the check.
+    ManagedInstance = Switch to skip this function if the instance registered as hybrid instance.
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 #>
@@ -20,13 +20,13 @@ Function Get-MetadataAccess {
     [String]$StatusCode,
     [String]$Region,
     [String]$EC2InstanceID,
-    [String]$ManagedInstance = $false
+    [Switch]$ManagedInstance
   )
   $check = "EC2 instance metadata accessible"
   Write-Log -Message "New check....."
   Write-Log -Message "$check"
   
-  if ($ManagedInstance -ne $true) {
+  if (-not ($ManagedInstance)) {
     #Check if there is access to the metadata
     if ($StatusCode -eq 200) {
       $value = "Pass"

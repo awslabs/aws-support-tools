@@ -8,7 +8,7 @@
   .INPUTS
 	Endpoint
     Region
-    Skip = Default is false. This script will be skipped if the region can't be retrieved.
+    Skip = Switch to skip this function if the region can't be retrieved.
   .OUTPUTS                                                                            
     New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"
 #>
@@ -18,7 +18,7 @@ Function Test-EndpointsNetworkAccess {
     param (
         [String]$Endpoint,
         [String]$Region,
-        [String]$Skip = $false
+        [Switch]$Skip
     )
 
     begin {
@@ -31,7 +31,7 @@ Function Test-EndpointsNetworkAccess {
 
     process {
      
-        if ($Skip -ne $true) {
+        if (-not ($Skip)) {
             try {
                 # Sample failed response
                 # ComputerName           : amazon.com
@@ -74,7 +74,7 @@ Function Test-EndpointsNetworkAccess {
     
         else {
             $value = "Skip"
-            $note = "This test skipped since EC2 instance metadata is not accessible and the instance is not configured as Managed(hybrid) Instance."
+            $note = "This test skipped since EC2 instance metadata is not accessible and the instance is not configured as Managed(hybrid) Instance"
             Write-Log -Message "The $check check skipped since the region information in the EC2 instance metadata is not accessible or under the Managed(hybrid) Instance registration file" -LogLevel "ERROR"
         }
     }
