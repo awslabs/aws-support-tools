@@ -2,11 +2,13 @@
 '''
 Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 SPDX-License-Identifier: MIT-0
+
 Permission is hereby granted, free of charge, to any person obtaining a copy of this
 software and associated documentation files (the "Software"), to deal in the Software
 without restriction, including without limitation the rights to use, copy, modify,
 merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
 permit persons to whom the Software is furnished to do so.
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
 PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
@@ -170,19 +172,6 @@ def check_iam_permissions(input_env, iam_client):
     '''uses iam simulation to check permissions of the role assigned to the environment'''
     print('### Checking the IAM execution role', input_env['ExecutionRoleArn'], 'using iam policy simulation')
     account_id = get_account_id(input_env)
-    policies = iam_client.list_attached_role_policies(
-        RoleName=input_env['ExecutionRoleArn'].split("/")[-1]
-    )['AttachedPolicies']
-    policy_list = []
-    for policy in policies:
-        policy_arn = policy['PolicyArn']
-        policy_version = iam_client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
-        policy_doc = iam_client.get_policy_version(PolicyArn=policy_arn,
-                                                   VersionId=policy_version)['PolicyVersion']['Document']
-        policy_list.append(json.dumps(policy_doc))
-
-    # Add inline policies
-    policy_list.extend(get_inline_policies(iam_client, input_env['ExecutionRoleArn'].split("/")[-1]))
     # Define actions and resources to be simulated
     actions_resources = [
         {'actions': ['airflow:PublishMetrics'], 'resources': [input_env['Arn']]},
@@ -213,13 +202,13 @@ def check_iam_permissions(input_env, iam_client):
                 ]
             })
     for simulation in actions_resources:
-        eval_results = iam_client.simulate_custom_policy(
-            PolicyInputList=policy_list,
+        eval_results = iam_client.simulate_principal_policy(
+            PolicySourceArn=input_env['ExecutionRoleArn'],
             ActionNames=simulation['actions'],
             ResourceArns=simulation['resources'],
             ContextEntries=simulation.get('contextEntries'),
-        )['EvaluationResults'] if simulation.get('contextEntries') else iam_client.simulate_custom_policy(
-                PolicyInputList=policy_list,
+        )['EvaluationResults'] if simulation.get('contextEntries') else iam_client.simulate_principal_policy(
+                PolicySourceArn=input_env['ExecutionRoleArn'],
                 ActionNames=simulation['actions'],
                 ResourceArns=simulation['resources']
             )['EvaluationResults']
