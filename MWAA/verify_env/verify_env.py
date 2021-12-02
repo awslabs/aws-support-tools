@@ -79,6 +79,8 @@ def validation_region(input_region):
     '''
     session = Session()
     mwaa_regions = session.get_available_regions('mwaa')
+    new_regions = ['sa-east-1', 'ap-northeast-2', 'ap-south-1', 'ca-central-1', 'eu-west-2', 'eu-west-3']
+    mwaa_regions.extend(new_regions)
     if input_region in mwaa_regions:
         return input_region
     raise argparse.ArgumentTypeError("%s is an invalid REGION value" % input_region)
@@ -88,7 +90,7 @@ def validation_profile(profile_name):
     '''
     verify profile name doesn't have path to files or unexpected input
     '''
-    if re.match(r"^[a-zA-Z0-9]*$", profile_name):
+    if re.match(r"^[a-zA-Z0-9\-]*$", profile_name):
         return profile_name
     raise argparse.ArgumentTypeError("%s is an invalid profile name value" % profile_name)
 
