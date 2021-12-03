@@ -642,7 +642,7 @@ def wait_for_ssm_step_one_to_finish(ssm_execution_id, ssm_client):
         )['AutomationExecution']['StepExecutions'][0]['StepStatus']
 
 
-def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm_client, mwaa_utilized_services):
+def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm_client):
     '''
     uses ssm document AWSSupport-ConnectivityTroubleshooter to check connectivity between MWAA's enis
     and a list of services. More information on this document can be found here
@@ -651,6 +651,9 @@ def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm
     print("### Testing connectivity to the following service endpoints from MWAA enis...")
     vpc = subnets[0]['VpcId']
     security_groups = input_env['NetworkConfiguration']['SecurityGroupIds']
+    tld = '.amazonaws.com'
+    mwaa_srvs = ['api.airflow', 'env.airflow', 'ops.airflow', 'sqs', 'test.dkr.ecr', 'api.ecr', 'kms', 's3', 'monitoring', 'logs']
+    mwaa_utilized_services = [{"service": srv + '.' + REGION + tld, "port": "443"} for srv in mwaa_srvs]
     for service in mwaa_utilized_services:
         # retry 5 times for just one of the enis the service uses
         for i in range(0, 5):
@@ -721,30 +724,6 @@ def print_err_msg(c_err):
     print('Http code: {}'.format(c_err.response['ResponseMetadata']['HTTPStatusCode']))
 
 
-def get_mwaa_utilized_services(ec2_client, vpc):
-    '''return an array objects for the services checking for ecr.dks and if it exists add it to the array'''
-    tld = '.amazonaws.com'
-    mwaa_srvs = ['api.airflow', 'env.airflow', 'ops.airflow', 'sqs', 'api.ecr', 'kms', 's3', 'monitoring', 'logs']
-    mwaa_utilized_services = [{"service": srv + '.' + REGION + tld, "port": "443"} for srv in mwaa_srvs]
-    ecr_dks_endpoint = ec2_client.describe_vpc_endpoints(Filters=[
-        {
-            'Name': 'service-name',
-            'Values': ['com.amazonaws.us-east-1.ecr.dkr']
-        },
-        {
-            'Name': 'vpc-id',
-            'Values': [vpc]
-        },
-        {
-            'Name': 'vpc-endpoint-type',
-            'Values': ['Interface']
-        }
-    ])['VpcEndpoints']
-    if ecr_dks_endpoint:
-        mwaa_utilized_services.append({"service": 'dkr.ecr.' + REGION + tld, "port": "443"})
-    return mwaa_utilized_services
-
-
 if __name__ == '__main__':
     if sys.version_info[0] < 3:
         print("python2 detected, please use python3. Will try to run anyway")
@@ -780,8 +759,8 @@ if __name__ == '__main__':
         check_routes(env, subnets, subnet_ids, ec2)
         check_s3_block_public_access(env, s3, s3control)
         # check_security_groups(env, ec2)
-        mwaa_services = get_mwaa_utilized_services(ec2, subnets[0]['VpcId'])
-        check_connectivity_to_dep_services(env, subnets, ec2, ssm, mwaa_services)
+        # mwaa_services = get_mwaa_utilized_services(ec2, subnets[0]['VpcId'])
+        check_connectivity_to_dep_services(env, subnets, ec2, ssm)
         check_for_failing_logs(log_groups, logs)
     except ClientError as client_error:
         if client_error.response['Error']['Code'] == 'LimitExceededException':
