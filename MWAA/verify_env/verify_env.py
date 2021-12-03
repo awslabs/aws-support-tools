@@ -724,7 +724,7 @@ def print_err_msg(c_err):
 def get_mwaa_utilized_services(ec2_client, vpc):
     '''return an array objects for the services checking for ecr.dks and if it exists add it to the array'''
     tld = '.amazonaws.com'
-    mwaa_srvs = ['api.airflow', 'env.airflow', 'ops.airflow', 'sqs', 'dkr.ecr', 'api.ecr', 'kms', 's3', 'monitoring', 'logs']
+    mwaa_srvs = ['api.airflow', 'env.airflow', 'ops.airflow', 'sqs', 'api.ecr', 'kms', 's3', 'monitoring', 'logs']
     mwaa_utilized_services = [{"service": srv + '.' + REGION + tld, "port": "443"} for srv in mwaa_srvs]
     ecr_dks_endpoint = ec2_client.describe_vpc_endpoints(Filters=[
         {
