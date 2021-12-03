@@ -452,9 +452,9 @@ def check_tgw_route(ec2_client, tgw_id, subnet_az):
                 print('TGW doesn\'t have default route to Internet')
             
 # Function to analyze VPC Endpoints            
-def check_vpc_endpoints(ec2_client, vpc_id, input_subnet_ids, input_security_groups):
+def check_vpc_endpoints(ec2_client, vpc_id, input_subnet_ids, input_security_groups, region_name):
     tld = "com.amazonaws."
-    REGION = 'eu-west-1'
+    REGION = region_name
     service_endpoints = [tld + REGION + '.' + srv for srv in ['airflow.api', 'airflow.env', 'airflow.ops', 'sqs', 'ecr.dkr', 'ecr.api', 'kms', 's3', 'monitoring', 'logs']]
     vpc_endpoints = ec2_client.describe_vpc_endpoints(Filters=[
         {
@@ -506,7 +506,7 @@ def check_vpce_sg_with_env(ec2_client, env_sg_ids, vpce_sgs):
     return result
 # End of new functions
 
-def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
+def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client, region_name):
     '''
     method to check and make sure routes have access to the internet if public and subnets are private
     '''
@@ -542,7 +542,7 @@ def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
         print('-'*40)
 
     # For VPCE Analysis
-    check_vpc_endpoints(ec2_client, vpc_id, input_subnet_ids, input_env['NetworkConfiguration']['SecurityGroupIds'])
+    check_vpc_endpoints(ec2_client, vpc_id, input_subnet_ids, input_env['NetworkConfiguration']['SecurityGroupIds'], region_name)
     print('='*15 + ' End of Network Analysis ' + '='*15)
     print('')
 
@@ -756,7 +756,7 @@ if __name__ == '__main__':
         check_kms_key_policy(env, kms)
         log_groups = check_log_groups(env, ENV_NAME, logs, cloudtrail)
         # check_nacl(subnets, subnet_ids, ec2)
-        check_routes(env, subnets, subnet_ids, ec2)
+        check_routes(env, subnets, subnet_ids, ec2, region_name=REGION)
         check_s3_block_public_access(env, s3, s3control)
         # check_security_groups(env, ec2)
         # mwaa_services = get_mwaa_utilized_services(ec2, subnets[0]['VpcId'])
