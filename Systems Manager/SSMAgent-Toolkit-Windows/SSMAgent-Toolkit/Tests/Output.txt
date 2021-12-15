@@ -1,12 +1,12 @@
 ﻿**********************
 Windows PowerShell transcript start
-Start time: 20210930205207
+Start time: 20211209215812
 Username: EC2AMAZ-TN1T8E4\Administrator
 RunAs User: EC2AMAZ-TN1T8E4\Administrator
 Configuration Name: 
 Machine: EC2AMAZ-TN1T8E4 (Microsoft Windows NT 10.0.20348.0)
 Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
-Process ID: 8268
+Process ID: 1896
 PSVersion: 5.1.20348.1
 PSEdition: Desktop
 PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.20348.1
@@ -19,382 +19,404 @@ SerializationVersion: 1.1.0.1
 Transcript started, output file is .\Output.txt
 Pester v5.3.0
 
-Starting discovery in 19 files.
-Discovery found 73 tests in 179ms.
+Starting discovery in 20 files.
+Discovery found 76 tests in 380ms.
 Running tests.
 
 Running tests from 'Get-AgentProxySettings.tests.ps1'
 This test assume the SSM agent is install.
 Describing Get-AgentProxySettings
  Context Calling Get-AgentProxySettings
-[2021-09-30T20:52:08.0199632+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.0199632+00:00] [INFO] SSM Agent Proxy Setting
-[2021-09-30T20:52:08.0199632+00:00] [INFO] Registry key TestRegistry:\AgentProxySettings\Environment does not exist
-[2021-09-30T20:52:08.0199632+00:00] [INFO] There is no proxy setting for SSM Agent
+[2021-12-09T21:58:13.9803987+00:00] [INFO] New check.....
+[2021-12-09T21:58:13.9813582+00:00] [INFO] SSM Agent Proxy Setting
+[2021-12-09T21:58:13.9823975+00:00] [INFO] Registry key TestRegistry:\AgentProxySettings\Environment does not exist
+[2021-12-09T21:58:13.9833710+00:00] [INFO] There is no proxy setting for SSM Agent
    [+] When no proxy is configure
- 16ms (10ms|6ms)
-[2021-09-30T20:52:08.0402327+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.0402327+00:00] [INFO] SSM Agent Proxy Setting
-[2021-09-30T20:52:08.0402327+00:00] [WARN] SSM Agent configured with proxy settings: http_proxy=192.168.1.1:88 no_proxy=169.254.169.254
+ 127ms (11ms|116ms)
+[2021-12-09T21:58:13.9983985+00:00] [INFO] New check.....
+[2021-12-09T21:58:13.9993718+00:00] [INFO] SSM Agent Proxy Setting
+[2021-12-09T21:58:14.0023994+00:00] [WARN] SSM Agent configured with proxy settings: http_proxy=192.168.1.1:88 no_proxy=169.254.169.254
    [+] When proxy is configure
- 13ms (11ms|2ms)
-[2021-09-30T20:52:08.0517582+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.0517582+00:00] [INFO] SSM Agent Proxy Setting
-[2021-09-30T20:52:08.0517582+00:00] [WARN] The SSM Agent Proxy Setting check skipped since the service is not available
+ 13ms (12ms|1ms)
+[2021-12-09T21:58:14.0134100+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.0143715+00:00] [INFO] SSM Agent Proxy Setting
+[2021-12-09T21:58:14.0153988+00:00] [WARN] The SSM Agent Proxy Setting check skipped since the service is not available
    [+] When skipping Get-AgentProxySettings
- 10ms (8ms|1ms)
+ 10ms (9ms|1ms)
 
 Running tests from 'Get-IEProxySettings.tests.ps1'
 Describing Get-IEProxySettings
  Context Calling Get-IEProxySettings
-[2021-09-30T20:52:08.1338629+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.1338629+00:00] [INFO] LocalSystem account user Internet Explorer proxy
-[2021-09-30T20:52:08.1338629+00:00] [INFO] Checking IE proxy settings settings from registry location TestRegistry:\IEProxySettings.
-[2021-09-30T20:52:08.1338629+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows.
-[2021-09-30T20:52:08.1474044+00:00] [INFO] IE proxy settings mainly used to enable PowerShell to have access to the internet (not Windows Update service)
-[2021-09-30T20:52:08.1474044+00:00] [INFO] Registry key TestRegistry:\IEProxySettings\ProxyEnable does not exist
-[2021-09-30T20:52:08.1474044+00:00] [INFO] There is noProxyServer configured for LocalSystem account user Internet Explorer proxy.
-[2021-09-30T20:52:08.1474044+00:00] [INFO] Note: If the instance behind a proxy and PowerShell via run command has a command which needs access to the internet would fail if there are no Internet Explorer proxy settings
+[2021-12-09T21:58:14.0974009+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.0984009+00:00] [INFO] LocalSystem account user Internet Explorer proxy
+[2021-12-09T21:58:14.0993728+00:00] [INFO] Checking IE proxy settings settings from registry location TestRegistry:\IEProxySettings.
+[2021-12-09T21:58:14.1003953+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows.
+[2021-12-09T21:58:14.1024013+00:00] [INFO] IE proxy settings mainly used to enable PowerShell to have access to the internet (not Windows Update service)
+[2021-12-09T21:58:14.1044026+00:00] [INFO] Registry key TestRegistry:\IEProxySettings\ProxyEnable does not exist
+[2021-12-09T21:58:14.1064013+00:00] [INFO] There is noProxyServer configured for LocalSystem account user Internet Explorer proxy.
+[2021-12-09T21:58:14.1074015+00:00] [INFO] Note: If the instance behind a proxy and PowerShell via run command has a command which needs access to the internet would fail if there are no Internet Explorer proxy settings
    [+] When no proxy set, ProxyEnable does not exist
- 21ms (18ms|3ms)
-[2021-09-30T20:52:08.1652254+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.1652254+00:00] [INFO] LocalSystem account user Internet Explorer proxy
-[2021-09-30T20:52:08.1652254+00:00] [INFO] Checking IE proxy settings settings from registry location TestRegistry:\IEProxySettings.
-[2021-09-30T20:52:08.1652254+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows.
-[2021-09-30T20:52:08.1652254+00:00] [INFO] IE proxy settings mainly used to enable PowerShell to have access to the internet (not Windows Update service)
-[2021-09-30T20:52:08.1652254+00:00] [INFO] There is noProxyServer configured for LocalSystem account user Internet Explorer proxy.
-[2021-09-30T20:52:08.1652254+00:00] [INFO] Note: If the instance behind a proxy and PowerShell via run command has a command which needs access to the internet would fail if there are no Internet Explorer proxy settings
+ 21ms (17ms|4ms)
+[2021-12-09T21:58:14.1204021+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.1223516+00:00] [INFO] LocalSystem account user Internet Explorer proxy
+[2021-12-09T21:58:14.1233535+00:00] [INFO] Checking IE proxy settings settings from registry location TestRegistry:\IEProxySettings.
+[2021-12-09T21:58:14.1263964+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows.
+[2021-12-09T21:58:14.1273548+00:00] [INFO] IE proxy settings mainly used to enable PowerShell to have access to the internet (not Windows Update service)
+[2021-12-09T21:58:14.1283837+00:00] [INFO] There is noProxyServer configured for LocalSystem account user Internet Explorer proxy.
+[2021-12-09T21:58:14.1293785+00:00] [INFO] Note: If the instance behind a proxy and PowerShell via run command has a command which needs access to the internet would fail if there are no Internet Explorer proxy settings
    [+] When no proxy set, ProxyEnable equal 0
- 15ms (14ms|1ms)
-[2021-09-30T20:52:08.1792982+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.1792982+00:00] [INFO] LocalSystem account user Internet Explorer proxy
-[2021-09-30T20:52:08.1792982+00:00] [INFO] Checking IE proxy settings settings from registry location TestRegistry:\IEProxySettings.
-[2021-09-30T20:52:08.1792982+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows.
-[2021-09-30T20:52:08.1792982+00:00] [INFO] IE proxy settings mainly used to enable PowerShell to have access to the internet (not Windows Update service)
-[2021-09-30T20:52:08.1966141+00:00] [WARN] Current IE proxy settings for LocalSystem account is https://192.168.1.1:88 ProxyServer, and  as ProxyOverride list. PowerShell would use these settings
+ 19ms (18ms|1ms)
+[2021-12-09T21:58:14.1433969+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.1453999+00:00] [INFO] LocalSystem account user Internet Explorer proxy
+[2021-12-09T21:58:14.1474022+00:00] [INFO] Checking IE proxy settings settings from registry location TestRegistry:\IEProxySettings.
+[2021-12-09T21:58:14.1484015+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows.
+[2021-12-09T21:58:14.1494009+00:00] [INFO] IE proxy settings mainly used to enable PowerShell to have access to the internet (not Windows Update service)
+[2021-12-09T21:58:14.1543966+00:00] [WARN] Current IE proxy settings for LocalSystem account is https://192.168.1.1:88 ProxyServer, and  as ProxyOverride list. PowerShell would use these settings
    [+] When only ProxyServer is set
- 18ms (17ms|1ms)
-[2021-09-30T20:52:08.2111904+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.2111904+00:00] [INFO] LocalSystem account user Internet Explorer proxy
-[2021-09-30T20:52:08.2111904+00:00] [INFO] Checking IE proxy settings settings from registry location TestRegistry:\IEProxySettings.
-[2021-09-30T20:52:08.2111904+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows.
-[2021-09-30T20:52:08.2111904+00:00] [INFO] IE proxy settings mainly used to enable PowerShell to have access to the internet (not Windows Update service)
-[2021-09-30T20:52:08.2111904+00:00] [WARN] Current IE proxy settings for LocalSystem account is https://192.168.1.1:88 ProxyServer, and 169.254.169.254:88 as ProxyOverride list. PowerShell would use these settings
+ 23ms (21ms|1ms)
+[2021-12-09T21:58:14.1704018+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.1714020+00:00] [INFO] LocalSystem account user Internet Explorer proxy
+[2021-12-09T21:58:14.1724004+00:00] [INFO] Checking IE proxy settings settings from registry location TestRegistry:\IEProxySettings.
+[2021-12-09T21:58:14.1733510+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows.
+[2021-12-09T21:58:14.1753976+00:00] [INFO] IE proxy settings mainly used to enable PowerShell to have access to the internet (not Windows Update service)
+[2021-12-09T21:58:14.1804021+00:00] [WARN] Current IE proxy settings for LocalSystem account is https://192.168.1.1:88 ProxyServer, and 169.254.169.254:88 as ProxyOverride list. PowerShell would use these settings
    [+] When both ProxyServer and ProxyOverride are set
- 21ms (20ms|1ms)
-[2021-09-30T20:52:08.2275079+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.2275079+00:00] [INFO] LocalSystem account user Internet Explorer proxy
-[2021-09-30T20:52:08.2275079+00:00] [INFO] Checking IE proxy settings settings from registry location TestRegistry:\IEProxySettings.
-[2021-09-30T20:52:08.2275079+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows.
-[2021-09-30T20:52:08.2430799+00:00] [INFO] IE proxy settings mainly used to enable PowerShell to have access to the internet (not Windows Update service)
-[2021-09-30T20:52:08.2430799+00:00] [WARN] Current IE proxy settings for LocalSystem account is  ProxyServer, and 169.254.169.254:88 as ProxyOverride list. PowerShell would use these settings
+ 21ms (19ms|1ms)
+[2021-12-09T21:58:14.1944033+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.1963747+00:00] [INFO] LocalSystem account user Internet Explorer proxy
+[2021-12-09T21:58:14.1973640+00:00] [INFO] Checking IE proxy settings settings from registry location TestRegistry:\IEProxySettings.
+[2021-12-09T21:58:14.1984032+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows.
+[2021-12-09T21:58:14.1993548+00:00] [INFO] IE proxy settings mainly used to enable PowerShell to have access to the internet (not Windows Update service)
+[2021-12-09T21:58:14.2044029+00:00] [WARN] Current IE proxy settings for LocalSystem account is  ProxyServer, and 169.254.169.254:88 as ProxyOverride list. PowerShell would use these settings
    [+] When only ProxyServer is set
- 24ms (22ms|1ms)
-[2021-09-30T20:52:08.2587994+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.2587994+00:00] [INFO] LocalSystem account user Internet Explorer proxy
-[2021-09-30T20:52:08.2587994+00:00] [INFO] Checking IE proxy settings settings from registry location Registry::HKEY_USERS\.DEFAULT\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings.
-[2021-09-30T20:52:08.2587994+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows.
-[2021-09-30T20:52:08.2587994+00:00] [INFO] IE proxy settings mainly used to enable PowerShell to have access to the internet (not Windows Update service)
-[2021-09-30T20:52:08.2587994+00:00] [WARN] The LocalSystem account user Internet Explorer proxy check skipped since the service is not available
+ 21ms (19ms|2ms)
+[2021-12-09T21:58:14.2193972+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.2203844+00:00] [INFO] LocalSystem account user Internet Explorer proxy
+[2021-12-09T21:58:14.2214014+00:00] [INFO] Checking IE proxy settings settings from registry location Registry::HKEY_USERS\.DEFAULT\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings.
+[2021-12-09T21:58:14.2223812+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows.
+[2021-12-09T21:58:14.2253892+00:00] [INFO] IE proxy settings mainly used to enable PowerShell to have access to the internet (not Windows Update service)
+[2021-12-09T21:58:14.2264017+00:00] [WARN] The LocalSystem account user Internet Explorer proxy check skipped since the service is not available
    [+] When skipping Get-IEProxySettings
- 13ms (12ms|1ms)
+ 20ms (19ms|1ms)
 
 Running tests from 'Get-InstanceID.tests.ps1'
-This test assume there is an access to the instance metadateand.
+This test assume there is an access to the instance metadata.
 Describing Get-InstanceID
  Context Calling Get-InstanceID
-[2021-09-30T20:52:08.3370875+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:08.3370875+00:00] [INFO] URL: http://169.254.169.254/latest/api/token, Method: PUT
-[2021-09-30T20:52:08.3370875+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token-ttl-seconds, Headers Values: 300
-[2021-09-30T20:52:08.3996157+00:00] [INFO] Successfully made the request - Status Code: 200
-[2021-09-30T20:52:08.3996157+00:00] [INFO] Metadata's token has been retrieved.
-[2021-09-30T20:52:08.3996157+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:08.3996157+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/instance-id, Method: Get
-[2021-09-30T20:52:08.3996157+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: AQAAANyjog9MlrlTolmcXA_nc0Q8ElIhVro_kWTitQ9JlslsitcRXw==
-[2021-09-30T20:52:08.4621309+00:00] [INFO] Successfully made the request - Status Code: 200
-[2021-09-30T20:52:08.4621309+00:00] [INFO] The ID of the instance retrieved from the metadata is i-0fcb5a541c162d744
+[2021-12-09T21:58:14.3084087+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:14.3113515+00:00] [INFO] URL: http://169.254.169.254/latest/api/token, Method: PUT
+[2021-12-09T21:58:14.3124045+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token-ttl-seconds, Headers Values: 300
+[2021-12-09T21:58:14.3463619+00:00] [INFO] Successfully made the request - Status Code: 200
+[2021-12-09T21:58:14.3484056+00:00] [INFO] Metadata's token has been retrieved.
+[2021-12-09T21:58:14.3543973+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:14.3554034+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/instance-id, Method: Get
+[2021-12-09T21:58:14.3574068+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: AQAAAKv7P-Gqvp55u8cNN19QvAT1J83y_5PVYb-yGuoZAJ37HCuOHw==
+[2021-12-09T21:58:14.3903545+00:00] [INFO] Successfully made the request - Status Code: 200
+[2021-12-09T21:58:14.3924068+00:00] [INFO] The ID of the instance retrieved from the metadata is i-0fcb5a541c162d744
    [+] When returning a valid value for Instance ID
- 127ms (123ms|3ms)
-[2021-09-30T20:52:08.4777032+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:08.4777032+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/instance-id, Method: Get
-[2021-09-30T20:52:08.4777032+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: abcdef0123456789
-PS C:\SSMAgent-Toolkit> TerminatingError(Invoke-WebRequest): "401 - Unauthorized"
-[2021-09-30T20:52:08.4934585+00:00] [ERROR] Failed...
-[2021-09-30T20:52:08.4934585+00:00] [ERROR] System.Net.HttpWebResponse
-[2021-09-30T20:52:08.4934585+00:00] [ERROR] Status Code: 401
-[2021-09-30T20:52:08.5089989+00:00] [ERROR] Unauthorized
-[2021-09-30T20:52:08.5089989+00:00] [ERROR] Unable to retrieve the Instance ID from the metadata
-[2021-09-30T20:52:08.5089989+00:00] [ERROR] Unable to retrieve the instance id from the metadata. Make sure the instance has access to metadata path http://169.254.169.254/latest/meta-data/instance-id
+ 91ms (87ms|4ms)
+[2021-12-09T21:58:14.4044031+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:14.4054044+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/instance-id, Method: Get
+[2021-12-09T21:58:14.4063787+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: abcdef0123456789
+PS>TerminatingError(Invoke-WebRequest): "
+
+
+ 
+  401 - Unauthorized
+ 
+ 
+  401 - Unauthorized
+ 
+
+"
+[2021-12-09T21:58:14.4094041+00:00] [ERROR] Failed...
+[2021-12-09T21:58:14.4103747+00:00] [ERROR] System.Net.HttpWebResponse
+[2021-12-09T21:58:14.4114104+00:00] [ERROR] Status Code: 401
+[2021-12-09T21:58:14.4124097+00:00] [ERROR] Unauthorized
+[2021-12-09T21:58:14.4144077+00:00] [ERROR] Unable to retrieve the Instance ID from the metadata
+[2021-12-09T21:58:14.4154077+00:00] [ERROR] Unable to retrieve the instance id from the metadata. Make sure the instance has access to metadata path http://169.254.169.254/latest/meta-data/instance-id
    [+] When Metadata is not reachable
- 45ms (44ms|1ms)
+ 17ms (15ms|2ms)
 
 Running tests from 'Get-LocalSystemAccountEnvironmentVariablesProxyKey.tests.ps1'
 Describing Get-LocalSystemAccountEnvironmentVariablesProxy
  Context Calling Get-LocalSystemAccountEnvironmentVariablesProxy
-[2021-09-30T20:52:08.6025904+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.6025904+00:00] [INFO] LocalSystem account user environment variable proxy
-[2021-09-30T20:52:08.6025904+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
-[2021-09-30T20:52:08.6025904+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:08.6025904+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
-[2021-09-30T20:52:08.6025904+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\http_proxy does not exist
-[2021-09-30T20:52:08.6025904+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
-[2021-09-30T20:52:08.6025904+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\https_proxy does not exist
-[2021-09-30T20:52:08.6025904+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
-[2021-09-30T20:52:08.6025904+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\no_proxy does not exist
-[2021-09-30T20:52:08.6025904+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
+[2021-12-09T21:58:14.4914101+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.4924105+00:00] [INFO] LocalSystem account user environment variable proxy
+[2021-12-09T21:58:14.4934081+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
+[2021-12-09T21:58:14.4943784+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:14.4954095+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:14.4974123+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\http_proxy does not exist
+[2021-12-09T21:58:14.5004068+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
+[2021-12-09T21:58:14.5014081+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\https_proxy does not exist
+[2021-12-09T21:58:14.5024095+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
+[2021-12-09T21:58:14.5044110+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\no_proxy does not exist
+[2021-12-09T21:58:14.5054085+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
    [+] When no proxy set
- 27ms (23ms|5ms)
-[2021-09-30T20:52:08.6338797+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.6338797+00:00] [INFO] LocalSystem account user environment variable proxy
-[2021-09-30T20:52:08.6338797+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
-[2021-09-30T20:52:08.6338797+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:08.6338797+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
-[2021-09-30T20:52:08.6338797+00:00] [WARN] For LocalSystem account user environment variable proxy. http_proxy = http://192.168.1.1:88.
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "https_proxy" cannot be found."
-[2021-09-30T20:52:08.6338797+00:00] [ERROR] Failed...
-[2021-09-30T20:52:08.6338797+00:00] [ERROR] Property "https_proxy" cannot be found.
-[2021-09-30T20:52:08.6338797+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "no_proxy" cannot be found."
-[2021-09-30T20:52:08.6496382+00:00] [ERROR] Failed...
-[2021-09-30T20:52:08.6496382+00:00] [ERROR] Property "no_proxy" cannot be found.
-[2021-09-30T20:52:08.6496382+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
+ 26ms (22ms|4ms)
+[2021-12-09T21:58:14.5184124+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.5194058+00:00] [INFO] LocalSystem account user environment variable proxy
+[2021-12-09T21:58:14.5204134+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
+[2021-12-09T21:58:14.5214123+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:14.5224109+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:14.5254102+00:00] [WARN] For LocalSystem account user environment variable proxy. http_proxy = http://192.168.1.1:88.
+[2021-12-09T21:58:14.5284201+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\https_proxy does not exist
+[2021-12-09T21:58:14.5304072+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
+[2021-12-09T21:58:14.5324103+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\no_proxy does not exist
+[2021-12-09T21:58:14.5333729+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
    [+] When only http_proxy is set
- 30ms (29ms|1ms)
-[2021-09-30T20:52:08.6652153+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.6652153+00:00] [INFO] LocalSystem account user environment variable proxy
-[2021-09-30T20:52:08.6652153+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
-[2021-09-30T20:52:08.6652153+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:08.6652153+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
-[2021-09-30T20:52:08.6652153+00:00] [WARN] For LocalSystem account user environment variable proxy. http_proxy = http://192.168.1.1:88.
-[2021-09-30T20:52:08.6652153+00:00] [WARN] For LocalSystem account user environment variable proxy. https_proxy = https://192.168.1.1:88.
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "no_proxy" cannot be found."
-[2021-09-30T20:52:08.6652153+00:00] [ERROR] Failed...
-[2021-09-30T20:52:08.6809693+00:00] [ERROR] Property "no_proxy" cannot be found.
-[2021-09-30T20:52:08.6809693+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
+ 24ms (23ms|1ms)
+[2021-12-09T21:58:14.5464043+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.5473714+00:00] [INFO] LocalSystem account user environment variable proxy
+[2021-12-09T21:58:14.5494095+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
+[2021-12-09T21:58:14.5514099+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:14.5524109+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:14.5544107+00:00] [WARN] For LocalSystem account user environment variable proxy. http_proxy = http://192.168.1.1:88.
+[2021-12-09T21:58:14.5574087+00:00] [WARN] For LocalSystem account user environment variable proxy. https_proxy = https://192.168.1.1:88.
+[2021-12-09T21:58:14.5624106+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\no_proxy does not exist
+[2021-12-09T21:58:14.5633704+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
    [+] When only http_proxy and https_proxy are set
- 28ms (26ms|1ms)
-[2021-09-30T20:52:08.6965459+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.6965459+00:00] [INFO] LocalSystem account user environment variable proxy
-[2021-09-30T20:52:08.6965459+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
-[2021-09-30T20:52:08.6965459+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:08.6965459+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
-[2021-09-30T20:52:08.6965459+00:00] [WARN] For LocalSystem account user environment variable proxy. http_proxy = http://192.168.1.1:88.
-[2021-09-30T20:52:08.7122945+00:00] [WARN] For LocalSystem account user environment variable proxy. https_proxy = https://192.168.1.1:88.
-[2021-09-30T20:52:08.7122945+00:00] [WARN] For LocalSystem account user environment variable proxy. no_proxy = 169.254.169.254:88.
+ 27ms (25ms|1ms)
+[2021-12-09T21:58:14.5774113+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.5784109+00:00] [INFO] LocalSystem account user environment variable proxy
+[2021-12-09T21:58:14.5793771+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
+[2021-12-09T21:58:14.5854044+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:14.5874110+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:14.5894121+00:00] [WARN] For LocalSystem account user environment variable proxy. http_proxy = http://192.168.1.1:88.
+[2021-12-09T21:58:14.5934120+00:00] [WARN] For LocalSystem account user environment variable proxy. https_proxy = https://192.168.1.1:88.
+[2021-12-09T21:58:14.5964114+00:00] [WARN] For LocalSystem account user environment variable proxy. no_proxy = 169.254.169.254:88.
    [+] When http_proxy, https_proxy and no_proxy are set
- 29ms (28ms|1ms)
-[2021-09-30T20:52:08.7278656+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.7278656+00:00] [INFO] LocalSystem account user environment variable proxy
-[2021-09-30T20:52:08.7278656+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
-[2021-09-30T20:52:08.7278656+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:08.7278656+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "http_proxy" cannot be found."
-[2021-09-30T20:52:08.7278656+00:00] [ERROR] Failed...
-[2021-09-30T20:52:08.7278656+00:00] [ERROR] Property "http_proxy" cannot be found.
-[2021-09-30T20:52:08.7278656+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
-[2021-09-30T20:52:08.7278656+00:00] [WARN] For LocalSystem account user environment variable proxy. https_proxy = https://192.168.1.1:88.
-[2021-09-30T20:52:08.7437132+00:00] [WARN] For LocalSystem account user environment variable proxy. no_proxy = 169.254.169.254:88.
+ 29ms (28ms|2ms)
+[2021-12-09T21:58:14.6094118+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.6113619+00:00] [INFO] LocalSystem account user environment variable proxy
+[2021-12-09T21:58:14.6123826+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
+[2021-12-09T21:58:14.6133671+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:14.6143712+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:14.6164133+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\http_proxy does not exist
+[2021-12-09T21:58:14.6174125+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
+[2021-12-09T21:58:14.6204141+00:00] [WARN] For LocalSystem account user environment variable proxy. https_proxy = https://192.168.1.1:88.
+[2021-12-09T21:58:14.6244122+00:00] [WARN] For LocalSystem account user environment variable proxy. no_proxy = 169.254.169.254:88.
    [+] When only https_proxy and no_proxy are set
- 26ms (24ms|2ms)
-[2021-09-30T20:52:08.7592054+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.7592054+00:00] [INFO] LocalSystem account user environment variable proxy
-[2021-09-30T20:52:08.7592054+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
-[2021-09-30T20:52:08.7592054+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:08.7592054+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "http_proxy" cannot be found."
-[2021-09-30T20:52:08.7592054+00:00] [ERROR] Failed...
-[2021-09-30T20:52:08.7592054+00:00] [ERROR] Property "http_proxy" cannot be found.
-[2021-09-30T20:52:08.7592054+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
-[2021-09-30T20:52:08.7592054+00:00] [WARN] For LocalSystem account user environment variable proxy. https_proxy = https://192.168.1.1:88.
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "no_proxy" cannot be found."
-[2021-09-30T20:52:08.7749520+00:00] [ERROR] Failed...
-[2021-09-30T20:52:08.7749520+00:00] [ERROR] Property "no_proxy" cannot be found.
-[2021-09-30T20:52:08.7749520+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
+ 25ms (23ms|1ms)
+[2021-12-09T21:58:14.6374128+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.6374128+00:00] [INFO] LocalSystem account user environment variable proxy
+[2021-12-09T21:58:14.6394124+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
+[2021-12-09T21:58:14.6413816+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:14.6424114+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:14.6444065+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\http_proxy does not exist
+[2021-12-09T21:58:14.6454085+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
+[2021-12-09T21:58:14.6484064+00:00] [WARN] For LocalSystem account user environment variable proxy. https_proxy = https://192.168.1.1:88.
+[2021-12-09T21:58:14.6504069+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\no_proxy does not exist
+[2021-12-09T21:58:14.6524153+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
    [+] When only https_proxy is set
- 30ms (29ms|1ms)
-[2021-09-30T20:52:08.7911023+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.7911023+00:00] [INFO] LocalSystem account user environment variable proxy
-[2021-09-30T20:52:08.7911023+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
-[2021-09-30T20:52:08.7911023+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:08.7911023+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "http_proxy" cannot be found."
-[2021-09-30T20:52:08.7911023+00:00] [ERROR] Failed...
-[2021-09-30T20:52:08.7911023+00:00] [ERROR] Property "http_proxy" cannot be found.
-[2021-09-30T20:52:08.7911023+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "https_proxy" cannot be found."
-[2021-09-30T20:52:08.7911023+00:00] [ERROR] Failed...
-[2021-09-30T20:52:08.7911023+00:00] [ERROR] Property "https_proxy" cannot be found.
-[2021-09-30T20:52:08.8068075+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
-[2021-09-30T20:52:08.8068075+00:00] [WARN] For LocalSystem account user environment variable proxy. no_proxy = 169.254.169.254:88.
+ 25ms (24ms|1ms)
+[2021-12-09T21:58:14.6664136+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.6673729+00:00] [INFO] LocalSystem account user environment variable proxy
+[2021-12-09T21:58:14.6684169+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
+[2021-12-09T21:58:14.6694149+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:14.6724114+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:14.6744137+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\http_proxy does not exist
+[2021-12-09T21:58:14.6753821+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
+[2021-12-09T21:58:14.6774137+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\https_proxy does not exist
+[2021-12-09T21:58:14.6784162+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
+[2021-12-09T21:58:14.6814142+00:00] [WARN] For LocalSystem account user environment variable proxy. no_proxy = 169.254.169.254:88.
    [+] When only no_proxy is set
- 30ms (28ms|2ms)
-[2021-09-30T20:52:08.8229650+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.8229650+00:00] [INFO] LocalSystem account user environment variable proxy
-[2021-09-30T20:52:08.8229650+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
-[2021-09-30T20:52:08.8229650+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:08.8229650+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
-[2021-09-30T20:52:08.8229650+00:00] [WARN] For LocalSystem account user environment variable proxy. http_proxy = http://192.168.1.1:88.
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "https_proxy" cannot be found."
-[2021-09-30T20:52:08.8229650+00:00] [ERROR] Failed...
-[2021-09-30T20:52:08.8387224+00:00] [ERROR] Property "https_proxy" cannot be found.
-[2021-09-30T20:52:08.8387224+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
-[2021-09-30T20:52:08.8387224+00:00] [WARN] For LocalSystem account user environment variable proxy. no_proxy = 169.254.169.254:88.
-   [+] When only http_Proxy and no_proxy are set
  26ms (25ms|1ms)
-[2021-09-30T20:52:08.8548657+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.8548657+00:00] [INFO] LocalSystem account user environment variable proxy
-[2021-09-30T20:52:08.8548657+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location Registry::HKEY_USERS\.DEFAULT\Environment.
-[2021-09-30T20:52:08.8548657+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:08.8548657+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
-[2021-09-30T20:52:08.8548657+00:00] [WARN] The LocalSystem account user environment variable proxy check skipped since the service is not available
+[2021-12-09T21:58:14.6964153+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.6973712+00:00] [INFO] LocalSystem account user environment variable proxy
+[2021-12-09T21:58:14.6983645+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy.
+[2021-12-09T21:58:14.6994124+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:14.7014162+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:14.7044134+00:00] [WARN] For LocalSystem account user environment variable proxy. http_proxy = http://192.168.1.1:88.
+[2021-12-09T21:58:14.7064143+00:00] [INFO] Registry key TestRegistry:\LocalSystemAccountEnvironmentVariablesProxy\https_proxy does not exist
+[2021-12-09T21:58:14.7074137+00:00] [INFO] There is no http_proxy configured for LocalSystem account user environment variable proxy.
+[2021-12-09T21:58:14.7104150+00:00] [WARN] For LocalSystem account user environment variable proxy. no_proxy = 169.254.169.254:88.
+   [+] When only http_Proxy and no_proxy are set
+ 25ms (24ms|1ms)
+[2021-12-09T21:58:14.7284250+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.7294102+00:00] [INFO] LocalSystem account user environment variable proxy
+[2021-12-09T21:58:14.7323995+00:00] [INFO] Checking LocalSystem account user environment variable proxy settings from registry location Registry::HKEY_USERS\.DEFAULT\Environment.
+[2021-12-09T21:58:14.7334139+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:14.7344139+00:00] [INFO] LocalSystem account user environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:14.7354137+00:00] [WARN] The LocalSystem account user environment variable proxy check skipped since the service is not available
    [+] When skipping Get-LocalSystemAccountEnvironmentVariablesProxy
- 13ms (12ms|1ms)
+ 19ms (14ms|5ms)
 
 Running tests from 'Get-MetadataAccess.tests.ps1'
-This test assume there is an access to the instance metadate.
+This test assume there is an access to the instance metadata.
 Describing Get-MetadataAccess
  Context Calling Get-MetadataAccess
-[2021-09-30T20:52:08.9344070+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.9344070+00:00] [INFO] EC2 instance metadata accessible
-[2021-09-30T20:52:08.9505270+00:00] [INFO] Metadata is accessible
+[2021-12-09T21:58:14.8144166+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.8173717+00:00] [INFO] EC2 instance metadata accessible
+[2021-12-09T21:58:14.8183676+00:00] [INFO] Metadata is accessible
    [+] When Metadata is accessible
- 16ms (13ms|3ms)
-[2021-09-30T20:52:08.9505270+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.9505270+00:00] [INFO] EC2 instance metadata accessible
-[2021-09-30T20:52:08.9505270+00:00] [ERROR] Metadata is not accessible. Check https://aws.amazon.com/premiumsupport/knowledge-center/waiting-for-metadata/ to troubleshoot
+ 15ms (11ms|4ms)
+[2021-12-09T21:58:14.8304173+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.8313698+00:00] [INFO] EC2 instance metadata accessible
+[2021-12-09T21:58:14.8323778+00:00] [ERROR] Metadata is not accessible. Check https://aws.amazon.com/premiumsupport/knowledge-center/waiting-for-metadata/ to troubleshoot
    [+] When Metadata is accessible is accessible
- 10ms (9ms|1ms)
-[2021-09-30T20:52:08.9662770+00:00] [INFO] New check.....
-[2021-09-30T20:52:08.9662770+00:00] [INFO] EC2 instance metadata accessible
-[2021-09-30T20:52:08.9662770+00:00] [INFO] Skipping Metadata accessibility check since this server configured as Managed(hybrid) Instance
+ 11ms (9ms|1ms)
+[2021-12-09T21:58:14.8444101+00:00] [INFO] New check.....
+[2021-12-09T21:58:14.8464126+00:00] [INFO] EC2 instance metadata accessible
+[2021-12-09T21:58:14.8474158+00:00] [INFO] Skipping Metadata accessibility check since this server configured as Managed(hybrid) Instance
    [+] When skipping Get-MetadataAccess
- 16ms (15ms|1ms)
+ 17ms (16ms|1ms)
 
 Running tests from 'Get-Region.tests.ps1'
-This test assume there is an access to the instance metadate.
+This test assume there is an access to the instance metadata.
 Describing Get-Region
  Context Calling Get-Region
-[2021-09-30T20:52:09.0462192+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:09.0462192+00:00] [INFO] URL: http://169.254.169.254/latest/api/token, Method: PUT
-[2021-09-30T20:52:09.0462192+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token-ttl-seconds, Headers Values: 300
-[2021-09-30T20:52:09.1028461+00:00] [INFO] Successfully made the request - Status Code: 200
-[2021-09-30T20:52:09.1028461+00:00] [INFO] Metadata's token has been retrieved.
-[2021-09-30T20:52:09.1098773+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:09.1098773+00:00] [INFO] URL: http://169.254.169.254/latest/dynamic/instance-identity/document, Method: Get
-[2021-09-30T20:52:09.1098773+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: AQAAANyjog_-L-pETI4co6vfO1UyK-uQ27xkmR7rvHSAgBGDuNkWBg==
-[2021-09-30T20:52:09.1654191+00:00] [INFO] Successfully made the request - Status Code: 200
-[2021-09-30T20:52:09.1654191+00:00] [INFO] Region from metadata is us-east-1
+[2021-12-09T21:58:14.9115001+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:14.9115001+00:00] [INFO] URL: http://169.254.169.254/latest/api/token, Method: PUT
+[2021-12-09T21:58:14.9272498+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token-ttl-seconds, Headers Values: 300
+[2021-12-09T21:58:14.9589805+00:00] [INFO] Successfully made the request - Status Code: 200
+[2021-12-09T21:58:14.9589805+00:00] [INFO] Metadata's token has been retrieved.
+[2021-12-09T21:58:14.9589805+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:14.9640210+00:00] [INFO] URL: http://169.254.169.254/latest/dynamic/instance-identity/document, Method: Get
+[2021-12-09T21:58:14.9640210+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: AQAAAKv7P-GIL446XKnVVHaD1SOc9CrkIMiBY-BWY-kKGytVOtUtzA==
+[2021-12-09T21:58:14.9952715+00:00] [INFO] Successfully made the request - Status Code: 200
+[2021-12-09T21:58:14.9952715+00:00] [INFO] Region from metadata is us-east-1
    [+] When returning a valid value for the region
- 122ms (119ms|3ms)
-[2021-09-30T20:52:09.1735039+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:09.1892521+00:00] [INFO] URL: http://169.254.169.254/latest/dynamic/instance-identity/document, Method: Get
-[2021-09-30T20:52:09.1892521+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: abcdef0123456789
-PS C:\SSMAgent-Toolkit> TerminatingError(Invoke-WebRequest): "401 - Unauthorized"
-[2021-09-30T20:52:09.2053951+00:00] [ERROR] Failed...
-[2021-09-30T20:52:09.2053951+00:00] [ERROR] System.Net.HttpWebResponse
-[2021-09-30T20:52:09.2053951+00:00] [ERROR] Status Code: 401
-[2021-09-30T20:52:09.2053951+00:00] [ERROR] Unauthorized
-[2021-09-30T20:52:09.2053951+00:00] [ERROR] Unable to retrieve the region from the metadata
-[2021-09-30T20:52:09.2053951+00:00] [ERROR] Make sure the instance has access to metadata path http://169.254.169.254/latest/dynamic/instance-identity/document
+ 83ms (80ms|3ms)
+[2021-12-09T21:58:15.0068381+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:15.0068381+00:00] [INFO] URL: http://169.254.169.254/latest/dynamic/instance-identity/document, Method: Get
+[2021-12-09T21:58:15.0068381+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: abcdef0123456789
+PS>TerminatingError(Invoke-WebRequest): "
+
+
+ 
+  401 - Unauthorized
+ 
+ 
+  401 - Unauthorized
+ 
+
+"
+[2021-12-09T21:58:15.0068381+00:00] [ERROR] Failed...
+[2021-12-09T21:58:15.0068381+00:00] [ERROR] System.Net.HttpWebResponse
+[2021-12-09T21:58:15.0225421+00:00] [ERROR] Status Code: 401
+[2021-12-09T21:58:15.0225421+00:00] [ERROR] Unauthorized
+[2021-12-09T21:58:15.0225421+00:00] [ERROR] Unable to retrieve the region from the metadata
+[2021-12-09T21:58:15.0265970+00:00] [ERROR] Make sure the instance has access to metadata path http://169.254.169.254/latest/dynamic/instance-identity/document
    [+] When Metadata is not reachable
- 30ms (29ms|1ms)
+ 17ms (16ms|1ms)
 
 Running tests from 'Get-ServiceAccount.tests.ps1'
 This test assume the SSM Agent installed.
 Describing Get-ServiceAccount
  Context Calling Get-ServiceAccount
-[2021-09-30T20:52:09.3011308+00:00] [INFO] New check.....
-[2021-09-30T20:52:09.3011308+00:00] [INFO] Amazon SSM service account
-[2021-09-30T20:52:09.4840935+00:00] [INFO] AmazonSSMAgent service account is Local System account. This is the desired account.
+[2021-12-09T21:58:15.0888935+00:00] [INFO] New check.....
+[2021-12-09T21:58:15.0888935+00:00] [INFO] Amazon SSM service account
+[2021-12-09T21:58:15.2822582+00:00] [INFO] AmazonSSMAgent service account is Local System account. This is the desired account.
    [+] When the ServiceAccount for AmazonSSMAgent service is LocalSystem
- 191ms (188ms|3ms)
-[2021-09-30T20:52:11.6563866+00:00] [INFO] New check.....
-[2021-09-30T20:52:11.6579087+00:00] [INFO] Amazon SSM service account
-[2021-09-30T20:52:11.7929104+00:00] [ERROR] AmazonSSMAgent service account is not Local System account
+ 196ms (193ms|4ms)
+[2021-12-09T21:58:17.4593194+00:00] [INFO] New check.....
+[2021-12-09T21:58:17.4606776+00:00] [INFO] Amazon SSM service account
+[2021-12-09T21:58:17.5988438+00:00] [ERROR] AmazonSSMAgent service account is not Local System account
    [+] When the ServiceAccount for AmazonSSMAgent service is not the LocalSystem
  3.33s (3.33s|1ms)
-[2021-09-30T20:52:12.8244800+00:00] [INFO] New check.....
-[2021-09-30T20:52:12.8244800+00:00] [INFO] Amazon SSM service account
-[2021-09-30T20:52:12.9673270+00:00] [ERROR] The Amazon SSM service account check skipped since The AmazonSSMAgent service is not available
+[2021-12-09T21:58:18.6228582+00:00] [INFO] New check.....
+[2021-12-09T21:58:18.6228582+00:00] [INFO] Amazon SSM service account
+[2021-12-09T21:58:18.7660834+00:00] [ERROR] The Amazon SSM service account check skipped since The AmazonSSMAgent service is not available
    [+] When skipping Get-ServiceAccount
- 147ms (146ms|1ms)
+ 146ms (145ms|1ms)
 
 Running tests from 'Get-ServiceAvailability.tests.ps1'
 This test assume the SSM Agent installed.
 Describing Get-ServiceAvailability
  Context Calling Get-ServiceAvailability
-[2021-09-30T20:52:13.0467676+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.0467676+00:00] [INFO] Amazon SSM agent service running
-[2021-09-30T20:52:13.0467676+00:00] [INFO] Checking if we can retrieve the service using Get-Service AmazonSSMAgent
-[2021-09-30T20:52:13.0467676+00:00] [INFO] AmazonSSMAgent service is available.
+[2021-12-09T21:58:18.8459691+00:00] [INFO] New check.....
+[2021-12-09T21:58:18.8459691+00:00] [INFO] Amazon SSM agent service running
+[2021-12-09T21:58:18.8459691+00:00] [INFO] Checking if we can retrieve the service using Get-Service AmazonSSMAgent
+[2021-12-09T21:58:18.8459691+00:00] [INFO] AmazonSSMAgent service is available.
    [+] When Service exist
  12ms (9ms|3ms)
-[2021-09-30T20:52:13.0467676+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.0625108+00:00] [INFO] Amazon SSM agent service running
-[2021-09-30T20:52:13.0625108+00:00] [INFO] Checking if we can retrieve the service using Get-Service AmazonSSMAgentx
-[2021-09-30T20:52:13.0625108+00:00] [ERROR] AmazonSSMAgentx service is not available. Please make sure the SSM agent is installed.
+[2021-12-09T21:58:18.8617162+00:00] [INFO] New check.....
+[2021-12-09T21:58:18.8617162+00:00] [INFO] Amazon SSM agent service running
+[2021-12-09T21:58:18.8617162+00:00] [INFO] Checking if we can retrieve the service using Get-Service AmazonSSMAgentx
+[2021-12-09T21:58:18.8617162+00:00] [ERROR] AmazonSSMAgentx service is not available. Please make sure the SSM agent is installed.
    [+] When the service does not exist
- 16ms (14ms|1ms)
+ 14ms (13ms|1ms)
+
+Running tests from 'Get-ServiceStartupMode.tests.ps1'
+This test assume the SSM Agent installed. The startup mode set as Automatic
+Describing Get-ServiceStartupMode
+ Context Calling Get-ServiceStartupMode
+[2021-12-09T21:58:18.9408245+00:00] [INFO] New check.....
+[2021-12-09T21:58:18.9408245+00:00] [INFO] Amazon SSM service startup mode
+[2021-12-09T21:58:19.0810636+00:00] [INFO] AmazonSSMAgent startup mode is Automatic. This is the desired account.
+   [+] When the Startup mode for AmazonSSMAgent service is Automatic
+ 150ms (146ms|4ms)
+[2021-12-09T21:58:20.0942739+00:00] [INFO] New check.....
+[2021-12-09T21:58:20.0942739+00:00] [INFO] Amazon SSM service startup mode
+[2021-12-09T21:58:20.2304702+00:00] [ERROR] AmazonSSMAgent startup mode is not Automatic. It's recommended to update the startup more to Automatic.
+   [+] When the Startup mode for AmazonSSMAgent service is not Automatic
+ 2.15s (2.15s|1ms)
+[2021-12-09T21:58:21.2458723+00:00] [INFO] New check.....
+[2021-12-09T21:58:21.2458723+00:00] [INFO] Amazon SSM service startup mode
+[2021-12-09T21:58:21.3893785+00:00] [ERROR] The Amazon SSM service startup mode check skipped since The AmazonSSMAgent service is not available.
+   [+] When skipping Get-ServiceStartupMode
+ 146ms (145ms|1ms)
 
 Running tests from 'Get-ServiceStatus.tests.ps1'
 This test assume the SSM Agent installed.
 Describing Get-ServiceStatus
  Context Calling Get-ServiceStatus
-[2021-09-30T20:52:13.1424127+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.1424127+00:00] [INFO] Amazon SSM agent service running
-[2021-09-30T20:52:13.1424127+00:00] [INFO] AmazonSSMAgent service is in Running state. This is the desired state
+[2021-12-09T21:58:21.4531853+00:00] [INFO] New check.....
+[2021-12-09T21:58:21.4642526+00:00] [INFO] Amazon SSM agent service running
+[2021-12-09T21:58:21.4642526+00:00] [INFO] AmazonSSMAgent service is in Running state. This is the desired state
    [+] When AmazonSSMAgent service is Running
- 12ms (9ms|3ms)
-[2021-09-30T20:52:13.1581291+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.1581291+00:00] [INFO] Amazon SSM agent service running
-[2021-09-30T20:52:13.1657107+00:00] [ERROR] AmazonSSMAgent service is not in Running state
+ 17ms (14ms|3ms)
+[2021-12-09T21:58:21.4693356+00:00] [INFO] New check.....
+[2021-12-09T21:58:21.4693356+00:00] [INFO] Amazon SSM agent service running
+[2021-12-09T21:58:21.4693356+00:00] [ERROR] AmazonSSMAgent service is not in Running state
    [+] When AmazonSSMAgent service is not Running
- 11ms (9ms|1ms)
+ 10ms (9ms|1ms)
 
 Running tests from 'Get-SessionManagerPluginVersion.tests.ps1'
 This test assume the Session Manager Plugin install and the instance have access to the internet.
 Describing Get-SessionManagerPluginVersion
  Context Calling Get-SessionManagerPluginVersion
-[2021-09-30T20:52:13.3175183+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.3175183+00:00] [INFO] Session Manager Plugin version
-[2021-09-30T20:52:13.3220552+00:00] [INFO] Testing if SessionManager path exist. C:\Program Files\Amazon\SessionManagerPlugin\VERSION
-[2021-09-30T20:52:13.3220552+00:00] [INFO] Checking the latest Session Manager Plugin version from https://s3.amazonaws.com/session-manager-downloads/plugin/latest/VERSION.
-[2021-09-30T20:52:13.3220552+00:00] [INFO] Checking the install Session Manager Plugin version from C:\Program Files\Amazon\SessionManagerPlugin\VERSION
-[2021-09-30T20:52:13.3220552+00:00] [INFO] The install Session Manager Plugin version is 1.2.245.0
-[2021-09-30T20:52:13.3336379+00:00] [INFO] The latest Session Manager Plugin version is 1.2.245.0.
-[2021-09-30T20:52:13.3336379+00:00] [INFO] The install and the latest Session Manager Plugin version is 1.2.245.0.
+[2021-12-09T21:58:21.6200274+00:00] [INFO] New check.....
+[2021-12-09T21:58:21.6200274+00:00] [INFO] Session Manager Plugin version
+[2021-12-09T21:58:21.6200274+00:00] [INFO] Testing if SessionManager path exist. C:\Program Files\Amazon\SessionManagerPlugin\VERSION
+[2021-12-09T21:58:21.6200274+00:00] [INFO] Checking the latest Session Manager Plugin version from https://s3.amazonaws.com/session-manager-downloads/plugin/latest/VERSION.
+[2021-12-09T21:58:21.6291003+00:00] [INFO] Checking the install Session Manager Plugin version from C:\Program Files\Amazon\SessionManagerPlugin\VERSION
+[2021-12-09T21:58:21.6291003+00:00] [INFO] The install Session Manager Plugin version is 1.2.279.0
+[2021-12-09T21:58:21.6448461+00:00] [INFO] The latest Session Manager Plugin version is 1.2.279.0.
+[2021-12-09T21:58:21.6448461+00:00] [INFO] The install and the latest Session Manager Plugin version is 1.2.279.0.
    [+] When both the Session Manager Plugin exist and the instance can reach the internet with latest version - Pass
- 35ms (31ms|4ms)
-[2021-09-30T20:52:13.3529325+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.3529325+00:00] [INFO] Session Manager Plugin version
-[2021-09-30T20:52:13.3529325+00:00] [INFO] Testing if SessionManager path exist. TestDrive:\testrandomversion
-[2021-09-30T20:52:13.3529325+00:00] [INFO] Checking the latest Session Manager Plugin version from https://s3.amazonaws.com/session-manager-downloads/plugin/latest/VERSION.
-[2021-09-30T20:52:13.3529325+00:00] [INFO] Checking the install Session Manager Plugin version from TestDrive:\testrandomversion
-[2021-09-30T20:52:13.3529325+00:00] [INFO] The install Session Manager Plugin version is 1.1.26.0
-[2021-09-30T20:52:13.3655157+00:00] [INFO] The latest Session Manager Plugin version is 1.2.245.0.
-[2021-09-30T20:52:13.3655157+00:00] [INFO] The install Session Manager Plugin version is 1.1.26.0, the latest is 1.2.245.0.
+ 36ms (32ms|4ms)
+[2021-12-09T21:58:21.6609836+00:00] [INFO] New check.....
+[2021-12-09T21:58:21.6609836+00:00] [INFO] Session Manager Plugin version
+[2021-12-09T21:58:21.6609836+00:00] [INFO] Testing if SessionManager path exist. TestDrive:\testrandomversion
+[2021-12-09T21:58:21.6609836+00:00] [INFO] Checking the latest Session Manager Plugin version from https://s3.amazonaws.com/session-manager-downloads/plugin/latest/VERSION.
+[2021-12-09T21:58:21.6609836+00:00] [INFO] Checking the install Session Manager Plugin version from TestDrive:\testrandomversion
+[2021-12-09T21:58:21.6609836+00:00] [INFO] The install Session Manager Plugin version is 1.1.26.0
+[2021-12-09T21:58:21.6828012+00:00] [INFO] The latest Session Manager Plugin version is 1.2.279.0.
+[2021-12-09T21:58:21.6828012+00:00] [INFO] The install Session Manager Plugin version is 1.1.26.0, the latest is 1.2.279.0.
    [+] When the install Session Manager Plugin and latest versions does not match - Pass
- 28ms (26ms|1ms)
-[2021-09-30T20:52:13.3843419+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.3843419+00:00] [INFO] Session Manager Plugin version
-[2021-09-30T20:52:13.3843419+00:00] [INFO] Testing if SessionManager path exist. C:\Program Files\Amazon\SessionManagerPlugin\VERSION
-[2021-09-30T20:52:13.3843419+00:00] [INFO] Checking the latest Session Manager Plugin version from https://s3.amazonaws.com/session-manager-downloads/plugin/latest/VERSIONx.
-[2021-09-30T20:52:13.3843419+00:00] [INFO] Checking the install Session Manager Plugin version from C:\Program Files\Amazon\SessionManagerPlugin\VERSION
-[2021-09-30T20:52:13.3843419+00:00] [INFO] The install Session Manager Plugin version is 1.2.245.0
-PS C:\SSMAgent-Toolkit> TerminatingError(Invoke-RestMethod): "The remote server returned an error: (403) Forbidden."
-[2021-09-30T20:52:13.3974154+00:00] [ERROR] Unable to retrieve the latest Session Manager Plugin version from https://s3.amazonaws.com/session-manager-downloads/plugin/latest/VERSIONx. The remote server returned an error: (403) Forbidden.
+ 33ms (32ms|1ms)
+[2021-12-09T21:58:21.6928686+00:00] [INFO] New check.....
+[2021-12-09T21:58:21.6928686+00:00] [INFO] Session Manager Plugin version
+[2021-12-09T21:58:21.6928686+00:00] [INFO] Testing if SessionManager path exist. C:\Program Files\Amazon\SessionManagerPlugin\VERSION
+[2021-12-09T21:58:21.6928686+00:00] [INFO] Checking the latest Session Manager Plugin version from https://s3.amazonaws.com/session-manager-downloads/plugin/latest/VERSIONx.
+[2021-12-09T21:58:21.6928686+00:00] [INFO] Checking the install Session Manager Plugin version from C:\Program Files\Amazon\SessionManagerPlugin\VERSION
+[2021-12-09T21:58:21.6928686+00:00] [INFO] The install Session Manager Plugin version is 1.2.279.0
+PS>TerminatingError(Invoke-RestMethod): "The remote server returned an error: (403) Forbidden."
+[2021-12-09T21:58:21.7141766+00:00] [ERROR] Unable to retrieve the latest Session Manager Plugin version from https://s3.amazonaws.com/session-manager-downloads/plugin/latest/VERSIONx. The remote server returned an error: (403) Forbidden.
    [+] With no internet access to check the latest version from the S3 bucket - Pass
- 23ms (22ms|1ms)
-[2021-09-30T20:52:13.4131581+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.4157297+00:00] [INFO] Session Manager Plugin version
-[2021-09-30T20:52:13.4157297+00:00] [INFO] Testing if SessionManager path exist. \Fakefolder\fakex\fake
-[2021-09-30T20:52:13.4157297+00:00] [INFO] The Session Manager Plugin version check skipped since is not is not installed
-[2021-09-30T20:52:13.4157297+00:00] [INFO] To install Session Manager Plugin - https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
+ 33ms (32ms|1ms)
+[2021-12-09T21:58:21.7247449+00:00] [INFO] New check.....
+[2021-12-09T21:58:21.7247449+00:00] [INFO] Session Manager Plugin version
+[2021-12-09T21:58:21.7247449+00:00] [INFO] Testing if SessionManager path exist. \Fakefolder\fakex\fake
+[2021-12-09T21:58:21.7247449+00:00] [INFO] The Session Manager Plugin version check skipped since is not is not installed
+[2021-12-09T21:58:21.7247449+00:00] [INFO] To install Session Manager Plugin - https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
    [+] When session manager plugin is not installed - Skip
- 14ms (13ms|1ms)
-[2021-09-30T20:52:13.4293051+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.4293051+00:00] [INFO] Session Manager Plugin version
-[2021-09-30T20:52:13.4293051+00:00] [WARN] The Session Manager Plugin Version check skipped since the SSM Agent is not installed
+ 12ms (11ms|1ms)
+[2021-12-09T21:58:21.7450680+00:00] [INFO] New check.....
+[2021-12-09T21:58:21.7450680+00:00] [INFO] Session Manager Plugin version
+[2021-12-09T21:58:21.7450680+00:00] [WARN] The Session Manager Plugin Version check skipped since the SSM Agent is not installed
    [+] When skipping since the SSM Agent is not installed - Skip
  10ms (9ms|1ms)
 
@@ -402,409 +424,411 @@ Running tests from 'Get-SSMAgentVersion.tests.ps1'
 This test assume the latest SSM Agent install and the instance have access to the internet.
 Describing Get-SSMAgentVersion
  Context Calling Get-SSMAgentVersion
-[2021-09-30T20:52:13.5876274+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.6031631+00:00] [INFO] SSMAgent version
-[2021-09-30T20:52:13.6031631+00:00] [INFO] Checking the latest SSM agent from https://s3.us-east-1.amazonaws.com/amazon-ssm-us-east-1/latest/VERSION.
-[2021-09-30T20:52:13.6031631+00:00] [INFO] Checking the install agent version from CurrentUser:\Software\\Pester\\11d33ea7-bfc2-42ad-837c-756c4a906bf5
+[2021-12-09T21:58:21.8997817+00:00] [INFO] New check.....
+[2021-12-09T21:58:21.9013613+00:00] [INFO] SSMAgent version
+[2021-12-09T21:58:21.9013613+00:00] [INFO] Checking the latest SSM agent from https://s3.us-east-1.amazonaws.com/amazon-ssm-us-east-1/latest/VERSION.
+[2021-12-09T21:58:21.9013613+00:00] [INFO] Checking the install agent version from CurrentUser:\Software\\Pester\\eed6478f-4ac9-432d-8f29-dc3c88fb5c87
 0.0.0.0
-[2021-09-30T20:52:13.6189056+00:00] [INFO] The install SSM Agent version is 0.0.0.0
-[2021-09-30T20:52:13.6344760+00:00] [INFO] The latest agent version in us-east-1 is 3.1.338.0.
+[2021-12-09T21:58:21.9159335+00:00] [INFO] The install SSM Agent version is 0.0.0.0
+[2021-12-09T21:58:21.9327552+00:00] [INFO] The latest agent version in us-east-1 is 3.1.501.0.
    [+] When not able to retrieve the install agent's version but able to get the latest version - Pass
- 59ms (44ms|15ms)
-[2021-09-30T20:52:13.6344760+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.6502168+00:00] [INFO] SSMAgent version
-[2021-09-30T20:52:13.6502168+00:00] [INFO] Checking the latest SSM agent from https://s3.us-east-1.amazonaws.com/amazon-ssm-us-east-1/latest/VERSION.
-[2021-09-30T20:52:13.6502168+00:00] [INFO] Checking the install agent version from LocalMachine:\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall
-3.1.338.0
-[2021-09-30T20:52:13.6657991+00:00] [INFO] The install SSM Agent version is 3.1.338.0
-[2021-09-30T20:52:13.6815447+00:00] [INFO] The latest agent version in us-east-1 is 3.1.338.0.
-[2021-09-30T20:52:13.6815447+00:00] [INFO] The install and the latest agent version in us-east-1 is 3.1.338.0.
+ 51ms (47ms|4ms)
+[2021-12-09T21:58:21.9477800+00:00] [INFO] New check.....
+[2021-12-09T21:58:21.9477800+00:00] [INFO] SSMAgent version
+[2021-12-09T21:58:21.9477800+00:00] [INFO] Checking the latest SSM agent from https://s3.us-east-1.amazonaws.com/amazon-ssm-us-east-1/latest/VERSION.
+[2021-12-09T21:58:21.9477800+00:00] [INFO] Checking the install agent version from LocalMachine:\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall
+3.1.501.0
+[2021-12-09T21:58:21.9640960+00:00] [INFO] The install SSM Agent version is 3.1.501.0
+[2021-12-09T21:58:21.9796651+00:00] [INFO] The latest agent version in us-east-1 is 3.1.501.0.
+[2021-12-09T21:58:21.9796651+00:00] [INFO] The install and the latest agent version in us-east-1 is 3.1.501.0.
    [+] When both the Agent and the instance can reach the internet - Pass
- 49ms (47ms|1ms)
-[2021-09-30T20:52:13.6971168+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.6971168+00:00] [INFO] SSMAgent version
-[2021-09-30T20:52:13.6971168+00:00] [INFO] Checking the latest SSM agent from https://s3.us-east-1.amazonaws.com/amazon-ssm-us-east-1/latest/VERSION.
-[2021-09-30T20:52:13.6971168+00:00] [INFO] Checking the install agent version from CurrentUser:\Software\\Pester\\11d33ea7-bfc2-42ad-837c-756c4a906bf5
+ 42ms (41ms|1ms)
+[2021-12-09T21:58:21.9952396+00:00] [INFO] New check.....
+[2021-12-09T21:58:21.9952396+00:00] [INFO] SSMAgent version
+[2021-12-09T21:58:21.9952396+00:00] [INFO] Checking the latest SSM agent from https://s3.us-east-1.amazonaws.com/amazon-ssm-us-east-1/latest/VERSION.
+[2021-12-09T21:58:21.9952396+00:00] [INFO] Checking the install agent version from CurrentUser:\Software\\Pester\\eed6478f-4ac9-432d-8f29-dc3c88fb5c87
 1.2.3.4
-[2021-09-30T20:52:13.7128738+00:00] [INFO] The install SSM Agent version is 1.2.3.4
-[2021-09-30T20:52:13.7290193+00:00] [INFO] The latest agent version in us-east-1 is 3.1.338.0.
-[2021-09-30T20:52:13.7290193+00:00] [INFO] The install SSM Agent version is 1.2.3.4, the latest in us-east-1 is 3.1.338.0.
+[2021-12-09T21:58:22.0109853+00:00] [INFO] The install SSM Agent version is 1.2.3.4
+[2021-12-09T21:58:22.0109853+00:00] [INFO] The latest agent version in us-east-1 is 3.1.501.0.
+[2021-12-09T21:58:22.0109853+00:00] [INFO] The install SSM Agent version is 1.2.3.4, the latest in us-east-1 is 3.1.501.0.
    [+] When the install version is not the same as the latest version - Pass
- 44ms (42ms|1ms)
-[2021-09-30T20:52:13.7447567+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.7447567+00:00] [INFO] SSMAgent version
-[2021-09-30T20:52:13.7447567+00:00] [INFO] Checking the latest SSM agent from https://s3..amazonaws.com/amazon-ssm-/latest/VERSION.
-[2021-09-30T20:52:13.7593015+00:00] [INFO] Checking the install agent version from LocalMachine:\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall
-3.1.338.0
-[2021-09-30T20:52:13.7608803+00:00] [INFO] The install SSM Agent version is 3.1.338.0
-PS C:\SSMAgent-Toolkit> TerminatingError(Invoke-RestMethod): "Cannot bind parameter 'Uri'. Cannot convert value "https://s3..amazonaws.com/amazon-ssm-/latest/VERSION" to type "System.Uri". Error: "Invalid URI: The hostname could not be parsed.""
-[2021-09-30T20:52:13.7766067+00:00] [ERROR] Unable to retrieve the latest SSM Agent version from https://s3..amazonaws.com/amazon-ssm-/latest/VERSION.Cannot bind parameter 'Uri'. Cannot convert value "https://s3..amazonaws.com/amazon-ssm-/latest/VERSION" to type "System.Uri". Error: "Invalid URI: The hostname could not be parsed."
+ 36ms (34ms|2ms)
+[2021-12-09T21:58:22.0265571+00:00] [INFO] New check.....
+[2021-12-09T21:58:22.0265571+00:00] [INFO] SSMAgent version
+[2021-12-09T21:58:22.0265571+00:00] [INFO] Checking the latest SSM agent from https://s3..amazonaws.com/amazon-ssm-/latest/VERSION.
+[2021-12-09T21:58:22.0265571+00:00] [INFO] Checking the install agent version from LocalMachine:\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall
+3.1.501.0
+[2021-12-09T21:58:22.0423006+00:00] [INFO] The install SSM Agent version is 3.1.501.0
+PS>TerminatingError(Invoke-RestMethod): "Cannot bind parameter 'Uri'. Cannot convert value "https://s3..amazonaws.com/amazon-ssm-/latest/VERSION" to type "System.Uri". Error: "Invalid URI: The hostname could not be parsed.""
+[2021-12-09T21:58:22.0423006+00:00] [ERROR] Unable to retrieve the latest SSM Agent version from https://s3..amazonaws.com/amazon-ssm-/latest/VERSION.Cannot bind parameter 'Uri'. Cannot convert value "https://s3..amazonaws.com/amazon-ssm-/latest/VERSION" to type "System.Uri". Error: "Invalid URI: The hostname could not be parsed."
    [+] With no Region or internet access but able to retrieve the install version - Pass
- 38ms (32ms|6ms)
-[2021-09-30T20:52:13.7927182+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.7927182+00:00] [INFO] SSMAgent version
-[2021-09-30T20:52:13.7927182+00:00] [INFO] Checking the latest SSM agent from https://s3..amazonaws.com/amazon-ssm-/latest/VERSION.
-[2021-09-30T20:52:13.7927182+00:00] [INFO] Checking the install agent version from CurrentUser:\Software\\Pester\\11d33ea7-bfc2-42ad-837c-756c4a906bf5
+ 27ms (26ms|1ms)
+[2021-12-09T21:58:22.0578692+00:00] [INFO] New check.....
+[2021-12-09T21:58:22.0578692+00:00] [INFO] SSMAgent version
+[2021-12-09T21:58:22.0578692+00:00] [INFO] Checking the latest SSM agent from https://s3..amazonaws.com/amazon-ssm-/latest/VERSION.
+[2021-12-09T21:58:22.0578692+00:00] [INFO] Checking the install agent version from CurrentUser:\Software\\Pester\\eed6478f-4ac9-432d-8f29-dc3c88fb5c87
 0.0.0.0
-[2021-09-30T20:52:13.8084643+00:00] [INFO] The install SSM Agent version is 0.0.0.0
-PS C:\SSMAgent-Toolkit> TerminatingError(Invoke-RestMethod): "Cannot bind parameter 'Uri'. Cannot convert value "https://s3..amazonaws.com/amazon-ssm-/latest/VERSION" to type "System.Uri". Error: "Invalid URI: The hostname could not be parsed.""
-[2021-09-30T20:52:13.8084643+00:00] [ERROR] Unable to retrieve the install or latest SSM Agent version from https://s3..amazonaws.com/amazon-ssm-/latest/VERSION. Cannot bind parameter 'Uri'. Cannot convert value "https://s3..amazonaws.com/amazon-ssm-/latest/VERSION" to type "System.Uri". Error: "Invalid URI: The hostname could not be parsed."
+[2021-12-09T21:58:22.0736196+00:00] [INFO] The install SSM Agent version is 0.0.0.0
+PS>TerminatingError(Invoke-RestMethod): "Cannot bind parameter 'Uri'. Cannot convert value "https://s3..amazonaws.com/amazon-ssm-/latest/VERSION" to type "System.Uri". Error: "Invalid URI: The hostname could not be parsed.""
+[2021-12-09T21:58:22.0736196+00:00] [ERROR] Unable to retrieve the install or latest SSM Agent version from https://s3..amazonaws.com/amazon-ssm-/latest/VERSION. Cannot bind parameter 'Uri'. Cannot convert value "https://s3..amazonaws.com/amazon-ssm-/latest/VERSION" to type "System.Uri". Error: "Invalid URI: The hostname could not be parsed."
    [+] When no Region or internet accessible and not able o retrieve the install version - N/A
- 28ms (27ms|1ms)
-[2021-09-30T20:52:13.8246147+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.8246147+00:00] [INFO] SSMAgent version
-[2021-09-30T20:52:13.8246147+00:00] [ERROR] The SSMAgent Version check skipped since the SSM Agent is not installed
-[2021-09-30T20:52:13.8246147+00:00] [INFO] Installing and configuring SSM Agent on EC2 instances for Windows Server - https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-install-ssm-win.html
+ 28ms (26ms|1ms)
+[2021-12-09T21:58:22.0891886+00:00] [INFO] New check.....
+[2021-12-09T21:58:22.0891886+00:00] [INFO] SSMAgent version
+[2021-12-09T21:58:22.0891886+00:00] [ERROR] The SSMAgent Version check skipped since the SSM Agent is not installed
+[2021-12-09T21:58:22.0891886+00:00] [INFO] Installing and configuring SSM Agent on EC2 instances for Windows Server - https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-install-ssm-win.html
    [+] When skipping Get-SSMAgentVersion - Skip
- 12ms (10ms|1ms)
+ 11ms (10ms|1ms)
 
 Running tests from 'Get-SystemWideEnvironmentVariablesProxy.tests.ps1'
 Describing Get-SystemWideEnvironmentVariablesProxy
  Context Calling Get-SystemWideEnvironmentVariablesProxy
-[2021-09-30T20:52:13.9203518+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.9203518+00:00] [INFO] System-wide environment variable proxy
-[2021-09-30T20:52:13.9203518+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
-[2021-09-30T20:52:13.9203518+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:13.9203518+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
-[2021-09-30T20:52:13.9203518+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\http_proxy does not exist
-[2021-09-30T20:52:13.9203518+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
-[2021-09-30T20:52:13.9203518+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\https_proxy does not exist
-[2021-09-30T20:52:13.9203518+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
-[2021-09-30T20:52:13.9203518+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\no_proxy does not exist
-[2021-09-30T20:52:13.9203518+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
+[2021-12-09T21:58:22.1843060+00:00] [INFO] New check.....
+[2021-12-09T21:58:22.1843060+00:00] [INFO] System-wide environment variable proxy
+[2021-12-09T21:58:22.1843060+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
+[2021-12-09T21:58:22.1843060+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:22.1843060+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:22.1843060+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\http_proxy does not exist
+[2021-12-09T21:58:22.1843060+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
+[2021-12-09T21:58:22.1843060+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\https_proxy does not exist
+[2021-12-09T21:58:22.1843060+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
+[2021-12-09T21:58:22.1843060+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\no_proxy does not exist
+[2021-12-09T21:58:22.1843060+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
    [+] When no proxy set
  23ms (19ms|4ms)
-[2021-09-30T20:52:13.9466881+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.9466881+00:00] [INFO] System-wide environment variable proxy
-[2021-09-30T20:52:13.9466881+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
-[2021-09-30T20:52:13.9466881+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:13.9466881+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
-[2021-09-30T20:52:13.9522344+00:00] [WARN] For System-wide environment variable proxy. http_proxy = http://192.168.1.1:88.
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "https_proxy" cannot be found."
-[2021-09-30T20:52:13.9522344+00:00] [ERROR] Failed...
-[2021-09-30T20:52:13.9522344+00:00] [ERROR] Property "https_proxy" cannot be found.
-[2021-09-30T20:52:13.9522344+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "no_proxy" cannot be found."
-[2021-09-30T20:52:13.9522344+00:00] [ERROR] Failed...
-[2021-09-30T20:52:13.9522344+00:00] [ERROR] Property "no_proxy" cannot be found.
-[2021-09-30T20:52:13.9522344+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
+[2021-12-09T21:58:22.2000123+00:00] [INFO] New check.....
+[2021-12-09T21:58:22.2000123+00:00] [INFO] System-wide environment variable proxy
+[2021-12-09T21:58:22.2000123+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
+[2021-12-09T21:58:22.2140366+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:22.2160690+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:22.2160690+00:00] [WARN] For System-wide environment variable proxy. http_proxy = http://192.168.1.1:88.
+[2021-12-09T21:58:22.2160690+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\https_proxy does not exist
+[2021-12-09T21:58:22.2160690+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
+[2021-12-09T21:58:22.2160690+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\no_proxy does not exist
+[2021-12-09T21:58:22.2160690+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
    [+] When only http_proxy is set
- 28ms (27ms|1ms)
-[2021-09-30T20:52:13.9780537+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.9780537+00:00] [INFO] System-wide environment variable proxy
-[2021-09-30T20:52:13.9780537+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
-[2021-09-30T20:52:13.9780537+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:13.9780537+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
-[2021-09-30T20:52:13.9841292+00:00] [WARN] For System-wide environment variable proxy. http_proxy = http://192.168.1.1:88.
-[2021-09-30T20:52:13.9841292+00:00] [WARN] For System-wide environment variable proxy. https_proxy = https://192.168.1.1:88.
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "no_proxy" cannot be found."
-[2021-09-30T20:52:13.9841292+00:00] [ERROR] Failed...
-[2021-09-30T20:52:13.9841292+00:00] [ERROR] Property "no_proxy" cannot be found.
-[2021-09-30T20:52:13.9841292+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
+ 23ms (22ms|1ms)
+[2021-12-09T21:58:22.2318139+00:00] [INFO] New check.....
+[2021-12-09T21:58:22.2318139+00:00] [INFO] System-wide environment variable proxy
+[2021-12-09T21:58:22.2318139+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
+[2021-12-09T21:58:22.2318139+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:22.2318139+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:22.2318139+00:00] [WARN] For System-wide environment variable proxy. http_proxy = http://192.168.1.1:88.
+[2021-12-09T21:58:22.2479525+00:00] [WARN] For System-wide environment variable proxy. https_proxy = https://192.168.1.1:88.
+[2021-12-09T21:58:22.2479525+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\no_proxy does not exist
+[2021-12-09T21:58:22.2479525+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
    [+] When only http_proxy and https_proxy are set
- 25ms (24ms|1ms)
-[2021-09-30T20:52:13.9998736+00:00] [INFO] New check.....
-[2021-09-30T20:52:13.9998736+00:00] [INFO] System-wide environment variable proxy
-[2021-09-30T20:52:13.9998736+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
-[2021-09-30T20:52:14.0094186+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:14.0094186+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
-[2021-09-30T20:52:14.0094186+00:00] [WARN] For System-wide environment variable proxy. http_proxy = http://192.168.1.1:88.
-[2021-09-30T20:52:14.0160033+00:00] [WARN] For System-wide environment variable proxy. https_proxy = https://192.168.1.1:88.
-[2021-09-30T20:52:14.0160033+00:00] [WARN] For System-wide environment variable proxy. no_proxy = 169.254.169.254:88.
+ 27ms (26ms|1ms)
+[2021-12-09T21:58:22.2636615+00:00] [INFO] New check.....
+[2021-12-09T21:58:22.2636615+00:00] [INFO] System-wide environment variable proxy
+[2021-12-09T21:58:22.2636615+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
+[2021-12-09T21:58:22.2636615+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:22.2636615+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:22.2636615+00:00] [WARN] For System-wide environment variable proxy. http_proxy = http://192.168.1.1:88.
+[2021-12-09T21:58:22.2766910+00:00] [WARN] For System-wide environment variable proxy. https_proxy = https://192.168.1.1:88.
+[2021-12-09T21:58:22.2797649+00:00] [WARN] For System-wide environment variable proxy. no_proxy = 169.254.169.254:88.
    [+] When http_proxy, https_proxy and no_proxy are set
- 30ms (28ms|1ms)
-[2021-09-30T20:52:14.0317525+00:00] [INFO] New check.....
-[2021-09-30T20:52:14.0407843+00:00] [INFO] System-wide environment variable proxy
-[2021-09-30T20:52:14.0407843+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
-[2021-09-30T20:52:14.0407843+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:14.0407843+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "http_proxy" cannot be found."
-[2021-09-30T20:52:14.0407843+00:00] [ERROR] Failed...
-[2021-09-30T20:52:14.0478681+00:00] [ERROR] Property "http_proxy" cannot be found.
-[2021-09-30T20:52:14.0478681+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
-[2021-09-30T20:52:14.0478681+00:00] [WARN] For System-wide environment variable proxy. https_proxy = https://192.168.1.1:88.
-[2021-09-30T20:52:14.0478681+00:00] [WARN] For System-wide environment variable proxy. no_proxy = 169.254.169.254:88.
+ 22ms (21ms|1ms)
+[2021-12-09T21:58:22.2797649+00:00] [INFO] New check.....
+[2021-12-09T21:58:22.2797649+00:00] [INFO] System-wide environment variable proxy
+[2021-12-09T21:58:22.2955037+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
+[2021-12-09T21:58:22.2955037+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:22.2955037+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:22.2955037+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\http_proxy does not exist
+[2021-12-09T21:58:22.2955037+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
+[2021-12-09T21:58:22.2955037+00:00] [WARN] For System-wide environment variable proxy. https_proxy = https://192.168.1.1:88.
+[2021-12-09T21:58:22.3075723+00:00] [WARN] For System-wide environment variable proxy. no_proxy = 169.254.169.254:88.
    [+] When only https_proxy and no_proxy are set
- 26ms (25ms|1ms)
-[2021-09-30T20:52:14.0636125+00:00] [INFO] New check.....
-[2021-09-30T20:52:14.0716553+00:00] [INFO] System-wide environment variable proxy
-[2021-09-30T20:52:14.0716553+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
-[2021-09-30T20:52:14.0716553+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:14.0716553+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "http_proxy" cannot be found."
-[2021-09-30T20:52:14.0716553+00:00] [ERROR] Failed...
-[2021-09-30T20:52:14.0716553+00:00] [ERROR] Property "http_proxy" cannot be found.
-[2021-09-30T20:52:14.0797306+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
-[2021-09-30T20:52:14.0797306+00:00] [WARN] For System-wide environment variable proxy. https_proxy = https://192.168.1.1:88.
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "no_proxy" cannot be found."
-[2021-09-30T20:52:14.0797306+00:00] [ERROR] Failed...
-[2021-09-30T20:52:14.0797306+00:00] [ERROR] Property "no_proxy" cannot be found.
-[2021-09-30T20:52:14.0797306+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
+ 24ms (22ms|1ms)
+[2021-12-09T21:58:22.3116451+00:00] [INFO] New check.....
+[2021-12-09T21:58:22.3116451+00:00] [INFO] System-wide environment variable proxy
+[2021-12-09T21:58:22.3116451+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
+[2021-12-09T21:58:22.3116451+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:22.3116451+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:22.3273793+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\http_proxy does not exist
+[2021-12-09T21:58:22.3273793+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
+[2021-12-09T21:58:22.3273793+00:00] [WARN] For System-wide environment variable proxy. https_proxy = https://192.168.1.1:88.
+[2021-12-09T21:58:22.3273793+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\no_proxy does not exist
+[2021-12-09T21:58:22.3273793+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
    [+] When only https_proxy is set
- 28ms (27ms|1ms)
-[2021-09-30T20:52:14.1030617+00:00] [INFO] New check.....
-[2021-09-30T20:52:14.1030617+00:00] [INFO] System-wide environment variable proxy
-[2021-09-30T20:52:14.1030617+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
-[2021-09-30T20:52:14.1030617+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:14.1030617+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "http_proxy" cannot be found."
-[2021-09-30T20:52:14.1030617+00:00] [ERROR] Failed...
-[2021-09-30T20:52:14.1030617+00:00] [ERROR] Property "http_proxy" cannot be found.
-[2021-09-30T20:52:14.1116491+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "https_proxy" cannot be found."
-[2021-09-30T20:52:14.1116491+00:00] [ERROR] Failed...
-[2021-09-30T20:52:14.1116491+00:00] [ERROR] Property "https_proxy" cannot be found.
-[2021-09-30T20:52:14.1116491+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
-[2021-09-30T20:52:14.1116491+00:00] [WARN] For System-wide environment variable proxy. no_proxy = 169.254.169.254:88.
+ 24ms (22ms|1ms)
+[2021-12-09T21:58:22.3435431+00:00] [INFO] New check.....
+[2021-12-09T21:58:22.3435431+00:00] [INFO] System-wide environment variable proxy
+[2021-12-09T21:58:22.3435431+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
+[2021-12-09T21:58:22.3435431+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:22.3435431+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:22.3435431+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\http_proxy does not exist
+[2021-12-09T21:58:22.3435431+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
+[2021-12-09T21:58:22.3435431+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\https_proxy does not exist
+[2021-12-09T21:58:22.3592372+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
+[2021-12-09T21:58:22.3592372+00:00] [WARN] For System-wide environment variable proxy. no_proxy = 169.254.169.254:88.
    [+] When only no_proxy is set
- 29ms (28ms|1ms)
-[2021-09-30T20:52:14.1344681+00:00] [INFO] New check.....
-[2021-09-30T20:52:14.1344681+00:00] [INFO] System-wide environment variable proxy
-[2021-09-30T20:52:14.1344681+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
-[2021-09-30T20:52:14.1344681+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:14.1344681+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
-[2021-09-30T20:52:14.1344681+00:00] [WARN] For System-wide environment variable proxy. http_proxy = http://192.168.1.1:88.
-PS C:\SSMAgent-Toolkit> TerminatingError(Select-Object): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Property "https_proxy" cannot be found."
-[2021-09-30T20:52:14.1434954+00:00] [ERROR] Failed...
-[2021-09-30T20:52:14.1434954+00:00] [ERROR] Property "https_proxy" cannot be found.
-[2021-09-30T20:52:14.1434954+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
-[2021-09-30T20:52:14.1434954+00:00] [WARN] For System-wide environment variable proxy. no_proxy = 169.254.169.254:88.
+ 25ms (23ms|1ms)
+[2021-12-09T21:58:22.3753858+00:00] [INFO] New check.....
+[2021-12-09T21:58:22.3753858+00:00] [INFO] System-wide environment variable proxy
+[2021-12-09T21:58:22.3753858+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location TestRegistry:\SystemWideEnvironmentVariablesProxy.
+[2021-12-09T21:58:22.3753858+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:22.3753858+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:22.3753858+00:00] [WARN] For System-wide environment variable proxy. http_proxy = http://192.168.1.1:88.
+[2021-12-09T21:58:22.3753858+00:00] [INFO] Registry key TestRegistry:\SystemWideEnvironmentVariablesProxy\https_proxy does not exist
+[2021-12-09T21:58:22.3753858+00:00] [INFO] There is no http_proxy configured for System-wide environment variable proxy.
+[2021-12-09T21:58:22.3753858+00:00] [WARN] For System-wide environment variable proxy. no_proxy = 169.254.169.254:88.
    [+] When only http_Proxy and no_proxy are set
- 25ms (24ms|1ms)
-[2021-09-30T20:52:14.1658286+00:00] [INFO] New check.....
-[2021-09-30T20:52:14.1658286+00:00] [INFO] System-wide environment variable proxy
-[2021-09-30T20:52:14.1658286+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment.
-[2021-09-30T20:52:14.1658286+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
-[2021-09-30T20:52:14.1658286+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
-[2021-09-30T20:52:14.1658286+00:00] [WARN] The System-wide environment variable proxy check skipped since the service is not available
+ 23ms (22ms|1ms)
+[2021-12-09T21:58:22.4017167+00:00] [INFO] New check.....
+[2021-12-09T21:58:22.4017167+00:00] [INFO] System-wide environment variable proxy
+[2021-12-09T21:58:22.4017167+00:00] [INFO] Checking System-wide environment variable proxy settings from registry location Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment.
+[2021-12-09T21:58:22.4017167+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables.
+[2021-12-09T21:58:22.4017167+00:00] [INFO] System-wide environment variable proxy mainly used by SSM Agent to connect to the endpoints
+[2021-12-09T21:58:22.4073011+00:00] [WARN] The System-wide environment variable proxy check skipped since the service is not available
    [+] When skipping Get-SystemWideEnvironmentVariablesProxy
- 14ms (12ms|1ms)
+ 15ms (13ms|1ms)
 
 Running tests from 'Get-SystemWideProxy.tests.ps1'
-The current output of - netsh winhttp show proxy - is:   Current WinHTTP proxy settings:      Direct access (no proxy server).
 This test will set Winhttp proxy and reset it to default
+The current output of - netsh winhttp show proxy - is:   Current WinHTTP proxy settings:      Direct access (no proxy server).
 Describing Get-SystemWideProxy
  Context Calling Get-SystemWideProxy
-[2021-09-30T20:52:16.2752342+00:00] [INFO] New check.....
-[2021-09-30T20:52:16.2752342+00:00] [INFO] WinHTTP system-wide proxy
-[2021-09-30T20:52:16.2907314+00:00] [WARN] Current WinHTTP system-wide proxy settings for LocalSystem account is http=myproxy;https=sproxy:88 as ProxyServer(s), and *.foo.com as Bypass list. Windows Update service would use these settings
+[2021-12-09T21:58:24.9699963+00:00] [INFO] New check.....
+[2021-12-09T21:58:24.9699963+00:00] [INFO] WinHTTP system-wide proxy
+[2021-12-09T21:58:24.9699963+00:00] [WARN] Current WinHTTP system-wide proxy settings for LocalSystem account is http=myproxy;https=sproxy:88 as ProxyServer(s), and *.foo.com as Bypass list. Windows Update service would use these settings
    [+] With set value
- 68ms (64ms|3ms)
-[2021-09-30T20:52:16.3533818+00:00] [INFO] New check.....
-[2021-09-30T20:52:16.3533818+00:00] [INFO] WinHTTP system-wide proxy
-[2021-09-30T20:52:16.3533818+00:00] [INFO] There is no ProxyServer(s) configured for WinHTTP system-wide proxy. Note: This proxy settings mainly used to by Windows Update service
+ 69ms (65ms|4ms)
+[2021-12-09T21:58:25.0492977+00:00] [INFO] New check.....
+[2021-12-09T21:58:25.0492977+00:00] [INFO] WinHTTP system-wide proxy
+[2021-12-09T21:58:25.0492977+00:00] [INFO] There is no ProxyServer(s) configured for WinHTTP system-wide proxy. Note: This proxy settings mainly used to by Windows Update service
    [+] With no proxy
- 67ms (65ms|1ms)
-[2021-09-30T20:52:16.3691226+00:00] [INFO] New check.....
-[2021-09-30T20:52:16.3691226+00:00] [INFO] WinHTTP system-wide proxy
-[2021-09-30T20:52:16.3691226+00:00] [WARN] The WinHTTP system-wide proxy check skipped since the service is not available
+ 66ms (65ms|1ms)
+[2021-12-09T21:58:25.0650242+00:00] [INFO] New check.....
+[2021-12-09T21:58:25.0650242+00:00] [INFO] WinHTTP system-wide proxy
+[2021-12-09T21:58:25.0650242+00:00] [WARN] The WinHTTP system-wide proxy check skipped since the service is not available
    [+] When skipping Get-SystemWideProxy
  10ms (9ms|1ms)
 
 Running tests from 'Get-WindowsImageState.tests.ps1'
 Describing Get-WindowsImageState
  Context Calling Get-WindowsImageState
-[2021-09-30T20:52:16.4473223+00:00] [INFO] New check.....
-[2021-09-30T20:52:16.4473223+00:00] [INFO] Windows sysprep image state complete
-[2021-09-30T20:52:16.4473223+00:00] [INFO] Checking Windows image state in this registry location TestRegistry:\State.
-[2021-09-30T20:52:16.4473223+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-setup-states
-[2021-09-30T20:52:16.4473223+00:00] [INFO] Windows image state value is IMAGE_STATE_COMPLETE. This is the desired state.
+[2021-12-09T21:58:25.1445454+00:00] [INFO] New check.....
+[2021-12-09T21:58:25.1445454+00:00] [INFO] Windows sysprep image state complete
+[2021-12-09T21:58:25.1445454+00:00] [INFO] Checking Windows image state in this registry location TestRegistry:\State.
+[2021-12-09T21:58:25.1516238+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-setup-states
+[2021-12-09T21:58:25.1516238+00:00] [INFO] Windows image state value is IMAGE_STATE_COMPLETE. This is the desired state.
    [+] When ImageState = IMAGE_STATE_COMPLETE
- 16ms (12ms|4ms)
-[2021-09-30T20:52:16.4630916+00:00] [INFO] New check.....
-[2021-09-30T20:52:16.4630916+00:00] [INFO] Windows sysprep image state complete
-[2021-09-30T20:52:16.4630916+00:00] [INFO] Checking Windows image state in this registry location TestRegistry:\State.
-[2021-09-30T20:52:16.4630916+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-setup-states
-[2021-09-30T20:52:16.4630916+00:00] [ERROR] The state of windows Image is IMAGE_STATE_UNDEPLOYABLE. The state of windows Image must be IMAGE_STATE_COMPLETE
+ 17ms (13ms|4ms)
+[2021-12-09T21:58:25.1606956+00:00] [INFO] New check.....
+[2021-12-09T21:58:25.1606956+00:00] [INFO] Windows sysprep image state complete
+[2021-12-09T21:58:25.1606956+00:00] [INFO] Checking Windows image state in this registry location TestRegistry:\State.
+[2021-12-09T21:58:25.1606956+00:00] [INFO] For more information check - https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-setup-states
+[2021-12-09T21:58:25.1606956+00:00] [ERROR] The state of windows Image is IMAGE_STATE_UNDEPLOYABLE. The state of windows Image must be IMAGE_STATE_COMPLETE
    [+] When ImageState != IMAGE_STATE_COMPLETE
- 14ms (13ms|1ms)
+ 14ms (12ms|1ms)
 
 Running tests from 'New-MetadataToken.tests.ps1'
-This test assume there is an access to the instance metadate.
+This test assume there is an access to the instance metadata.
 Describing New-MetadataToken
  Context Calling New-MetadataToken
-[2021-09-30T20:52:16.5408401+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:16.5566165+00:00] [INFO] URL: http://169.254.169.254/latest/api/token, Method: PUT
-[2021-09-30T20:52:16.5566165+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token-ttl-seconds, Headers Values: 300
-[2021-09-30T20:52:16.6034285+00:00] [INFO] Successfully made the request - Status Code: 200
-[2021-09-30T20:52:16.6034285+00:00] [INFO] Metadata's token has been retrieved.
+[2021-12-09T21:58:25.2452487+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:25.2452487+00:00] [INFO] URL: http://169.254.169.254/latest/api/token, Method: PUT
+[2021-12-09T21:58:25.2452487+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token-ttl-seconds, Headers Values: 300
+[2021-12-09T21:58:25.2765139+00:00] [INFO] Successfully made the request - Status Code: 200
+[2021-12-09T21:58:25.2765139+00:00] [INFO] Metadata's token has been retrieved.
    [+] When Metadata is reachable
- 67ms (63ms|3ms)
-[2021-09-30T20:52:16.6191729+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:16.6191729+00:00] [INFO] URL: http://169.254.169.254/latest/apix/token, Method: PUT
-[2021-09-30T20:52:16.6191729+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token-ttl-seconds, Headers Values: 300
-PS C:\SSMAgent-Toolkit> TerminatingError(Invoke-WebRequest): "403 - Forbidden"
-[2021-09-30T20:52:16.6347468+00:00] [ERROR] Failed...
-[2021-09-30T20:52:16.6347468+00:00] [ERROR] System.Net.HttpWebResponse
-[2021-09-30T20:52:16.6504445+00:00] [ERROR] Status Code: 403
-[2021-09-30T20:52:16.6504445+00:00] [ERROR] Forbidden
-[2021-09-30T20:52:16.6504445+00:00] [ERROR] Unable to retrieve metadata token: You cannot call a method on a null-valued expression.
+ 44ms (40ms|3ms)
+[2021-12-09T21:58:25.2880468+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:25.2880468+00:00] [INFO] URL: http://169.254.169.254/latest/apix/token, Method: PUT
+[2021-12-09T21:58:25.2880468+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token-ttl-seconds, Headers Values: 300
+PS>TerminatingError(Invoke-WebRequest): "
+
+
+ 
+  403 - Forbidden
+ 
+ 
+  403 - Forbidden
+ 
+
+"
+[2021-12-09T21:58:25.2880468+00:00] [ERROR] Failed...
+[2021-12-09T21:58:25.3037841+00:00] [ERROR] System.Net.HttpWebResponse
+[2021-12-09T21:58:25.3037841+00:00] [ERROR] Status Code: 403
+[2021-12-09T21:58:25.3037841+00:00] [ERROR] Forbidden
+[2021-12-09T21:58:25.3078543+00:00] [ERROR] Unable to retrieve metadata token: You cannot call a method on a null-valued expression.
    [+] When Metadata is not reachable
- 41ms (40ms|1ms)
+ 18ms (17ms|1ms)
 
 Running tests from 'Test-EndpointsNetworkAccess.tests.ps1'
 This test assume the instance have access to the internet or ssm endpoint.
 Describing Test-EndpointsNetworkAccess
  Context Calling Test-EndpointsNetworkAccess
-[2021-09-30T20:52:17.0798459+00:00] [INFO] New check.....
-[2021-09-30T20:52:17.0798459+00:00] [INFO] ssm.us-east-1.amazonaws.com accessible
-[2021-09-30T20:52:17.0798459+00:00] [INFO] Testing a TCP connection over Port: 443
-[2021-09-30T20:52:17.1970276+00:00] [INFO] Remote URL: ssm.us-east-1.amazonaws.com
-[2021-09-30T20:52:17.2071855+00:00] [INFO] Remote Address: 52.46.141.158
-[2021-09-30T20:52:17.2071855+00:00] [INFO] Remote Port: 443
-[2021-09-30T20:52:17.2071855+00:00] [INFO] Interface Alias: Ethernet 2
-[2021-09-30T20:52:17.2227863+00:00] [INFO] Source Address: 172.31.33.220
-[2021-09-30T20:52:17.2227863+00:00] [INFO] PingSucceeded: False
-[2021-09-30T20:52:17.2389669+00:00] [INFO] Ping Reply Details:
-[2021-09-30T20:52:17.2389669+00:00] [INFO] Tcp Test Succeeded: True
-[2021-09-30T20:52:17.2389669+00:00] [INFO] ssm.us-east-1.amazonaws.com is reachable via port 443. Endpoint IP address is 52.46.141.158
+[2021-12-09T21:58:25.7612304+00:00] [INFO] New check.....
+[2021-12-09T21:58:25.7612304+00:00] [INFO] ssm.us-east-1.amazonaws.com accessible
+[2021-12-09T21:58:25.7612304+00:00] [INFO] Testing a TCP connection over Port: 443
+[2021-12-09T21:58:25.8862881+00:00] [INFO] Remote URL: ssm.us-east-1.amazonaws.com
+[2021-12-09T21:58:25.8862881+00:00] [INFO] Remote Address: 52.46.159.244
+[2021-12-09T21:58:25.8862881+00:00] [INFO] Remote Port: 443
+[2021-12-09T21:58:25.8862881+00:00] [INFO] Interface Alias: Ethernet 2
+[2021-12-09T21:58:25.8862881+00:00] [INFO] Source Address: 172.31.33.220
+[2021-12-09T21:58:25.8862881+00:00] [INFO] PingSucceeded: False
+[2021-12-09T21:58:25.9018553+00:00] [INFO] Ping Reply Details:
+[2021-12-09T21:58:25.9018553+00:00] [INFO] Tcp Test Succeeded: True
+[2021-12-09T21:58:25.9018553+00:00] [INFO] ssm.us-east-1.amazonaws.com is reachable via port 443. Endpoint IP address is 52.46.159.244
    [+] With existing endpoint - Pass
- 178ms (173ms|5ms)
-[2021-09-30T20:52:17.2708615+00:00] [INFO] New check.....
-[2021-09-30T20:52:17.2708615+00:00] [INFO] ssm1.us-east-1.amazonaws.com accessible
-[2021-09-30T20:52:17.2708615+00:00] [INFO] Testing a TCP connection over Port: 443
+ 165ms (158ms|7ms)
+[2021-12-09T21:58:25.9175805+00:00] [INFO] New check.....
+[2021-12-09T21:58:25.9175805+00:00] [INFO] ssm1.us-east-1.amazonaws.com accessible
+[2021-12-09T21:58:25.9337235+00:00] [INFO] Testing a TCP connection over Port: 443
 WARNING: Name resolution of ssm1.us-east-1.amazonaws.com failed
-[2021-09-30T20:52:17.2708615+00:00] [INFO] Remote URL: ssm1.us-east-1.amazonaws.com
-[2021-09-30T20:52:17.2906217+00:00] [INFO] Remote Address:
-[2021-09-30T20:52:17.3026466+00:00] [INFO] Remote Port: 0
-[2021-09-30T20:52:17.3026466+00:00] [INFO] Interface Alias:
-[2021-09-30T20:52:17.3026466+00:00] [INFO] Source Address:
-[2021-09-30T20:52:17.3026466+00:00] [INFO] PingSucceeded: False
-[2021-09-30T20:52:17.3026466+00:00] [INFO] Ping Reply Details:
-[2021-09-30T20:52:17.3026466+00:00] [INFO] Tcp Test Succeeded: False
-[2021-09-30T20:52:17.3026466+00:00] [ERROR] ssm1.us-east-1.amazonaws.com is not reachable via port 443. Endpoint IP address is
+[2021-12-09T21:58:25.9494386+00:00] [INFO] Remote URL: ssm1.us-east-1.amazonaws.com
+[2021-12-09T21:58:25.9494386+00:00] [INFO] Remote Address:
+[2021-12-09T21:58:25.9494386+00:00] [INFO] Remote Port: 0
+[2021-12-09T21:58:25.9494386+00:00] [INFO] Interface Alias:
+[2021-12-09T21:58:25.9639803+00:00] [INFO] Source Address:
+[2021-12-09T21:58:25.9655383+00:00] [INFO] PingSucceeded: False
+[2021-12-09T21:58:25.9655383+00:00] [INFO] Ping Reply Details:
+[2021-12-09T21:58:25.9655383+00:00] [INFO] Tcp Test Succeeded: False
+[2021-12-09T21:58:25.9655383+00:00] [ERROR] ssm1.us-east-1.amazonaws.com is not reachable via port 443. Endpoint IP address is
    [+] With fake endpoint - Fail
- 66ms (65ms|1ms)
-[2021-09-30T20:52:17.3345337+00:00] [INFO] New check.....
-[2021-09-30T20:52:17.3345337+00:00] [INFO] ssm.us-east-1.amazonaws.com accessible
-[2021-09-30T20:52:17.3345337+00:00] [INFO] Testing a TCP connection over Port: 443
-[2021-09-30T20:52:17.3533598+00:00] [ERROR] The ssm.us-east-1.amazonaws.com accessible check skipped since the region information in the EC2 instance metadata is not accessible or under the Managed(hybrid) Instance registration file
+ 65ms (63ms|1ms)
+[2021-12-09T21:58:25.9973735+00:00] [INFO] New check.....
+[2021-12-09T21:58:25.9973735+00:00] [INFO] ssm.us-east-1.amazonaws.com accessible
+[2021-12-09T21:58:25.9973735+00:00] [INFO] Testing a TCP connection over Port: 443
+[2021-12-09T21:58:25.9973735+00:00] [ERROR] The ssm.us-east-1.amazonaws.com accessible check skipped since the region information in the EC2 instance metadata is not accessible or under the Managed(hybrid) Instance registration file
    [+] When skipping Test-EndpointsNetworkAccess
- 30ms (29ms|1ms)
+ 28ms (27ms|1ms)
 
 Running tests from 'Test-HybridRegistration.tests.ps1'
 Describing Test-HybridRegistration
  Context Calling Test-HybridRegistration
-[2021-09-30T20:52:17.4470948+00:00] [INFO] New check.....
-[2021-09-30T20:52:17.4470948+00:00] [INFO] Managed(hybrid) Instance Registration
-[2021-09-30T20:52:17.4470948+00:00] [INFO] The ID of the instance retrieved from the hybrid registration file is mi-abcdef01234567890
-[2021-09-30T20:52:17.4621639+00:00] [INFO] Region from the hybrid registration file is us-east-1
-[2021-09-30T20:52:17.4779048+00:00] [INFO] Pulling the information from TestDrive:\testregistration. The instance will skip checking the metadata.
-[2021-09-30T20:52:17.4784819+00:00] [INFO] ManagedInstanceID = mi-abcdef01234567890, Region = us-east-1
+[2021-12-09T21:58:26.0930133+00:00] [INFO] New check.....
+[2021-12-09T21:58:26.1087550+00:00] [INFO] Managed(hybrid) Instance Registration
+[2021-12-09T21:58:26.1087550+00:00] [INFO] The ID of the instance retrieved from the hybrid registration file is mi-abcdef01234567890
+[2021-12-09T21:58:26.1087550+00:00] [INFO] Region from the hybrid registration file is us-east-1
+[2021-12-09T21:58:26.1087550+00:00] [INFO] Pulling the information from TestDrive:\testregistration. The instance will skip checking the metadata.
+[2021-12-09T21:58:26.1202737+00:00] [INFO] ManagedInstanceID = mi-abcdef01234567890, Region = us-east-1
    [+] When RegistrationFile exist
- 40ms (33ms|7ms)
-[2021-09-30T20:52:17.4940534+00:00] [INFO] New check.....
-[2021-09-30T20:52:17.4940534+00:00] [INFO] Managed(hybrid) Instance Registration
-[2021-09-30T20:52:17.5095978+00:00] [INFO] The instance is not configured as Managed(hybrid) Instance. Metadata will be used to get the InstanceId and Region
+ 30ms (23ms|7ms)
+[2021-12-09T21:58:26.1248432+00:00] [INFO] New check.....
+[2021-12-09T21:58:26.1248432+00:00] [INFO] Managed(hybrid) Instance Registration
+[2021-12-09T21:58:26.1405653+00:00] [INFO] The instance is not configured as Managed(hybrid) Instance. Metadata will be used to get the InstanceId and Region
    [+] When RegistrationFile does not exist
- 25ms (24ms|1ms)
+ 20ms (19ms|1ms)
 
 Running tests from 'Test-IAMInstanceProfile.tests.ps1'
-This test assume there is an access to the instance metadate and have a profile attached with "SSMInstanceProfile" as a name.
+This test assume there is an access to the instance metadata and have a profile attached with "SSMInstanceProfile" as a name.
 Describing Test-IAMInstanceProfile
  Context Calling Test-IAMInstanceProfile
-[2021-09-30T20:52:17.6035662+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:17.6035662+00:00] [INFO] URL: http://169.254.169.254/latest/api/token, Method: PUT
-[2021-09-30T20:52:17.6035662+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token-ttl-seconds, Headers Values: 300
-[2021-09-30T20:52:17.6817969+00:00] [INFO] Successfully made the request - Status Code: 200
-[2021-09-30T20:52:17.6817969+00:00] [INFO] Metadata's token has been retrieved.
-[2021-09-30T20:52:17.6973286+00:00] [INFO] New check.....
-[2021-09-30T20:52:17.6973286+00:00] [INFO] IAM instance profile
-[2021-09-30T20:52:17.7130807+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:17.7130807+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/iam/security-credentials/, Method: Get
-[2021-09-30T20:52:17.7130807+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: AQAAANyjog9sxYX1-U5aQ-m_3TLa5bMZI-DVgpzML4_gF_Mfp0ekcA==
-[2021-09-30T20:52:17.7910995+00:00] [INFO] Successfully made the request - Status Code: 200
-[2021-09-30T20:52:17.7910995+00:00] [INFO] SSMInstanceProfile is the instance profile name retrieved from the metadata.
-[2021-09-30T20:52:17.7910995+00:00] [INFO] Make sure it does have enough permission - https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-profile.html
+[2021-12-09T21:58:26.2361878+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:26.2452117+00:00] [INFO] URL: http://169.254.169.254/latest/api/token, Method: PUT
+[2021-12-09T21:58:26.2452117+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token-ttl-seconds, Headers Values: 300
+[2021-12-09T21:58:26.2997222+00:00] [INFO] Successfully made the request - Status Code: 200
+[2021-12-09T21:58:26.3077905+00:00] [INFO] Metadata's token has been retrieved.
+[2021-12-09T21:58:26.3077905+00:00] [INFO] New check.....
+[2021-12-09T21:58:26.3077905+00:00] [INFO] IAM instance profile
+[2021-12-09T21:58:26.3158625+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:26.3158625+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/iam/security-credentials/, Method: Get
+[2021-12-09T21:58:26.3158625+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: AQAAAKv7P-EL39lIHnvkExpbe0PZrGl8nO3Hoj2zSZQwhiwXsxUnMA==
+[2021-12-09T21:58:26.3793217+00:00] [INFO] Successfully made the request - Status Code: 200
+[2021-12-09T21:58:26.3793217+00:00] [INFO] SSMInstanceProfile is the instance profile name retrieved from the metadata.
+[2021-12-09T21:58:26.3793217+00:00] [INFO] Make sure it does have enough permission - https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-profile.html
    [+] IAM instance profile "SSMInstanceProfile" exist
- 218ms (202ms|16ms)
-[2021-09-30T20:52:17.8224138+00:00] [INFO] New check.....
-[2021-09-30T20:52:17.8224138+00:00] [INFO] IAM instance profile
-[2021-09-30T20:52:17.8224138+00:00] [ERROR] Unable to retrieve the IAM instance profile from the EC2 instance metadata
+ 166ms (154ms|12ms)
+[2021-12-09T21:58:26.4016210+00:00] [INFO] New check.....
+[2021-12-09T21:58:26.4016210+00:00] [INFO] IAM instance profile
+[2021-12-09T21:58:26.4111800+00:00] [ERROR] Unable to retrieve the IAM instance profile from the EC2 instance metadata
    [+] Metadata is not accessible - Skip
- 15ms (13ms|2ms)
-[2021-09-30T20:52:17.8542926+00:00] [INFO] New check.....
-[2021-09-30T20:52:17.8542926+00:00] [INFO] IAM instance profile
-[2021-09-30T20:52:17.8542926+00:00] [Info] Get the IAMInstanceProfile test skipped since this server configured as Managed(hybrid) Instance
+ 20ms (19ms|1ms)
+[2021-12-09T21:58:26.4329536+00:00] [INFO] New check.....
+[2021-12-09T21:58:26.4329536+00:00] [INFO] IAM instance profile
+[2021-12-09T21:58:26.4329536+00:00] [Info] Get the IAMInstanceProfile test skipped since this server configured as Managed(hybrid) Instance
    [+] Instance registered as hybrid instance - Skip
- 14ms (13ms|1ms)
-[2021-09-30T20:52:17.8861829+00:00] [INFO] New check.....
-[2021-09-30T20:52:17.8861829+00:00] [INFO] IAM instance profile
-[2021-09-30T20:52:17.8861829+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:17.8861829+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/iam/security-credentials/, Method: Get
-[2021-09-30T20:52:17.8861829+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: abcdef0123456789
-PS C:\SSMAgent-Toolkit> TerminatingError(Invoke-WebRequest): "401 - Unauthorized"
-[2021-09-30T20:52:17.9180818+00:00] [ERROR] Failed...
-[2021-09-30T20:52:17.9180818+00:00] [ERROR] System.Net.HttpWebResponse
-[2021-09-30T20:52:17.9180818+00:00] [ERROR] Status Code: 401
-[2021-09-30T20:52:17.9180818+00:00] [ERROR] Unauthorized
-[2021-09-30T20:52:17.9337860+00:00] [ERROR] Unable to retrieve the IAM instance profile
+ 25ms (24ms|1ms)
+[2021-12-09T21:58:26.4642700+00:00] [INFO] New check.....
+[2021-12-09T21:58:26.4642700+00:00] [INFO] IAM instance profile
+[2021-12-09T21:58:26.4642700+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:26.4748519+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/iam/security-credentials/, Method: Get
+[2021-12-09T21:58:26.4748519+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: abcdef0123456789
+PS>TerminatingError(Invoke-WebRequest): "
+
+
+ 
+  401 - Unauthorized
+ 
+ 
+  401 - Unauthorized
+ 
+
+"
+[2021-12-09T21:58:26.4748519+00:00] [ERROR] Failed...
+[2021-12-09T21:58:26.4951765+00:00] [ERROR] System.Net.HttpWebResponse
+[2021-12-09T21:58:26.4951765+00:00] [ERROR] Status Code: 401
+[2021-12-09T21:58:26.4951765+00:00] [ERROR] Unauthorized
+[2021-12-09T21:58:26.4951765+00:00] [ERROR] Unable to retrieve the IAM instance profile
    [+] IAM instance profile is not attached to the instance
- 69ms (67ms|1ms)
+ 50ms (49ms|1ms)
 
 Running tests from 'Test-IAMInstanceProfileCredentialLastUpdate.tests.ps1'
-This test assume there is an access to the instance metadate and have a IAM instance profile attached.
-[2021-09-30T20:52:18.0455545+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:18.0455545+00:00] [INFO] URL: http://169.254.169.254/latest/api/token, Method: PUT
-[2021-09-30T20:52:18.0455545+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token-ttl-seconds, Headers Values: 300
-[2021-09-30T20:52:18.1345169+00:00] [INFO] Successfully made the request - Status Code: 200
-[2021-09-30T20:52:18.1345169+00:00] [INFO] Metadata's token has been retrieved.
-[2021-09-30T20:52:18.1410524+00:00] [INFO] New check.....
-[2021-09-30T20:52:18.1410524+00:00] [INFO] IAM instance profile
-[2021-09-30T20:52:18.1567571+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:18.1567571+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/iam/security-credentials/, Method: Get
-[2021-09-30T20:52:18.1567571+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: AQAAANyjog-cnbmrPIXA7malQC2tSh1UgVn__CMvLylShZ7Kl9WQxA==
-[2021-09-30T20:52:18.2364264+00:00] [INFO] Successfully made the request - Status Code: 200
-[2021-09-30T20:52:18.2364264+00:00] [INFO] SSMInstanceProfile is the instance profile name retrieved from the metadata.
-[2021-09-30T20:52:18.2364264+00:00] [INFO] Make sure it does have enough permission - https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-profile.html
+This test assume there is an access to the instance metadata and have a IAM instance profile attached.
+[2021-12-09T21:58:26.5892125+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:26.5892125+00:00] [INFO] URL: http://169.254.169.254/latest/api/token, Method: PUT
+[2021-12-09T21:58:26.5892125+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token-ttl-seconds, Headers Values: 300
+[2021-12-09T21:58:26.6517245+00:00] [INFO] Successfully made the request - Status Code: 200
+[2021-12-09T21:58:26.6517245+00:00] [INFO] Metadata's token has been retrieved.
+[2021-12-09T21:58:26.6517245+00:00] [INFO] New check.....
+[2021-12-09T21:58:26.6517245+00:00] [INFO] IAM instance profile
+[2021-12-09T21:58:26.6517245+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:26.6657563+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/iam/security-credentials/, Method: Get
+[2021-12-09T21:58:26.6657563+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: AQAAAKv7P-HN761g3XzdS_liNyPaBv51BDmRh7HM7cZjEuzm_ymoJA==
+[2021-12-09T21:58:26.7292812+00:00] [INFO] Successfully made the request - Status Code: 200
+[2021-12-09T21:58:26.7292812+00:00] [INFO] SSMInstanceProfile is the instance profile name retrieved from the metadata.
+[2021-12-09T21:58:26.7292812+00:00] [INFO] Make sure it does have enough permission - https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-profile.html
 Describing Test-IAMInstanceProfileCredentialLastUpdate
  Context Calling Test-IAMInstanceProfileCredentialLastUpdate
-[2021-09-30T20:52:18.2682470+00:00] [INFO] New check.....
-[2021-09-30T20:52:18.2682470+00:00] [INFO] IAM profile credential valid
-[2021-09-30T20:52:18.2682470+00:00] [INFO] Making an HTTP request
-[2021-09-30T20:52:18.2682470+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/iam/security-credentials/SSMInstanceProfile, Method: Get
-[2021-09-30T20:52:18.2682470+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: AQAAANyjog-cnbmrPIXA7malQC2tSh1UgVn__CMvLylShZ7Kl9WQxA==
-[2021-09-30T20:52:18.3535963+00:00] [INFO] Successfully made the request - Status Code: 200
-[2021-09-30T20:52:18.3535963+00:00] [INFO] Last IAM Credential update is 09/30/2021 20:20:22 UTC
-[2021-09-30T20:52:18.3535963+00:00] [INFO] IAM Credential expiration is 10/01/2021 02:23:09 UTC
-[2021-09-30T20:52:18.3636486+00:00] [INFO] Current time - 6 Hours is 09/30/2021 14:52:18 UTC
-[2021-09-30T20:52:18.3636486+00:00] [INFO] IAM instance profile's credential is up to date. IAM credential Expiration timestamp is 10/01/2021 02:23:09. The Last update is 09/30/2021 20:20:22 UTC
+[2021-12-09T21:58:26.7611554+00:00] [INFO] New check.....
+[2021-12-09T21:58:26.7611554+00:00] [INFO] IAM profile credential valid
+[2021-12-09T21:58:26.7611554+00:00] [INFO] Making an HTTP request
+[2021-12-09T21:58:26.7611554+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/iam/security-credentials/SSMInstanceProfile, Method: Get
+[2021-12-09T21:58:26.7611554+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: AQAAAKv7P-HN761g3XzdS_liNyPaBv51BDmRh7HM7cZjEuzm_ymoJA==
+[2021-12-09T21:58:26.8236079+00:00] [INFO] Successfully made the request - Status Code: 200
+[2021-12-09T21:58:26.8391749+00:00] [INFO] Last IAM Credential update is 12/09/2021 21:23:23 UTC
+[2021-12-09T21:58:26.8391749+00:00] [INFO] IAM Credential expiration is 12/10/2021 03:34:56 UTC
+[2021-12-09T21:58:26.8391749+00:00] [INFO] Current time UTC is 12/09/2021 21:58:26 UTC
+[2021-12-09T21:58:26.8391749+00:00] [INFO] IAM instance profile's credential is up to date. IAM credential Expiration timestamp is 12/10/2021 03:34:56. The Last update is 12/09/2021 21:23:23 UTC
    [+] IAM instance profile attached
- 135ms (118ms|17ms)
-[2021-09-30T20:52:18.3955297+00:00] [INFO] New check.....
-[2021-09-30T20:52:18.3955297+00:00] [INFO] IAM profile credential valid
-[2021-09-30T20:52:18.3955297+00:00] [ERROR] Unable to retrieve the IAM instance profile's LastUpdated and Expiration time stamp from the EC2 instance metadata or no IAM instance profile attached to the instance
+ 120ms (105ms|15ms)
+[2021-12-09T21:58:26.8704314+00:00] [INFO] New check.....
+[2021-12-09T21:58:26.8704314+00:00] [INFO] IAM profile credential valid
+[2021-12-09T21:58:26.8704314+00:00] [ERROR] Unable to retrieve the IAM instance profile's LastUpdated and Expiration time stamp from the EC2 instance metadata or no IAM instance profile attached to the instance
    [+] Metadata is not accessible - Skip
- 14ms (13ms|1ms)
-[2021-09-30T20:52:18.4274048+00:00] [INFO] New check.....
-[2021-09-30T20:52:18.4274048+00:00] [INFO] IAM profile credential valid
-[2021-09-30T20:52:18.4274048+00:00] [Info] Get the IAMInstanceProfileCredentialLastUpdate test skipped since this server configured as Managed(hybrid) Instance
+ 15ms (14ms|1ms)
+[2021-12-09T21:58:26.8861691+00:00] [INFO] New check.....
+[2021-12-09T21:58:26.8861691+00:00] [INFO] IAM profile credential valid
+[2021-12-09T21:58:26.9017369+00:00] [Info] Get the IAMInstanceProfileCredentialLastUpdate test skipped since this server configured as Managed(hybrid) Instance
    [+] Instance registered as hybrid instance - Skip
- 14ms (12ms|1ms)
-[2021-09-30T20:52:18.4593043+00:00] [INFO] New check.....
-[2021-09-30T20:52:18.4593043+00:00] [INFO] IAM profile credential valid
-[2021-09-30T20:52:18.4593043+00:00] [ERROR] There is no IAM instance profile attached to the instance
+ 20ms (19ms|1ms)
+[2021-12-09T21:58:26.9174875+00:00] [INFO] New check.....
+[2021-12-09T21:58:26.9174875+00:00] [INFO] IAM profile credential valid
+[2021-12-09T21:58:26.9330564+00:00] [ERROR] There is no IAM instance profile attached to the instance
    [+] IAM instance profile is not attached to the instance
- 14ms (13ms|1ms)
-[2021-10-01T20:52:18.4920836+00:00] [INFO] New check.....
-[2021-10-01T20:52:18.4920836+00:00] [INFO] IAM profile credential valid
-[2021-10-01T20:52:18.4920836+00:00] [INFO] Making an HTTP request
-[2021-10-01T20:52:18.4920836+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/iam/security-credentials/SSMInstanceProfile, Method: Get
-[2021-10-01T20:52:18.4920836+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: AQAAANyjog-cnbmrPIXA7malQC2tSh1UgVn__CMvLylShZ7Kl9WQxA==
-[2021-10-01T20:52:18.5922042+00:00] [INFO] Successfully made the request - Status Code: 200
-[2021-10-01T20:52:18.5922042+00:00] [INFO] Last IAM Credential update is 09/30/2021 20:20:22 UTC
-[2021-10-01T20:52:18.5922042+00:00] [INFO] IAM Credential expiration is 10/01/2021 02:23:09 UTC
-[2021-10-01T20:52:18.6002708+00:00] [INFO] Current time - 6 Hours is 10/01/2021 14:52:18 UTC
-[2021-10-01T20:52:18.6002708+00:00] [ERROR] Credential Expiration time is in the past for SSMInstanceProfile IAM instance profile. The Last update is 09/30/2021 20:20:22 UTC. Please make sure IAM Role is attach to the instance,Stop and start the instance
+ 20ms (19ms|1ms)
+[2021-12-10T21:58:26.9487675+00:00] [INFO] New check.....
+[2021-12-10T21:58:26.9487675+00:00] [INFO] IAM profile credential valid
+[2021-12-10T21:58:26.9536454+00:00] [INFO] Making an HTTP request
+[2021-12-10T21:58:26.9726643+00:00] [INFO] URL: http://169.254.169.254/latest/meta-data/iam/security-credentials/SSMInstanceProfile, Method: Get
+[2021-12-10T21:58:26.9882291+00:00] [INFO] Headers Keys: X-aws-ec2-metadata-token, Headers Values: AQAAAKv7P-HN761g3XzdS_liNyPaBv51BDmRh7HM7cZjEuzm_ymoJA==
+[2021-12-10T21:58:27.0518475+00:00] [INFO] Successfully made the request - Status Code: 200
+[2021-12-10T21:58:27.0518475+00:00] [INFO] Last IAM Credential update is 12/09/2021 21:23:23 UTC
+[2021-12-10T21:58:27.0518475+00:00] [INFO] IAM Credential expiration is 12/10/2021 03:34:56 UTC
+[2021-12-10T21:58:27.0518475+00:00] [INFO] Current time UTC is 12/10/2021 21:58:27 UTC
+[2021-12-10T21:58:27.0675362+00:00] [ERROR] Credential Expiration time is in the past for SSMInstanceProfile IAM instance profile. The Last update is 12/09/2021 21:23:23 UTC. IAM credential Expiration timestamp is 12/10/2021 03:34:56. Please make sure IAM Role is attach to the instance,Stop and start the instance
    [+] IAM instance profile is not attached to the instance
- 122ms (121ms|1ms)
-Tests completed in 10.86s
-Tests Passed: 73,
+ 136ms (134ms|1ms)
+Tests completed in 13.81s
+Tests Passed: 76,
 Failed: 0,
 Skipped: 0
 
 NotRun: 0
 **********************
 Windows PowerShell transcript end
-End time: 20210930205218
+End time: 20211209215827
 **********************

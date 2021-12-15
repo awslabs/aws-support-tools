@@ -27,6 +27,9 @@ Function Get-SSMAgentVersion {
   Write-Log -Message "$check"
 
   if (-not ($Skip)) { 
+    if ($Region -eq 0) {
+      $Region = "us-east-1"
+    }
     $LatestVersionUrl = "https://s3.$Region.amazonaws.com/amazon-ssm-$Region/latest/VERSION"
     Write-Log -Message "Checking the latest SSM agent from $LatestVersionUrl."
     
@@ -70,6 +73,7 @@ Function Get-SSMAgentVersion {
       }
     }
   }
+
 
   else {
     $value = "Skip"

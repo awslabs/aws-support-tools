@@ -49,27 +49,27 @@ Function Test-IAMInstanceProfileCredentialLastUpdate {
     [System.Collections.IDictionary]$Headers = @{"X-aws-ec2-metadata-token" = $Token }
     $IAMMetadata = Invoke-CustomHTTPRequest -Uri $Uri -Headers $Headers | ConvertFrom-Json
     
-    [DateTime]$LastUpdatedUTC = $IAMMetadata.LastUpdated
-    [DateTime]$ExpirationUTC = $IAMMetadata.Expiration
+    $LastUpdatedUTC = ([DateTime]($IAMMetadata.LastUpdated)).ToUniversalTime()
+    $ExpirationUTC  = ([DateTime]($IAMMetadata.Expiration)).ToUniversalTime()
 
-    Write-Log -Message "Last IAM Credential update is $LastUpdatedUTC UTC"
-    Write-Log -Message "IAM Credential expiration is $ExpirationUTC UTC"
+    Write-Log -Message "Last IAM Credential update from metadata is $($IAMMetadata.LastUpdated) in UTC"
+    Write-Log -Message "Last IAM Credential update variable is $LastUpdatedUTC in UTC"
+    Write-Log -Message "IAM Credential expiration from metadata is $($IAMMetadata.Expiration) in UTC"
+    Write-Log -Message "IAM Credential expiration variable is $ExpirationUTC UTC"
         
-    #Current time - 6 hours
     $CurrentTimeUTC = [DateTime]::UtcNow
-    $TimeMinus6Hours = $CurrentTimeUTC.AddHours(-6)
-    Write-Log -Message "Current time - 6 Hours is $TimeMinus6Hours UTC"
+    Write-Log -Message "Current time UTC is $CurrentTimeUTC UTC"
 
     #Check if the last credential update of the IAMInstanceProfile is more than 6 hours.
     if ($ExpirationUTC -gt $CurrentTimeUTC) {
       $value = "Pass"
-      $note = "IAM instance profile's credential is up to date. IAM credential Expiration timestamp is $ExpirationUTC. The Last update is $LastUpdatedUTC UTC"
+      $note = "IAM instance profile's credential is up to date. IAM credential Expiration timestamp is $ExpirationUTC UTC. The Last update is $LastUpdatedUTC UTC"
       Write-Log -Message $note
     }
     elseif ($ExpirationUTC -lt $CurrentTimeUTC) {
       $value = "Fail"
       $note = "Credential Expiration time is in the past.Please make sure IAM Role is attach to the instance,Stop and start the instance"
-      Write-Log -Message "Credential Expiration time is in the past for $IAMInstanceProfile IAM instance profile. The Last update is $LastUpdatedUTC UTC. Please make sure IAM Role is attach to the instance,Stop and start the instance" -LogLevel "ERROR"
+      Write-Log -Message "Credential Expiration time is in the past for $IAMInstanceProfile IAM instance profile. The Last update is $LastUpdatedUTC UTC. IAM credential Expiration timestamp is $ExpirationUTC UTC. Please make sure IAM Role is attach to the instance,Stop and start the instance" -LogLevel "ERROR"
     }
   }
   New-PSObjectResponse -Check "$check" -Status "$value" -Note "$note"

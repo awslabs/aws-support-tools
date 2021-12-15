@@ -2,7 +2,7 @@
   .Synopsis
     Test registry value 
   .Description
-    This is a helper function to test registry value and whater if the key is available or not.
+    This is a helper function to test registry value and whether if the key is available or not.
   .Example
     Test-RegistryValue -Path 'Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\AmazonSSMAgent' -Value 'Environment'
   .INPUTS
@@ -21,7 +21,7 @@ function Test-RegistryValue {
   )
 
   try {
-    if (Get-ItemProperty -Path $Path | Select-Object -ExpandProperty $Value -ErrorAction Stop) {
+    if (Get-ItemProperty -Path $Path | Select-Object -ExpandProperty $Value -ErrorAction SilentlyContinue) {
       return $true
     }
     else {

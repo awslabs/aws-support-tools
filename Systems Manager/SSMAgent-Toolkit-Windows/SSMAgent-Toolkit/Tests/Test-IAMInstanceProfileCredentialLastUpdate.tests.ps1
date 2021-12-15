@@ -24,7 +24,7 @@ Describe "Test-IAMInstanceProfileCredentialLastUpdate" {
                 
             $output.Check | Should -Be $Check
             $output.Value | Should -Be "Pass"
-            $output.Note | Should -Be "IAM instance profile's credential is up to date. IAM credential Expiration timestamp is $ExpirationUTC. The Last update is $LastUpdatedUTC UTC"
+            $output.Note | Should -Be "IAM instance profile's credential is up to date. IAM credential Expiration timestamp is $ExpirationUTC UTC. The Last update is $LastUpdatedUTC UTC"
         }
 
         It 'Metadata is not accessible - Skip' {           
