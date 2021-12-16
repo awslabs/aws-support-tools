@@ -15,7 +15,7 @@
     RootModule = ''
     
     # Version number of this module.
-    ModuleVersion = '0.1.0'
+    ModuleVersion = '1.0'
     
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -39,7 +39,7 @@
     PowerShellVersion = '5.1'
     
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-    FunctionsToExport = @("Get-AgentProxySettings","Get-IEProxySettings","Get-InstanceID","Get-LocalSystemAccountEnvironmentVariablesProxy","Get-MetadataAccess","Get-Region","Get-ServiceAvailability","Get-ServiceAccount","Get-ServiceStatus","Get-LocalSystemAccountSTSCallerIdentity","Get-SystemWideEnvironmentVariablesProxy","Get-SystemWideProxy","Get-WindowsImageState","Invoke-SSMChecks","New-MetadataToken","Test-EndpointsNetworkAccess","Test-IAMInstanceProfile","Test-IAMInstanceProfileCredentialLastUpdate","Test-HybridRegistration","Get-SSMAgentVersion","Get-SessionManagerPluginVersion")
+    FunctionsToExport = @("Get-AgentProxySettings","Get-IEProxySettings","Get-InstanceID","Get-LocalSystemAccountEnvironmentVariablesProxy","Get-MetadataAccess","Get-Region","Get-ServiceAvailability","Get-ServiceAccount","Get-ServiceStatus","Get-LocalSystemAccountSTSCallerIdentity","Get-SystemWideEnvironmentVariablesProxy","Get-SystemWideProxy","Get-WindowsImageState","Invoke-SSMChecks","New-MetadataToken","Test-EndpointsNetworkAccess","Test-IAMInstanceProfile","Test-IAMInstanceProfileCredentialLastUpdate","Test-HybridRegistration","Get-SSMAgentVersion","Get-SessionManagerPluginVersion","Get-ServiceStartupMode")
     
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
     CmdletsToExport = @()
