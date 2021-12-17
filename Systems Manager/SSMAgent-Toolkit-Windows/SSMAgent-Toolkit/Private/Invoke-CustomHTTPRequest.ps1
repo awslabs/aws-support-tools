@@ -24,7 +24,7 @@ function Invoke-CustomHTTPRequest {
     
   process {
     try {
-      $httpResponse = Invoke-WebRequest -Uri $Uri -Method $Method -Headers $Headers
+      $httpResponse = Invoke-WebRequest -Uri $Uri -Method $Method -Headers $Headers -UseBasicParsing
       $resStatusCode = $httpResponse.StatusCode
       if ($resStatusCode -eq 200) {
         Write-Log "Successfully made the request - Status Code: $($resStatusCode)"

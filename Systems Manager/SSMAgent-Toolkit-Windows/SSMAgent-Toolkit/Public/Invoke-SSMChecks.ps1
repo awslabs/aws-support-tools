@@ -15,12 +15,11 @@
 	PS C:\SSMAgent-Toolkit> Import-Module "$destination\SSMAgent-Toolkit\SSMAgent-Toolkit.psm1";Invoke-SSMChecks -Table
 	Checking for elevated permissions...
 	Code is running as administrator - executing the script...
-	[2021-10-01T13:16:05.6939670+00:00] [INFO] Logs directory exists - C:\SSMAgent-Toolkit\logs\
-	[2021-10-01T13:16:05.7095817+00:00] [INFO] Outputs directory exists - C:\SSMAgent-Toolkit\Outputs\
-	[2021-10-01T13:16:05.7095817+00:00] [INFO] Logs available at C:\SSMAgent-Toolkit\logs\SSMCheck_2021-10-01-01-16-05.log
-	[2021-10-01T13:16:05.7095817+00:00] [INFO] Outputs available at C:\SSMAgent-Toolkit\Outputs\SSMCheck_2021-10-01-01-16-05.txt
+	[2021-12-09T20:26:38.5340080+00:00] [INFO] Logs directory exists - C:\SSMAgent-Toolkit\logs\
+	[2021-12-09T20:26:38.5340080+00:00] [INFO] Outputs directory exists - C:\SSMAgent-Toolkit\Outputs\
+	[2021-12-09T20:26:38.5497378+00:00] [INFO] Logs available at C:\SSMAgent-Toolkit\logs\SSMCheck_2021-12-09-08-26-38.log
+	[2021-12-09T20:26:38.5497378+00:00] [INFO] Outputs available at C:\SSMAgent-Toolkit\Outputs\SSMCheck_2021-12-09-08-26-38.txt
 	Running all the tests can take a few minutes...
-
 		___ _       _______    _____            __                         __  ___
 	   /   | |     / / ___/   / ___/__  _______/ /____  ____ ___  _____   /  |/  /___ _____  ____ _____ ____  _____
 	  / /| | | /| / /\__ \    \__ \/ / / / ___/ __/ _ \/ __ __ \/ ___/   / /|_/ / __  / __ \/ __  / __  / _ \/ ___/
@@ -33,24 +32,27 @@
 	Windows sysprep image state complete                Pass                                                                          Image state is IMAGE_STATE_COMPLETE. This is the desired state
 	Amazon SSM agent service running                    Pass                                                                          amazonssmagent service is in Running state. This is the desired state
 	Amazon SSM service account                          LocalSystem                                                                   This is the recommended account to use
+	Amazon SSM service startup mode                     Auto                                                                          This is the recommended startup mode to use
 	Managed(hybrid) Instance Registration               Skip                                                                          The instance is not configured as Managed(hybrid) Instance. Metadata will be used to get the InstanceId and Region
 	EC2 instance metadata accessible                    Pass                                                                          EC2 InstanceID = i-abcdef01234567890, Region = us-east-1
 	IAM instance profile                                SSMInstanceProfile                                                            IAM instance profile SSMInstanceProfile is attached to the instance
-	IAM profile credential valid                        Pass                                                                          IAM instance profile's credential is up to date. IAM credential Expiration timestamp is 10/01/2021 18:26:44. The Last update is 10/01/2021 12:17:17 UTC
+	IAM profile credential valid                        Pass                                                                          IAM instance profile`'s credential is up to date. IAM credential Expiration timestamp is 10/01/2021 18:26:44.
+																																	The Last update is 10/01/2021 12:17:17 UTC
 	LocalSystem account user API assume role            arn:aws:sts::012345678901:assumed-role/SSMInstanceProfile/i-abcdef01234567890 The role and the instance in the ARN should match the metadata\hybrid registration
-	ssm.us-east-1.amazonaws.com accessible              Pass                                                                          Endpoint IP address is 52.46.141.158
-	ec2messages.us-east-1.amazonaws.com accessible      Pass                                                                          Endpoint IP address is 52.94.228.178
-	ssmmessages.us-east-1.amazonaws.com accessible      Pass                                                                          Endpoint IP address is 52.46.128.123
-	S3.us-east-1.amazonaws.com accessible               Pass                                                                          Endpoint IP address is 52.216.140.190
-	kms.us-east-1.amazonaws.com accessible              Pass                                                                          Endpoint IP address is 54.239.17.195
+	ssm.us-east-1.amazonaws.com accessible              Pass                                                                          Endpoint IP address is 52.46.145.233
+	ec2messages.us-east-1.amazonaws.com accessible      Pass                                                                          Endpoint IP address is 52.46.138.63
+	ssmmessages.us-east-1.amazonaws.com accessible      Pass                                                                          Endpoint IP address is 52.46.132.109
+	S3.us-east-1.amazonaws.com accessible               Pass                                                                          Endpoint IP address is 52.217.98.142
+	kms.us-east-1.amazonaws.com accessible              Pass                                                                          Endpoint IP address is 52.46.136.89
 	logs.us-east-1.amazonaws.com accessible             Pass                                                                          Endpoint IP address is 3.236.94.131
+	monitoring.us-east-1.amazonaws.com accessible       Pass                                                                          Endpoint IP address is 72.21.206.194
 	SSM Agent Proxy Setting                             N/A                                                                           There is no proxy setting for SSM Agent
 	System-wide environment variable proxy              N/A                                                                           There is no http_proxy, https_proxy or no_proxy configured
 	LocalSystem account user environment variable proxy N/A                                                                           There is no http_proxy, https_proxy or no_proxy configured
 	WinHTTP system-wide proxy                           N/A                                                                           There is no ProxyServer(s) configured for WinHTTP system-wide proxy
 	LocalSystem account user Internet Explorer proxy    N/A                                                                           There is no ProxyServer configured
-	SSMAgent version                                    Pass                                                                          The install and the latest agent version in us-east-1 is 3.1.338.0
-	Session Manager Plugin version                      Pass               															  The install and the latest Session Manager Plugin version is 1.2.245.0
+	SSMAgent version                                    Pass                                                                          The install and the latest agent version in us-east-1 is 3.1.501.0
+	Session Manager Plugin version                      Pass               															  The install and the latest Session Manager Plugin version is 1.2.279.0
 #>
 
 
@@ -64,7 +66,8 @@ function Invoke-SSMChecks {
 			"ssmmessages",
 			"S3",
 			"kms",
-			"logs"
+			"logs",
+			"monitoring"
 		),
 		[Switch]$GridView,
 		[Switch]$Table
@@ -140,10 +143,12 @@ function Invoke-SSMChecks {
 		if ($ServiceAvailability[0] -eq 1) {
 			$Output.Add((Get-ServiceStatus -ServiceStatus $ServiceAvailability[1] 6>> $LogsDestination)) | Out-Null
 			$Output.Add((Get-ServiceAccount 6>> $LogsDestination)) | Out-Null
+			$Output.Add((Get-ServiceStartupMode 6>> $LogsDestination)) | Out-Null
 		}
 		else {
 			$Output.Add($ServiceAvailability) | Out-Null
 			$Output.Add((Get-ServiceAccount -Skip 6>> $LogsDestination)) | Out-Null
+			$Output.Add((Get-ServiceStartupMode -Skip 6>> $LogsDestination)) | Out-Null
 		}
 		#Check if the instance have a registration file exit. If does, means the instance is configured as Managed(hybrid) instance and will skip the metadata check.
 		
@@ -181,6 +186,8 @@ function Invoke-SSMChecks {
 			else {
 				Write-Log -Message "Metadata is not reachable. Skipping endpoints checks, IAM instance profile, IAM instance profile last update and STS caller identity" -LogLevel "ERROR" 6>> $LogsDestination
 				$region = 0
+				$ec2instanceid = "i-0123456789abcdefa"
+				$Output.Add((Get-MetadataAccess -StatusCode $MetadataInfo[0] -Region $region -EC2InstanceID $ec2instanceid 6>> $LogsDestination)) | Out-Null
 				$Output.Add((Test-IAMInstanceProfile -Token "N/A" -NoMetadataAccess 6>> $LogsDestination)) | Out-Null
 				$Output.Add((Test-IAMInstanceProfileCredentialLastUpdate -Token "N/A" -IAMInstanceProfile "N/A" -NoMetadataAccess 6>> $LogsDestination)) | Out-Null
 				$Output.Add((Get-LocalSystemAccountSTSCallerIdentity -ParentDirectoryLocation $ParentDirectory -Skip 6>> $LogsDestination)) | Out-Null
