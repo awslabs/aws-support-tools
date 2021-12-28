@@ -1,7 +1,7 @@
 # Note: Starting with [SSM Agent version 3.1.501.0](https://github.com/aws/amazon-ssm-agent/releases/tag/3.1.501.0). This solution is part of the [ssm-cli](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-cli.html) a subset tool of the SSM Agent.
 # SSM Agent Toolkit for Windows
 
-The [SSMAgent-Toolkit for Windows](https://github.com/awslabs/aws-support-tools/tree/master/Systems%20Manager/SSMAgent-Toolkit-Windows) is a set of PowerShell scripts developed to run multiple checks to determined why an Windows EC2 instance does not come online or not appearing under Managed Instances in the AWS Systems Manager console. The toolkit will go through the following workflow
+The [SSMAgent-Toolkit for Windows](https://github.com/awslabs/aws-support-tools/tree/master/Systems%20Manager/SSMAgent-Toolkit-Windows) is a set of PowerShell scripts developed to run multiple checks to determined why an Windows EC2 instance does not come online or not appearing under "Managed Instances" or "Fleet Manager" in the AWS Systems Manager console. The toolkit will go through the following workflow
 
 ![Flowchart](https://github.com/awslabs/aws-support-tools/raw/master/Systems%20Manager/SSMAgent-Toolkit-Windows/SSMAgent-Toolkit_Flowchart.png?raw=1)
 
