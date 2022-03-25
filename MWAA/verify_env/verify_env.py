@@ -879,7 +879,7 @@ def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm
                           interface_ip, "and", service['service'], "on port", service['port'])
                     print("Please follow this link to view the results of the test:")
                     print("https://console.aws.amazon.com/systems-manager/automation/execution/" + ssm_execution_id +
-                          "?REGION=" + REGION + "\n")
+                          "?region=" + REGION + "\n")
                     break
             except ClientError as client_error:
                 print('Attempt', i, 'Encountered error', client_error.response['Error']['Message'], ' retrying...')
