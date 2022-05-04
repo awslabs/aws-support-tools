@@ -66,11 +66,17 @@ echo "Found "${ENI}" with "$Subnet" using Security Groups" ${SortedSGs[@]}
 echo "Searching for Lambda function versions using "$Subnet" and Security Groups" ${SortedSGs[@]}"..."
 
 # Get all the Lambda functions in an account that are using the same subnet, including versions
-Response="$(aws lambda list-functions --function-version ALL --region ${REGION} --output json --query 'Functions[?VpcConfig!=`null` && VpcConfig.SubnetIds!=`[]`] | [].{Arn:FunctionArn, Subnets:VpcConfig.SubnetIds, SecurityGroups: VpcConfig.SecurityGroupIds} | [?contains(Subnets, `'$Subnet'`) == `true`]')"
 Functions=()
-for row in $(echo $Response | jq -c -r '.[]')
-do
-  Functions+=(${row})
+Response="$(aws lambda list-functions --function-version ALL --max-items 1000 --region ${REGION} --output json --query '{"NextToken": NextToken, "VpcConfigsByFunction": Functions[?VpcConfig!=`null` && VpcConfig.SubnetIds!=`[]`] | [].{Arn:FunctionArn, Subnets:VpcConfig.SubnetIds, SecurityGroups: VpcConfig.SecurityGroupIds} | [?contains(Subnets, `'$Subnet'`) == `true`] }')"
+# Find functions using the same subnet and security group as target ENI. Use paginated calls to enumerate all functions.
+while : ; do
+    NextToken=$(echo $Response | jq '.NextToken')
+    for row in $(echo $Response | jq -c -r '.VpcConfigsByFunction[]')
+    do
+        Functions+=(${row})
+    done
+    [[ $NextToken != "null" ]] || break
+    Response="$(aws lambda list-functions --function-version ALL --max-items 1000 --starting-token $NextToken --region ${REGION} --output json --query '{"NextToken": NextToken, "VpcConfigsByFunction": Functions[?VpcConfig!=`null` && VpcConfig.SubnetIds!=`[]`] | [].{Arn:FunctionArn, Subnets:VpcConfig.SubnetIds, SecurityGroups: VpcConfig.SecurityGroupIds} | [?contains(Subnets, `'$Subnet'`) == `true`] }')"
 done
 # check if we got any functions with this subnet at all
 if [ $(echo "${#Functions[@]}") -eq 0 ]
