@@ -19,7 +19,7 @@ var keys_url string
 var keys *jwk.Set
 
 type AWSCognitoClaims struct {
-	ClientId string `json:client_id`
+	Client_ID string `json:client_id`
 	Username string `json:username`
 	jwt.StandardClaims
 }
@@ -64,7 +64,7 @@ func validateToken(token *jwt.Token) (interface{}, error) {
 	if key := keys.LookupKeyID(keyID); len(key) == 1 {
 
 		claims := token.Claims.(*AWSCognitoClaims)
-		// verify the Audience (use claims.ClientId if verifying an access token)
+		// verify the Audience (use claims.Client_ID if verifying an access token)
 		if claims.Audience != app_client_id {
 			return nil, errors.New("token was not issued for this audience")
 		}
