@@ -428,7 +428,7 @@ def check_iam_permissions(input_env, iam_client):
                 "kms:Encrypt"
             ],
             ResourceArns=[
-                "arn:aws:kms:*:111122223333:key/*"
+                "arn:aws:kms:*:" +  account_id + ":key/*"
             ],
             ContextEntries=[
                 {
@@ -446,7 +446,7 @@ def check_iam_permissions(input_env, iam_client):
                 "kms:GenerateDataKey*"
             ],
             ResourceArns=[
-                "arn:aws:kms:*:111122223333:key/*"
+                "arn:aws:kms:*:" +  account_id + ":key/*"
             ],
             ContextEntries=[
                 {
