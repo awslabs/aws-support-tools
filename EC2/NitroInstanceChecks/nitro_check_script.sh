@@ -60,6 +60,90 @@ find_distro=`cat /etc/os-release |sed -n 's|^ID="\([a-z]\{4\}\).*|\1|p'`      # 
         exit 1
     fi
 }
+
+########################################################################
+
+# See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html#timeout-nvme-ebs-volumes
+# for explanation
+check_nvme_timeout () {
+    time_stamp=$(date +%F-%H:%M:%S)
+    grub_default_file="/etc/default/grub"
+    grub_config_file="/boot/grub2/grub.cfg"
+    nvme_byte_timeout_value=254
+    nvme_uint_timeout_value=4294967295
+
+    if [ -f ${grub_config_file} ]; then
+        if [ -n "`grep -E 'nvme.*\.io_timeout=[0-9]+' ${grub_config_file} | grep "\`uname -r\`"`" ]; then
+            # NVMe io_timeout is already configured
+            echo -e "\n\nOK     NVMe IO timeout configured in ${grub_config_file} for kernel `uname -r`"
+            return
+        fi
+    fi
+
+    if [[ "`uname -r | awk -F '.' '{print $(NF-1)}'`" =~ ^amzn* ]]; then
+        # Amazon Linux 1 and 2 support nvme_core io_timeout of 4294967295
+        nvme_module_name="nvme_core"
+        nvme_module_value=${nvme_uint_timeout_value}
+    else
+        if [[ -z `modinfo nvme 2>/dev/null` &&
+              -z `modinfo nvme_core 2>/dev/null` ]]; then
+            # NVMe modules not installed
+            echo -e "\n\nWARNING Neither nvme nor nvme_core kernel modules are loaded."
+            return
+        fi
+        # All other Operating Systems need to be checked
+        # with nvme_core taking precendence over nvme if it's available
+        for module in nvme nvme_core; do
+            if [[ `modinfo ${module} 2<&1 >/dev/null` ]]; then
+                # module is loaded
+                if [[ `modinfo -p ${module} 2>/dev/null | grep -E "^io_timeout:"` =~ (uint) ]]; then
+                    # module supports io_timeout of 4294967295
+                    nvme_module_name="${module}"
+                    nvme_module_value=${nvme_uint_timeout_value}
+                else
+                    # module supports io_timeout of only 254
+	            nvme_module_name="${module}"
+                    nvme_module_value=${nvme_byte_timeout_value}
+                fi
+	    fi
+        done
+    fi
+
+    if [ -f ${grub_default_file} ]; then
+        if [ -n "`grep -E "nvme.*.io_timeout=" ${grub_default_file}`" ]; then
+            echo -e "\n\nOK     NVMe IO timeout is already configured in ${grub_default_file}"
+        else
+            echo -e "\n\nWARNING  Your kernel NVMe io_timeout value is not explicitly set. You should set the io_timeout to avoid io timeout issues under Nitro."
+            printf "\nEnter y to reconfigure grub to use an appropriate NVMe IO timeout.\nEnter n to keep the kernels as they are with no modification (y/n) "
+            read RESPONSE;
+            case "$RESPONSE" in
+                [yY]|[yY][eE][sS])                                              # If answer is yes, make the changes
+                        # Write changes to grub configuration
+                        echo "Writing changes to /etc/default/grub and re-generating grub configuration..."
+                        echo -e "\n\n***********************"
+                        cp -a ${grub_default_file} ${grub_default_file}.backup.$time_stamp
+                        sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"/GRUB_CMDLINE_LINUX_DEFAULT=\"${nvme_module_name}.io_timeout=${nvme_module_value} /" ${grub_default_file}
+                        grub2-mkconfig >${grub_config_file}
+                        echo -e "***********************"
+                        echo -e "\nOriginal /etc/default/grub file is stored as /etc/default/grub.backup.$time_stamp"
+                ;;
+                [nN]|[nN][oO]|"")                                               # If answer is no, or if the user just pressed Enter
+                        echo -e "Aborting: Not saving changes...\n"                  # don't save the new fstab file
+                ;;
+                *)                                                              # If answer is anything else, exit and don't save changes
+                        echo "Invalid Response"                                 # to /etc/default/grub
+                        echo "Skipping NVMe io_timeout check"
+                        echo "------------------------------------------------"
+                ;;
+            esac
+        fi
+    else
+        # Grub configuration not supported
+        echo -e "\n\nWARNING     Could not check NVMe IO timeout. Please check grub configuration manually."
+    fi
+
+}
+
 ########################################################################
 
 check_fstab () {
@@ -109,7 +193,7 @@ check_fstab () {
         esac
         rm /tmp/device_names
 
-    else 
+    else
         rm /etc/fstab.backup.$time_stamp
         rm /etc/fstab.modified.$time_stamp
         echo -e "\n\nOK     fstab file looks fine and does not contain any device names. "
@@ -152,6 +236,8 @@ else
     echo -e "------------------------------------------------\n"
     echo -e "OK     NVMe Module is installed and available on your instance"
 fi
+
+check_nvme_timeout
 
 modinfo ena > /dev/null 2>&1
 if [ $? -ne 0 ] 
