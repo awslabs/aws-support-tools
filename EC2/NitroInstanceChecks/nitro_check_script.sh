@@ -80,14 +80,10 @@ check_nvme_timeout () {
         grub_cmd="`which grub-mkconfig 2>/dev/null` >${grub_config_file}"
     fi
 
-    # Check if Operating system is derived from RHEL6 such as
-    # Amazon Linux
-    # CentOS 6
-    # Orable Linux 6 etc and use grubby instead 
-    # because grub2-mkconfig and grub-mkconfig aren't available
+    # Check if Operating system is RHEL6, C6, Amazon Linux 1 etc
+    # and set the correct path to grub configuration file
     if [ -n "`uname -r 2>/dev/null | grep -Eo '\.(amzn1|el6)\.' 2>/dev/null`" ]; then
         grub_config_file="/boot/grub/grub.cfg"
-        grub_cmd="`which grubby 2>/dev/null` --update-kernel=ALL --args=\"${nvme_module_name}.io_timeout=${nvme_module_value}\""
     fi
 
     # Check if NVMe io_timeout already configured in grub configuration
@@ -131,6 +127,11 @@ check_nvme_timeout () {
                 fi
 	    fi
         done
+    fi
+
+    # Make sure RHEL6 style operating systems use grubby instead of grub2-mkconfig
+    if [ -n "`uname -r 2>/dev/null | grep -Eo '\.(amzn1|el6)\.' 2>/dev/null`" ]; then
+        grub_cmd="`which grubby 2>/dev/null` --update-kernel=ALL --args=\"${nvme_module_name}.io_timeout=${nvme_module_value}\""
     fi
 
     echo -e "\n\nWARNING  Your kernel NVMe io_timeout value is not explicitly set. You should set the io_timeout to avoid io timeout issues under Nitro."
