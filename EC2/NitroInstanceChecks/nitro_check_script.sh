@@ -147,14 +147,19 @@ check_nvme_timeout () {
                 echo "Writing changes to grub configuration..."
                 echo -e "\n\n***********************"
                 if [ -f ${grub_default_file} ]; then
+                    source ${grub_default_file}
+		    if [ -n ${GRUB_CMDLINE_LINUX_DEFAULT+x} ]; then
+                        grub_default_parameter="GRUB_CMDLINE_LINUX_DEFAULT"
+                    else
+                        grub_default_parameter="GRUB_CMDLINE_LINUX"
+                    fi
                     cp -a ${grub_default_file} ${grub_default_file}.backup.$time_stamp
                     echo -e "\nOriginal ${grub_default_file} file is stored as ${grub_default_file}.backup.$time_stamp"
-                    sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"/GRUB_CMDLINE_LINUX_DEFAULT=\"${nvme_module_name}.io_timeout=${nvme_module_value} /" ${grub_default_file}
+                    sed -i "s/${grub_default_parameter}=\"/${grub_default_parameter}=\"${nvme_module_name}.io_timeout=${nvme_module_value} /" ${grub_default_file}
                 fi
                 if [ -f ${grub_config_file} ]; then
                     cp -a ${grub_config_file} ${grub_config_file}.backup.$time_stamp
-                    echo -e "\nOriginal ${grub_default_file} file is stored as ${grub_default_file}.backup.$time_stamp"
-                    sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"/GRUB_CMDLINE_LINUX_DEFAULT=\"${nvme_module_name}.io_timeout=${nvme_module_value} /" ${grub_default_file}
+                    echo -e "\nOriginal ${grub_config_file} file is stored as ${grub_config_file}.backup.$time_stamp"
                 fi
                 eval ${grub_cmd}
                 # Confirm NVMe timeout has been added to grub configuration
