@@ -104,8 +104,12 @@ check_nvme_timeout () {
         nvme_module_name="nvme_core"
         nvme_module_value=${nvme_uint_timeout_value}
     else
-        if [[ -z `modinfo nvme 2>/dev/null` &&
-              -z `modinfo nvme_core 2>/dev/null` ]]; then
+        modinfo nvme >/dev/null 2>&1
+	nvme_module_not_loaded="$?"
+        modinfo nvme_core >/dev/null 2>&1
+	nvme_core_module_not_loaded="$?"
+        if [[ nvme_module_not_loaded -eq 1 &&
+              nvme_core_module_not_loaded -eq 1 ]]; then
             # NVMe modules not installed
             echo -e "\n\nWARNING Neither nvme nor nvme_core kernel modules are loaded."
             return
