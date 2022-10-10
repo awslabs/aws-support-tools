@@ -113,7 +113,7 @@ check_nvme_timeout () {
         # All other Operating Systems need to be checked
         # with nvme_core taking precendence over nvme if it's available
         for module in nvme nvme_core; do
-	    modinfo ${module} 2>&1 >/dev/null
+	    modinfo ${module} >/dev/null 2>&1
             if [ $? -eq 0 ]; then
                 # module is loaded so we can check the io_timeout max size
                 if [[ `modinfo ${module} 2>/dev/null | grep -E 'parm:.*io_timeout:'` =~ (uint) ]]; then
