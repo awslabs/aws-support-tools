@@ -69,7 +69,6 @@ check_nvme_timeout () {
     time_stamp=$(date +%F-%H:%M:%S)
     grub_default_file="/etc/default/grub"
     grub_config_file="/boot/grub2/grub.cfg"
-    grub_cmd="`which grub2-mkconfig 2>/dev/null` >${grub_config_file}"
     nvme_byte_timeout_value=254
     nvme_uint_timeout_value=4294967295
 
@@ -134,6 +133,11 @@ check_nvme_timeout () {
         grub_cmd="`which grubby 2>/dev/null` --update-kernel=ALL --args=\"${nvme_module_name}.io_timeout=${nvme_module_value}\""
     fi
 
+    # Set a default grub command if none has already been specified
+    if [ -z "${grub_cmd}" ]; then
+        grub_cmd="`which grub2-mkconfig 2>/dev/null` >${grub_config_file}"
+    fi
+
     echo -e "\n\nWARNING  Your kernel NVMe io_timeout value is not explicitly set. You should set the io_timeout to avoid io timeout issues under Nitro."
     printf "\nEnter y to reconfigure grub to use an appropriate NVMe IO timeout.\nEnter n to keep the kernels as they are with no modification (y/n) "
     read RESPONSE;
@@ -153,6 +157,13 @@ check_nvme_timeout () {
                     sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"/GRUB_CMDLINE_LINUX_DEFAULT=\"${nvme_module_name}.io_timeout=${nvme_module_value} /" ${grub_default_file}
                 fi
                 ${grub_cmd}
+                # Confirm NVMe timeout has been added to grub configuration
+                # for the running kernel.
+                if [ -n "`grep -E 'nvme.*\.io_timeout=[0-9]+' ${grub_config_file} | grep "\`uname -r\`"`" ]; then
+                    echo -e "\n\nOK     NVMe IO timeout configured in ${grub_config_file}"
+                else
+                    echo -e "\n\nFAILED     NVMe IO timeout couldn't be configured in ${grub_config_file}"
+                fi
                 echo -e "***********************"
         ;;
         [nN]|[nN][oO]|"")                                               # If answer is no, or if the user just pressed Enter
