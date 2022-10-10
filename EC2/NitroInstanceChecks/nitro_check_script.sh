@@ -69,7 +69,7 @@ check_nvme_timeout () {
     time_stamp=$(date +%F-%H:%M:%S)
     grub_default_file="/etc/default/grub"
     grub_config_file="/boot/grub2/grub.cfg"
-    grub_cmd="`which grub2-mkconfig` >${grub_config_file}"
+    grub_cmd="`which grub2-mkconfig 2>/dev/null` >${grub_config_file}"
     nvme_byte_timeout_value=254
     nvme_uint_timeout_value=4294967295
 
@@ -77,7 +77,7 @@ check_nvme_timeout () {
     # and also use a different grub configuration file
     if [ -f /etc/debian_version ]; then
 	grub_config_file="/boot/grub/grub.cfg"
-        grub_cmd="`which grub-mkconfig` >${grub_config_file}"
+        grub_cmd="`which grub-mkconfig 2>/dev/null` >${grub_config_file}"
     fi
 
     # Check if Operating system is derived from RHEL6 such as
@@ -87,7 +87,7 @@ check_nvme_timeout () {
     # because grub2-mkconfig and grub-mkconfig aren't available
     if [ -n "`uname -r 2>/dev/null | grep -Eo '\.(amzn1|el6)\.' 2>/dev/null`" ]; then
         grub_config_file="/boot/grub/grub.cfg"
-        grub_cmd="`which grubby` --update-kernel=ALL --args=\"${nvme_module_name}.io_timeout=${nvme_module_value}\""
+        grub_cmd="`which grubby 2>/dev/null` --update-kernel=ALL --args=\"${nvme_module_name}.io_timeout=${nvme_module_value}\""
     fi
 
     # Check if NVMe io_timeout already configured in grub configuration
