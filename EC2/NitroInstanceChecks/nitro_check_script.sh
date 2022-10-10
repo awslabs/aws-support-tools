@@ -156,7 +156,7 @@ check_nvme_timeout () {
                     echo -e "\nOriginal ${grub_default_file} file is stored as ${grub_default_file}.backup.$time_stamp"
                     sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"/GRUB_CMDLINE_LINUX_DEFAULT=\"${nvme_module_name}.io_timeout=${nvme_module_value} /" ${grub_default_file}
                 fi
-                ${grub_cmd}
+                eval ${grub_cmd}
                 # Confirm NVMe timeout has been added to grub configuration
                 # for the running kernel.
                 if [ -n "`grep -E 'nvme.*\.io_timeout=[0-9]+' ${grub_config_file} | grep "\`uname -r\`"`" ]; then
