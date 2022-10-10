@@ -147,8 +147,9 @@ check_nvme_timeout () {
                 echo "Writing changes to grub configuration..."
                 echo -e "\n\n***********************"
                 if [ -f ${grub_default_file} ]; then
+                    # Determine the correct variable to use from /etc/default/grub
                     source ${grub_default_file}
-		    if [ -n ${GRUB_CMDLINE_LINUX_DEFAULT+x} ]; then
+		    if [ -v GRUB_CMDLINE_LINUX_DEFAULT ]; then
                         grub_default_parameter="GRUB_CMDLINE_LINUX_DEFAULT"
                     else
                         grub_default_parameter="GRUB_CMDLINE_LINUX"
