@@ -116,7 +116,7 @@ check_nvme_timeout () {
 	    modinfo ${module} 2>&1 >/dev/null
             if [ $? -eq 0 ]; then
                 # module is loaded so we can check the io_timeout max size
-                if [[ `modinfo -p ${module} 2>/dev/null | grep -E "^io_timeout:"` =~ (uint) ]]; then
+                if [[ `modinfo ${module} 2>/dev/null | grep -E 'parm:.*io_timeout:'` =~ (uint) ]]; then
                     # module supports io_timeout of 4294967295
                     nvme_module_name="${module}"
                     nvme_module_value=${nvme_uint_timeout_value}
