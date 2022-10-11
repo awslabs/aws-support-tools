@@ -167,7 +167,7 @@ check_nvme_timeout () {
                 eval ${grub_cmd}
                 # Confirm NVMe timeout has been added to grub configuration
                 # for the running kernel.
-                if [ -n "`eval ${grub_check_cmd}"`" ]; then
+                if [ -n "`eval ${grub_check_cmd}`" ]; then
                     echo -e "\n\nOK     NVMe IO timeout configured in ${grub_config_file}"
                 else
                     echo -e "\n\nFAILED     NVMe IO timeout couldn't be configured in ${grub_config_file}"
