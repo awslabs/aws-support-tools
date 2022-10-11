@@ -130,12 +130,14 @@ check_nvme_timeout () {
 
     # Make sure RHEL6 style operating systems use grubby instead of grub2-mkconfig
     if [ -n "`uname -r 2>/dev/null | grep -Eo '\.(amzn1|el6)\.' 2>/dev/null`" ]; then
-        grub_cmd="`which grubby 2>/dev/null` --update-kernel=ALL --args=\"${nvme_module_name}.io_timeout=${nvme_module_value}\""
+        grub_cmd="`which grubby 2>/dev/null` --update-kernel=ALL --args=${nvme_module_name}.io_timeout=${nvme_module_value}"
+	grub_check_cmd="grubby --info=ALL | grep -Eo 'nvme.*\.io_timeout=[0-9]+' ${grub_config_file}"
     fi
 
     # Set a default grub command if none has already been specified
     if [ -z "${grub_cmd}" ]; then
         grub_cmd="`which grub2-mkconfig 2>/dev/null` >${grub_config_file}"
+	grub_check_cmd="grep -Eo 'nvme.*\.io_timeout=[0-9]+' ${grub_config_file}"
     fi
 
     echo -e "\n\nWARNING  Your kernel NVMe io_timeout value is not explicitly set. You should set the io_timeout to avoid io timeout issues under Nitro."
@@ -149,10 +151,10 @@ check_nvme_timeout () {
                 if [ -f ${grub_default_file} ]; then
                     # Determine the correct variable to use from /etc/default/grub
                     source ${grub_default_file}
-		    if [ -v GRUB_CMDLINE_LINUX_DEFAULT ]; then
-                        grub_default_parameter="GRUB_CMDLINE_LINUX_DEFAULT"
-                    else
+		    if [ -v GRUB_CMDLINE_LINUX ]; then
                         grub_default_parameter="GRUB_CMDLINE_LINUX"
+                    else
+                        grub_default_parameter="GRUB_CMDLINE_LINUX_DEFAULT"
                     fi
                     cp -a ${grub_default_file} ${grub_default_file}.backup.$time_stamp
                     echo -e "\nOriginal ${grub_default_file} file is stored as ${grub_default_file}.backup.$time_stamp"
@@ -165,7 +167,7 @@ check_nvme_timeout () {
                 eval ${grub_cmd}
                 # Confirm NVMe timeout has been added to grub configuration
                 # for the running kernel.
-                if [ -n "`grep -E 'nvme.*\.io_timeout=[0-9]+' ${grub_config_file} | grep "\`uname -r\`"`" ]; then
+                if [ -n "`eval ${grub_check_cmd}"`" ]; then
                     echo -e "\n\nOK     NVMe IO timeout configured in ${grub_config_file}"
                 else
                     echo -e "\n\nFAILED     NVMe IO timeout couldn't be configured in ${grub_config_file}"
