@@ -87,15 +87,6 @@ check_nvme_timeout () {
         grub_config_file="/boot/grub/menu.lst"
     fi
 
-    # Check if NVMe io_timeout already configured in grub configuration
-    # This only checks the currently running kernel and not all kernels
-    if [ -f ${grub_config_file} ]; then
-        if [ -n "`grep -E 'nvme.*\.io_timeout=[0-9]+' ${grub_config_file} | grep "\`uname -r\`"`" ]; then
-            echo -e "\n\nOK     NVMe IO timeout configured in ${grub_config_file} for kernel `uname -r`"
-            return
-        fi
-    fi
-
     # Amazon Linux flavours support nvme_core io_timeout of 4294967295 natively
     if [[ "`uname -r | awk -F '.' '{print $(NF-1)}'`" =~ ^amzn* ]]; then
         nvme_module_name="nvme_core"
@@ -146,6 +137,12 @@ check_nvme_timeout () {
 	grub_check_cmd="grep -Eo 'nvme.*\.io_timeout=[0-9]+' ${grub_config_file}"
     fi
 
+    # Confirm NVMe timeout has been added to grub configuration
+    if [ -n "`eval ${grub_check_cmd}`" ]; then
+        echo -e "\n\nOK     NVMe IO timeout configured in ${grub_config_file}"
+        return
+    fi
+
     echo -e "\n\nWARNING  Your kernel NVMe io_timeout value is not explicitly set. You should set the io_timeout to avoid io timeout issues under Nitro."
     printf "\nEnter y to reconfigure grub to use an appropriate NVMe IO timeout.\nEnter n to keep the kernels as they are with no modification (y/n) "
     read RESPONSE;
@@ -172,7 +169,6 @@ check_nvme_timeout () {
                 fi
                 eval ${grub_cmd}
                 # Confirm NVMe timeout has been added to grub configuration
-                # for the running kernel.
                 if [ -n "`eval ${grub_check_cmd}`" ]; then
                     echo -e "\n\nOK     NVMe IO timeout configured in ${grub_config_file}"
                 else
