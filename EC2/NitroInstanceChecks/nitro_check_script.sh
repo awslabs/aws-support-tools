@@ -81,9 +81,10 @@ check_nvme_timeout () {
 
     # Check if Operating system is RHEL6, C6, Amazon Linux 1 etc
     # and set the correct path to grub configuration file
-    # These are often soft linked to /boot/grub/grub.conf or /boot/grub/menu.lst
-    if [ -n "`uname -r 2>/dev/null | grep -Eo '\.(amzn1|el6)\.' 2>/dev/null`" ]; then
-        grub_config_file="/etc/grub.conf"
+    if [ -n "`uname -r 2>/dev/null | grep -Eo '\.el6\.' 2>/dev/null`" ]; then
+        grub_config_file="/boot/grub/grub.conf"
+    elif [ -n "`uname -r 2>/dev/null | grep -Eo '\.amzn1\.' 2>/dev/null`" ]; then
+        grub_config_file="/boot/grub/menu.lst"
     fi
 
     # Check if NVMe io_timeout already configured in grub configuration
