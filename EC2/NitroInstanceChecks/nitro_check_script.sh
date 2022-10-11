@@ -136,9 +136,13 @@ check_nvme_timeout () {
 	grub_check_cmd="grubby --info=ALL | grep -Eo 'nvme.*\.io_timeout=[0-9]+'"
     fi
 
-    # Set a default grub command if none has already been specified
+    # Set a default grub command if none has already been set
     if [ -z "${grub_cmd}" ]; then
         grub_cmd="`which grub2-mkconfig 2>/dev/null` >${grub_config_file}"
+    fi
+
+    # Set a default grub check command if one hasn't already been set
+    if [ -z "${grub_check_cmd}" ]; then
 	grub_check_cmd="grep -Eo 'nvme.*\.io_timeout=[0-9]+' ${grub_config_file}"
     fi
 
