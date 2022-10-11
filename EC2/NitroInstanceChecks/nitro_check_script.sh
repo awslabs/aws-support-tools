@@ -131,7 +131,7 @@ check_nvme_timeout () {
     # Make sure RHEL6 style operating systems use grubby instead of grub2-mkconfig
     if [ -n "`uname -r 2>/dev/null | grep -Eo '\.(amzn1|el6)\.' 2>/dev/null`" ]; then
         grub_cmd="`which grubby 2>/dev/null` --update-kernel=ALL --args=${nvme_module_name}.io_timeout=${nvme_module_value}"
-	grub_check_cmd="grubby --info=ALL | grep -Eo 'nvme.*\.io_timeout=[0-9]+' ${grub_config_file}"
+	grub_check_cmd="grubby --info=ALL | grep -Eo 'nvme.*\.io_timeout=[0-9]+'"
     fi
 
     # Set a default grub command if none has already been specified
