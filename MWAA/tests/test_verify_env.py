@@ -3,7 +3,7 @@ import boto3
 import os
 import pytest
 
-from moto import mock_s3
+from moto import mock_s3, mock_s3control
 from verify_env import verify_env
 
 @pytest.fixture
@@ -41,15 +41,21 @@ def test_validation_region():
     https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/
     '''
     regions = [
-        'us-east-2',
-        'us-east-1',
-        'us-west-2',
+        'ap-northeast-1',
+        'ap-northeast-2',
+        'ap-south-1',
         'ap-southeast-1',
         'ap-southeast-2',
-        'ap-northeast-1',
+        'ca-central-1',
         'eu-central-1',
+        'eu-north-1',
         'eu-west-1',
-        'eu-north-1'
+        'eu-west-2',
+        'eu-west-3',
+        'sa-east-1',
+        'us-east-1',
+        'us-east-2',
+        'us-west-2'
     ]
     for region in regions:
         assert verify_env.validation_region(region) == region
@@ -57,15 +63,9 @@ def test_validation_region():
         'us-west-1',
         'af-south-1',
         'ap-east-1',
-        'ap-south-1',
         'ap-northeast-3',
-        'ap-northeast-2',
-        'ca-central-1',
-        'eu-west-2',
         'eu-south-1',
-        'eu-west-3',
-        'me-sourth-1',
-        'sa-east-1'
+        'me-south-1',
     ]
     for unsupport_region in unsupport_regions:
         with pytest.raises(argparse.ArgumentTypeError) as excinfo:
@@ -250,6 +250,7 @@ def init_s3():
     permisions
     '''
     @mock_s3
+    @mock_s3control
     def _init_s3(is_bucket_access_blocked, is_account_access_blocked):
         s3_client = boto3.client('s3', region_name=TEST_ACCOUNT_REGION)
         s3_client.create_bucket(Bucket=TEST_BUCKET_NAME)
