@@ -698,6 +698,25 @@ def check_service_vpc_endpoints(ec2_client, subnets):
         print("The route for the subnets do not have a NAT Gateway. However, there are sufficient VPC endpoints")
 
 
+def check_vpc_dns_resolution(vpc_id, ec2_client):
+    """
+    Checks whether DNS resolution is enabled in the VPC that MWAA uses. DNS resolution is critical
+    when resolving AWS service names; without it the webserver for example can't connect to the scheduler.
+    Originally encountered in
+    https://apache-airflow.slack.com/archives/CCRR5EBA7/p1673956637610969?thread_ts=1673539899.621079&cid=CCRR5EBA7
+    """
+    print("### Verifying DNS resolution is enabled in VPC ID %s..." % (vpc_id,))
+    dns_support = ec2_client.describe_vpc_attribute(
+        Attribute="enableDnsSupport",
+        VpcId=vpc_id
+    ).get("EnableDnsSupport").get("Value")
+
+    if dns_support:
+        print("VPC ID %s has DNS resolution enabled ✅\n" % (vpc_id,))
+    else:
+        print("DNS resolution is disabled in VPC ID %s 🚫\n" % (vpc_id,))
+
+
 def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
     '''
     method to check and make sure routes have access to the internet if public and subnets are private
@@ -972,14 +991,16 @@ if __name__ == '__main__':
         ssm = boto3.client('ssm', region_name=REGION)
         iam = boto3.client('iam', region_name=REGION)
         env, subnets, subnet_ids = prompt_user_and_print_info(ENV_NAME, ec2)
+        vpc_id = subnets[0]['VpcId']
         check_iam_permissions(env, iam)
         check_kms_key_policy(env, kms)
         log_groups = check_log_groups(env, ENV_NAME, logs, cloudtrail)
         check_nacl(subnets, subnet_ids, ec2)
         check_routes(env, subnets, subnet_ids, ec2)
+        check_vpc_dns_resolution(vpc_id=vpc_id, ec2_client=ec2)
         check_s3_block_public_access(env, s3, s3control)
         check_security_groups(env, ec2)
-        mwaa_services = get_mwaa_utilized_services(ec2, subnets[0]['VpcId'])
+        mwaa_services = get_mwaa_utilized_services(ec2, vpc_id)
         check_connectivity_to_dep_services(env, subnets, ec2, ssm, mwaa_services)
         check_for_failing_logs(log_groups, logs)
     except ClientError as client_error:
