@@ -53,17 +53,19 @@ fi
 # search for the ENI to get the subnet and security group(s) it uses
 METADATA="$(aws ec2 describe-network-interfaces --network-interface-ids ${ENI} --filters Name=network-interface-id,Values=${ENI} --region ${REGION} --output json --query 'NetworkInterfaces[0].{Subnet:SubnetId,SecurityGroups:Groups[*].GroupId}')"
 
-read Subnet < <(echo $METADATA | jq -r '.Subnet')
+read Subnet < <(echo $METADATA | jq -ar '.Subnet')
 SecurityGroups=()
-for row in $(echo $METADATA | jq -r '.SecurityGroups[]')
+for row in $(echo $METADATA | jq -ar '.SecurityGroups[]')
 do
   SecurityGroups+=(${row})
 done
 # Sort the list of SGs, so that we can easily compare with the list from a Lambda function
 IFS=$'\n' SortedSGs=($(sort <<<"${SecurityGroups[*]}"))
 unset IFS
-echo "Found "${ENI}" with "$Subnet" using Security Groups" ${SortedSGs[@]}
-echo "Searching for Lambda function versions using "$Subnet" and Security Groups" ${SortedSGs[@]}"..."
+#convert Subnet to "echo-able", if $Subnet is used directly, GitBash skips the call outputting: ' using Security Groups "sg-012345example" '
+SUBNET_STRING=$(echo $Subnet)
+echo "Found "${ENI}" with $SUBNET_STRING using Security Groups" ${SortedSGs[@]}
+echo "Searching for Lambda function versions using "$SUBNET_STRING" and Security Groups" ${SortedSGs[@]}"..."
 
 # Get all the Lambda functions in an account that are using the same subnet, including versions
 Functions=()
@@ -89,7 +91,7 @@ for each in "${Functions[@]}"
 do
   # Check if there are any functions that match the security groups of the ENI
   LambdaSGs=()
-  for row in $(echo "$each" | jq -r '.SecurityGroups[]')
+  for row in $(echo "$each" | jq -ar '.SecurityGroups[]')
   do
     LambdaSGs+=(${row})
   done
