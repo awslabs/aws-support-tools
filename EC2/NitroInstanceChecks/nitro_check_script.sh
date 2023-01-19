@@ -19,8 +19,8 @@ check_NVMe_in_initrd () {
 find_distro=`cat /etc/os-release |sed -n 's|^ID="\([a-z]\{4\}\).*|\1|p'`      # Check if instance is using amazon AMI. 
 
     if [ -f /etc/redhat-release ] ; then
-        # Distribution is Red hat
-        lsinitrd /boot/initramfs-$(uname -r).img|grep nvme > /dev/null 2>&1
+        # Distribution is Red hat or a Red hat derivative such CentOS or Oracle Linux
+        lsinitrd /boot/initramfs-$(uname -r).img|grep nvme.ko > /dev/null 2>&1
         if [ $? -ne 0 ]; then
         # NVMe module is not loaded in initrd/initramfs
         echo -e "\n\nERROR  NVMe Module is not loaded in the initramfs image.\n\t- Please run the following command on your instance to recreate initramfs:"
