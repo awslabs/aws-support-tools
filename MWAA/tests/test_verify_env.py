@@ -97,7 +97,7 @@ def test_validate_envname():
 
 def test_validate_profile():
     '''
-    test invalid and valid names for MWAA environment
+    test invalid and valid names for the profile
     '''
     with pytest.raises(argparse.ArgumentTypeError) as excinfo:
         profile_name = 'test space'
@@ -113,6 +113,12 @@ def test_validate_profile():
     result = verify_env.validation_profile(profile_name)
     assert result == profile_name
     profile_name = 'HelloWorld'
+    result = verify_env.validation_profile(profile_name)
+    assert result == profile_name
+    profile_name = '_HelloWorld'
+    result = verify_env.validation_profile(profile_name)
+    assert result == profile_name
+    profile_name = 'Hello-World'
     result = verify_env.validation_profile(profile_name)
     assert result == profile_name
 
