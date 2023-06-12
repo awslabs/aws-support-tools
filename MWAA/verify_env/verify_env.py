@@ -78,7 +78,8 @@ def validation_region(input_region):
     REGION: example is us-east-1
     '''
     session = Session()
-    mwaa_regions = session.get_available_regions('mwaa')
+    partition = session.get_partition_for_region(input_region)
+    mwaa_regions = session.get_available_regions('mwaa', partition)
     if input_region in mwaa_regions:
         return input_region
     raise argparse.ArgumentTypeError("%s is an invalid REGION value" % input_region)
@@ -187,15 +188,16 @@ def check_iam_permissions(input_env, iam_client):
     policy_list.extend(get_inline_policies(iam_client, input_env['ExecutionRoleArn'].split("/")[-1]))
     if "KmsKey" in input_env:
         print('Found Customer managed CMK')
-        eval_results = eval_results + iam_client.simulate_custom_policy(
-            PolicyInputList=policy_list,
-            ActionNames=[
-                "airflow:PublishMetrics"
-            ],
-            ResourceArns=[
-                input_env['Arn']
-            ]
-        )['EvaluationResults']
+        if PARTITION != 'aws-cn':
+            eval_results = eval_results + iam_client.simulate_custom_policy(
+                PolicyInputList=policy_list,
+                ActionNames=[
+                    "airflow:PublishMetrics"
+                ],
+                ResourceArns=[
+                    input_env['Arn']
+                ]
+            )['EvaluationResults']
         # this next test should be denied
         eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
@@ -229,7 +231,7 @@ def check_iam_permissions(input_env, iam_client):
                 "logs:GetLogGroupFields"
             ],
             ResourceArns=[
-                "arn:aws:logs:" + REGION + ":" + account_id + ":log-group:airflow-" + ENV_NAME + "-*"
+                "arn:" + PARTITION + ":logs:" + REGION + ":" + account_id + ":log-group:airflow-" + ENV_NAME + "-*"
             ]
         )['EvaluationResults']
         eval_results = eval_results + iam_client.simulate_custom_policy(
@@ -261,7 +263,7 @@ def check_iam_permissions(input_env, iam_client):
                 "sqs:SendMessage"
             ],
             ResourceArns=[
-                "arn:aws:sqs:" + REGION + ":*:airflow-celery-*"
+                "arn:" + PARTITION + ":sqs:" + REGION + ":*:airflow-celery-*"
             ]
         )['EvaluationResults']
         eval_results = eval_results + iam_client.simulate_custom_policy(
@@ -276,7 +278,7 @@ def check_iam_permissions(input_env, iam_client):
                 {
                     'ContextKeyName': 'kms:viaservice',
                     'ContextKeyValues': [
-                        's3.' + REGION + '.amazonaws.com'
+                        's3.' + REGION + TOP_LEVEL_DOMAIN
                     ],
                     'ContextKeyType': 'string'
                 }
@@ -342,15 +344,16 @@ def check_iam_permissions(input_env, iam_client):
         )['EvaluationResults']
     else:
         print('Using AWS CMK')
-        eval_results = eval_results + iam_client.simulate_custom_policy(
-            PolicyInputList=policy_list,
-            ActionNames=[
-                "airflow:PublishMetrics"
-            ],
-            ResourceArns=[
-                input_env['Arn']
-            ]
-        )['EvaluationResults']
+        if PARTITION != 'aws-cn':
+            eval_results = eval_results + iam_client.simulate_custom_policy(
+                PolicyInputList=policy_list,
+                ActionNames=[
+                    "airflow:PublishMetrics"
+                ],
+                ResourceArns=[
+                    input_env['Arn']
+                ]
+            )['EvaluationResults']
         # this action should be denied
         eval_results = eval_results + iam_client.simulate_custom_policy(
             PolicyInputList=policy_list,
@@ -384,7 +387,7 @@ def check_iam_permissions(input_env, iam_client):
                 "logs:GetLogGroupFields"
             ],
             ResourceArns=[
-                "arn:aws:logs:" + REGION + ":" + account_id + ":log-group:airflow-" + ENV_NAME + "-*"
+                "arn:" + PARTITION + ":logs:" + REGION + ":" + account_id + ":log-group:airflow-" + ENV_NAME + "-*"
             ]
         )['EvaluationResults']
         eval_results = eval_results + iam_client.simulate_custom_policy(
@@ -416,7 +419,7 @@ def check_iam_permissions(input_env, iam_client):
                 "sqs:SendMessage"
             ],
             ResourceArns=[
-                "arn:aws:sqs:" + REGION + ":*:airflow-celery-*"
+                "arn:" + PARTITION + ":sqs:" + REGION + ":*:airflow-celery-*"
             ]
         )['EvaluationResults']
         # tests role to allow any kms all for resources not in this account and that are from the sqs service
@@ -428,7 +431,7 @@ def check_iam_permissions(input_env, iam_client):
                 "kms:Encrypt"
             ],
             ResourceArns=[
-                "arn:aws:kms:*:111122223333:key/*"
+                "arn:" + PARTITION + ":kms:*:111122223333:key/*"
             ],
             ContextEntries=[
                 {
@@ -446,7 +449,7 @@ def check_iam_permissions(input_env, iam_client):
                 "kms:GenerateDataKey*"
             ],
             ResourceArns=[
-                "arn:aws:kms:*:111122223333:key/*"
+                "arn:" + PARTITION + ":kms:*:111122223333:key/*"
             ],
             ContextEntries=[
                 {
@@ -652,11 +655,10 @@ def check_service_vpc_endpoints(ec2_client, subnets):
     '''
     should be used if the environment does not have internet access through NAT Gateway
     '''
-    top_level_domain = "com.amazonaws."
+    top_level_domain = TOP_LEVEL_DOMAIN.split(".").reverse().join(".")
     service_endpoints = [
         top_level_domain + REGION + '.airflow.api',
         top_level_domain + REGION + '.airflow.env',
-        top_level_domain + REGION + '.airflow.ops',
         top_level_domain + REGION + '.sqs',
         top_level_domain + REGION + '.ecr.api',
         top_level_domain + REGION + '.ecr.dkr',
@@ -665,6 +667,10 @@ def check_service_vpc_endpoints(ec2_client, subnets):
         top_level_domain + REGION + '.monitoring',
         top_level_domain + REGION + '.logs'
     ]
+    if PARTITION == "aws":
+        service_endpoints.append(
+           top_level_domain + REGION + '.airflow.ops', 
+        )
     vpc_endpoints = ec2_client.describe_vpc_endpoints(Filters=[
         {
             'Name': 'service-name',
@@ -684,7 +690,7 @@ def check_service_vpc_endpoints(ec2_client, subnets):
     if len(vpc_endpoints) != 9:
         print("The route for the subnets do not have a NAT gateway." +
               "This suggests vpc endpoints are needed to connect to:")
-        print('s3, ecr, kms, sqs, monitoring, airflow.api, airflow.env, airflow.ops')
+        print('s3, ecr, kms, sqs, monitoring, airflow.api, airflow.env.')
         print("The environment's subnets currently have these endpoints: ")
         for endpoint in vpc_endpoints:
             print(endpoint['ServiceName'])
@@ -914,17 +920,19 @@ def print_err_msg(c_err):
 
 def get_mwaa_utilized_services(ec2_client, vpc):
     '''return an array objects for the services checking for ecr.dks and if it exists add it to the array'''
-    top_level_domain = '.amazonaws.com'
-    mwaa_utilized_services = [{"service": 'sqs.' + REGION + top_level_domain, "port": "443"},
-                              {"service": 'api.ecr.' + REGION + top_level_domain, "port": "443"},
-                              {"service": 'monitoring.' + REGION + top_level_domain, "port": "443"},
-                              {"service": 'kms.' + REGION + top_level_domain, "port": "443"},
-                              {"service": 's3.' + REGION + top_level_domain, "port": "443"},
-                              {"service": 'env.airflow.' + REGION + top_level_domain, "port": "443"},
-                              {"service": 'env.airflow.' + REGION + top_level_domain, "port": "5432"},
-                              {"service": 'ops.airflow.' + REGION + top_level_domain, "port": "443"},
-                              {"service": 'api.airflow.' + REGION + top_level_domain, "port": "443"},
-                              {"service": 'logs.' + REGION + top_level_domain, "port": "443"}]
+    mwaa_utilized_services = [{"service": 'sqs.' + REGION + TOP_LEVEL_DOMAIN, "port": "443"},
+                              {"service": 'api.ecr.' + REGION + TOP_LEVEL_DOMAIN, "port": "443"},
+                              {"service": 'monitoring.' + REGION + TOP_LEVEL_DOMAIN, "port": "443"},
+                              {"service": 'kms.' + REGION + TOP_LEVEL_DOMAIN, "port": "443"},
+                              {"service": 's3.' + REGION + TOP_LEVEL_DOMAIN, "port": "443"},
+                              {"service": 'env.airflow.' + REGION + TOP_LEVEL_DOMAIN, "port": "443"},
+                              {"service": 'env.airflow.' + REGION + TOP_LEVEL_DOMAIN, "port": "5432"},
+                              {"service": 'api.airflow.' + REGION + TOP_LEVEL_DOMAIN, "port": "443"},
+                              {"service": 'logs.' + REGION + TOP_LEVEL_DOMAIN, "port": "443"}]
+    if PARTITION == 'aws':
+        mwaa_utilized_services.append(
+                              {"service": 'ops.airflow.' + REGION + TOP_LEVEL_DOMAIN, "port": "443"}
+        )
     ecr_dks_endpoint = ec2_client.describe_vpc_endpoints(Filters=[
         {
             'Name': 'service-name',
@@ -940,7 +948,7 @@ def get_mwaa_utilized_services(ec2_client, vpc):
         }
     ])['VpcEndpoints']
     if ecr_dks_endpoint:
-        mwaa_utilized_services.append({"service": 'dkr.ecr.' + REGION + top_level_domain, "port": "443"})
+        mwaa_utilized_services.append({"service": 'dkr.ecr.' + REGION + TOP_LEVEL_DOMAIN, "port": "443"})
     return mwaa_utilized_services
 
 
@@ -960,6 +968,8 @@ if __name__ == '__main__':
     args, _ = parser.parse_known_args()
     ENV_NAME = args.envname
     REGION = args.region
+    PARTITION = boto3.session.Session().get_partition_for_region(args.region)
+    TOP_LEVEL_DOMAIN = '.amazonaws.com.cn' if PARTITION == 'aws-cn' else '.amazonaws.com'
     PROFILE = args.profile
     try:
         boto3.setup_default_session(profile_name=PROFILE)
