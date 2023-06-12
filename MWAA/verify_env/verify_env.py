@@ -78,7 +78,8 @@ def validation_region(input_region):
     REGION: example is us-east-1
     '''
     session = Session()
-    mwaa_regions = session.get_available_regions('mwaa')
+    partition = session.get_partition_for_region(input_region)
+    mwaa_regions = session.get_available_regions('mwaa', partition)
     if input_region in mwaa_regions:
         return input_region
     raise argparse.ArgumentTypeError("%s is an invalid REGION value" % input_region)
