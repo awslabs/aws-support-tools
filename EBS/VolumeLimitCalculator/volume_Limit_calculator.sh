@@ -282,9 +282,9 @@ case "$volumeType" in
         verify_input_as_integers $volumeSize
         echo -e "Enter Provisioned IOPS, if volume was created via CLI without provisioned IOPS please press Enter:"
         read volumeIOPS
-        echo -e "Enter Provisioned Throughput, if volume was created via CLI without provisioned Throughput please press Enter:"
+        echo -e "Enter Provisioned Throughput in MiB/s, if volume was created via CLI without provisioned Throughput please press Enter:"
         read volumeThroughput
-        calculate_gp3_limits                    # Calling gp2 function to calculate maximum limits.
+        calculate_gp3_limits                    # Calling gp3 function to calculate maximum limits.
         ;;
         [iI][oO][12])                           # If answer is io1
         echo -e "Enter Provisioned IOPS:"
