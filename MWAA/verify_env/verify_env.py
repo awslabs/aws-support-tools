@@ -655,7 +655,7 @@ def check_service_vpc_endpoints(ec2_client, subnets):
     '''
     should be used if the environment does not have internet access through NAT Gateway
     '''
-    top_level_domain = TOP_LEVEL_DOMAIN.split(".").reverse().join(".")
+    top_level_domain = ".".join(reversed(TOP_LEVEL_DOMAIN.split(".")))
     service_endpoints = [
         top_level_domain + REGION + '.airflow.api',
         top_level_domain + REGION + '.airflow.env',
