@@ -84,7 +84,7 @@ Disk Write Activity Maximum   [YELLOW]        The Max for Disk Write Activity wa
 
 
     #### Run specific check
-    To learn more about each check please reference the [check table](https://gitlab.aws.dev/aaalzand/mgn-toolkit/-/blob/main/Windows/README.md?ref_type=heads#checks) below.
+    To learn more about each check please reference the [check table](https://github.com/awslabs/aws-support-tools/tree/master/MGN/Windows#checks) below.
 
     ##### AD Domain Controller or Authentication method
     ```powershell
@@ -118,7 +118,7 @@ Disk Write Activity Maximum   [YELLOW]        The Max for Disk Write Activity wa
     (Test-EndpointsNetworkAccess -region $Region -mgnVpceId $MgnVpceId -s3VpceId $S3VpceId) | Out-Null
     $Output | ForEach { [PSCustomObject]$_ } | Format-Table -Wrap
     ```
-    ##### For all other functions use the method below with the appropriate [function name](www.google.com)
+    ##### For all other functions use the method below with the appropriate [function name](https://github.com/awslabs/aws-support-tools/tree/master/MGN/Windows#checks)
     ```powershell
     Import-Module .\MGN-Toolkit.psm1
     $Output = New-Object -TypeName "System.Collections.ArrayList"
@@ -129,28 +129,27 @@ Disk Write Activity Maximum   [YELLOW]        The Max for Disk Write Activity wa
 ### Download, Extract, and Execute the Toolkit
 
 1. Run the following sample code as an Administrator in PowerShell to download the ZIP file included in this package, extract and execute the toolkit.
-    - Adjust the last line as needed with the desired parameters mentioned [here](https://gitlab.aws.dev/aaalzand/mgn-toolkit/-/blob/main/Windows/README.md?ref_type=heads#examples-with-switches-added)
+    - Adjust the last line as needed with the desired parameters mentioned [here](https://github.com/awslabs/aws-support-tools/tree/master/MGN/Windows#switches)
 
     ```powershell
     #MGN-Toolkit
-    $uri = 'TBD'
+    $uri = 'https://github.com/awslabs/aws-support-tools/archive/refs/heads/master.zip'
     $destination = (Get-Location).Path
-    if ((Test-Path -Path "$destination\MGN-Toolkit.zip" -PathType Leaf) -or (Test-Path -Path "$destination\MGN-Toolkit")) {
-        write-host "File $destination\MGN-Toolkit.zip or folder $destination\MGN-Toolkit found, exiting"
-    }
-    else {
+    if ((Test-Path -Path "$destination\aws-support-tools-master.zip" -PathType Leaf) -or (Test-Path -Path "$destination\aws-support-tools-master")) {
+        write-host "File $destination\aws-support-tools-master.zip or folder $destination\aws-support-tools-master found, exiting"
+    }else {
         Write-host "Enable TLS 1.2 for this PowerShell session only."
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         $webClient = New-Object System.Net.WebClient
-        Write-host "Downloading MGN-Toolkit.zip"
-        $webClient.DownloadFile($uri, "$destination\MGN-Toolkit.zip")
-        Write-host "MGN-Toolkit.zip download successfully"
-        [System.IO.Compression.ZipFile]::ExtractToDirectory("$destination\MGN-Toolkit.zip","$destination\MGN-Toolkit")
-        Write-host "Extracting MGN-Toolkit.zip complete successfully"
-        Import-Module "$destination\MGN-Toolkit\WindowsMigration-Toolkit.psm1"; Invoke-MGNToolkit
+        Write-host "Downloading aws-support-tools-master.zip"
+        $webClient.DownloadFile($uri, "$destination\aws-support-tools-master.zip")
+        Write-host "aws-support-tools-master.zip download successfully"
+        Add-Type -Assembly "system.io.compression.filesystem"
+        [System.IO.Compression.ZipFile]::ExtractToDirectory("$destination\aws-support-tools-master.zip","$destination\aws-support-tools-master")
+        Write-host "Extracting aws-support-tools-master.zip complete successfully"
+        Import-Module "$destination\aws-support-tools-master\aws-support-tools-master\MGN\Windows\MGN-Toolkit.psm1"; Invoke-MGNToolkit
     }
     ```
-
 
 ## Checks
 | Check | Description | Function name | Input Parameter
@@ -168,8 +167,8 @@ Disk Write Activity Maximum   [YELLOW]        The Max for Disk Write Activity wa
 | WMI Service | Checks to make sure the WMI Service is in a running state, as this is required for AWS Replication Agent installation | Get-WMIServiceStatus | NA
 | Proxy | Checks to see if there is any type of proxy installed([IE](https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows), [LocalSystem account user environment variable](https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables), [System-wide environment variable](https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables), [WinHTTP system-wide](https://learn.microsoft.com/en-us/windows/win32/winhttp/winhttp-start-page)). The AWS Replication Agent requires [TCP Port 443 communication to AWS Endpoints](https://docs.aws.amazon.com/mgn/latest/ug/Network-Requirements.html#Source-Manager-TCP-443) | Get-ProxySetting | NA
 | Test Endpoint Connectivity | Checks TCP Port 443 access to the necessary Endpoints for [AWS Replication Agent installation](https://docs.aws.amazon.com/mgn/latest/ug/Network-Requirements.html) | Test-EndpointsNetworkAccess | NA
-| Bandwidth Upload Speed | Check the upload speed to from the Source Server to the AWS Staging Area subnet. Low speeds may cause slow replication performance. For bandwidth test follow the [documentation](https://docs.aws.amazon.com/mgn/latest/ug/Replication-Related-FAQ.html#perform-connectivity-bandwidth-test).| Get-Bandwidth | -SpeedTestIP <IP-Address>
-| Disk Write Activity Average and Maximum | Checks what the Average and Maximum Disk Write/s is. This result compared with the Bandwidth Upload Speed check can help determine if there is sufficient bandwidth speeds to replicate data based on the source server data change rate  | Get-DiskActivity | -WriteOpsTimer <Seconds>
+| Bandwidth Upload Speed | Check the upload speed to from the Source Server to the AWS Staging Area subnet. Low speeds may cause slow replication performance. For bandwidth test follow the [documentation](https://docs.aws.amazon.com/mgn/latest/ug/Replication-Related-FAQ.html#perform-connectivity-bandwidth-test).| Get-Bandwidth | SpeedTestIP
+| Disk Write Activity Average and Maximum | Checks what the Average and Maximum Disk Write/s is. This result compared with the Bandwidth Upload Speed check can help determine if there is sufficient bandwidth speeds to replicate data based on the source server data change rate  | Get-DiskActivity | WriteOpsTimer
 
 
 
@@ -191,8 +190,11 @@ Disk Write Activity Maximum   [YELLOW]        The Max for Disk Write Activity wa
 
 PowerShell 3.0
 
+## Credits
+
+* Thanks to Imthian Ramgobin for helping.
+
 ## Authors
 
 * Ali Alzand
 * Tim Hall
-* Imthian Ramgobin
