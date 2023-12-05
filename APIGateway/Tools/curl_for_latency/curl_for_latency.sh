@@ -41,17 +41,10 @@ EOV
 
 
 # Execute the curl command
-# NOTE: The URL and curl options should be modified to suit your needs, including adding headers (API keys, Authorization tokens, etc.)
-# The query string "nocaching=$(uuidgen)" is automatically populated with a random UUID.  This can be used to prevent caching of the requests.
-x=1
-while (( x <= 3 )); do
-    sleep 2
-    echo "\n-----------------------------------\n"
-    curl \
-    -w "$TIME_DATA" \
-    -o /dev/null \
-    -s \
-    -v \
-    -X GET "https://1234567890.execute-api.us-west-2.amazonaws.com/stage/resource?nocaching=$(uuidgen)"
-    ((x++))
-done
+curl \
+   --rate 30/m \
+   -w "$TIME_DATA" \
+   -o /dev/null \
+   -s \
+   -v \
+   -X $1 "$2" "$2" "$2"
