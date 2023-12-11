@@ -21,16 +21,9 @@ This script may identify why.
 ```
 pip3 install boto3 --upgrade --user
 git clone https://github.com/awslabs/aws-support-tools.git
-python3 aws-support-tools/MWAA/verify_env/verify_env.py --envname YOUR_ENV_NAME_HERE
+python3 aws-support-tools/MWAA/verify_env/verify_env.py --envname YOUR_ENV_NAME_HERE --output /tmp/verify_output.txt
 ```
-
-#### How can I send the output to a file automatically?
-
-##### Use a redirection operator
-python3 aws-support-tools/MWAA/verify_env/verify_env.py --envname YOUR_ENV_NAME_HERE > output.log
-
-##### Use vscode or codium
-python3 aws-support-tools/MWAA/verify_env/verify_env.py --envname YOUR_ENV_NAME_HERE | code -
+The above script is recommended to run on [AWS CloudShell](console.aws.amazon.com/cloudshell). Script is expected to run for minutes. Output file can be downloaded from "Actions > Download file" at top right of CloudShell page.
 
 ### Logic and api calls
 The following actions will be performed in this order:
@@ -86,6 +79,7 @@ optional arguments:
   --envname ENVNAME  name of the MWAA environment
   --region REGION    region, Ex: us-east-1
   --profile PROFILE  profile, Ex: dev
+  --output OUTPUT    output file path, Ex: /tmp/output.txt
 ```
 
 ### example output:
