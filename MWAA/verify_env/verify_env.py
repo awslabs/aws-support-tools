@@ -89,7 +89,7 @@ def validation_profile(profile_name):
     '''
     verify profile name doesn't have path to files or unexpected input
     '''
-    if re.match(r"^[a-zA-Z0-9]*$", profile_name):
+    if re.match(r"^[a-zA-Z0-9\/]*$", profile_name):
         return profile_name
     raise argparse.ArgumentTypeError("%s is an invalid profile name value" % profile_name)
 
