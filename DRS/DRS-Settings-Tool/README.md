@@ -1,7 +1,7 @@
 # DRS Settings Tool
 
 ## Description
-This tool was created to help change settings in bulk for multiple Elastic Disaster Recovery Service(DRS) Source Servers that do not share the same settings.
+This tool was created to help change settings in bulk for multiple Elastic Disaster Recovery Service(DRS) Source Servers.
 
 ## Prerequisites
 
