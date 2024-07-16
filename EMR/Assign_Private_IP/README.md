@@ -23,3 +23,5 @@ Steps to execute this script:
      Optional arguments:-  172.31.45.13 us-east-1
     
 - To find the new IP address, open the Amazon Elastic Compute Cloud (Amazon EC2) console. Then, select the EC2 instance that's acting as the master node of the EMR cluster. The new IP address appears on the Description tab, in the Secondary private IPs field.
+
+- Use script `assign_private_ip_v2.py` if you have security configuration enabled to support IMDSv2 only. 
