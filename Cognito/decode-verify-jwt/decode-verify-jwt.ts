@@ -48,11 +48,22 @@ interface Claim {
   client_id: string;
 }
 
-const cognitoPoolId = process.env.COGNITO_POOL_ID || '';
-if (!cognitoPoolId) {
-  throw new Error('env var required for cognito pool');
+const USERPOOL_ID = process.env.COGNITO_POOL_ID || '';
+if (!USERPOOL_ID) {
+  throw new Error('USERPOOL_ID env var required');
 }
-const cognitoIssuer = `https://cognito-idp.us-east-1.amazonaws.com/${cognitoPoolId}`;
+
+const CLIENT_ID = process.env.CLIENT_ID || '';
+if (!CLIENT_ID) {
+  throw new Error('CLIENT_ID env var required');
+}
+
+const AWS_REGION = process.env.AWS_REGION || '';
+if (!AWS_REGION) {
+  throw new Error('AWS_REGION env var required');
+}
+
+const cognitoIssuer = `https://cognito-idp.${AWS_REGION}.amazonaws.com/${USERPOOL_ID}`;
 
 let cacheKeys: MapOfKidToPublicKey | undefined;
 const getPublicKeys = async (): Promise<MapOfKidToPublicKey> => {
@@ -99,6 +110,11 @@ const handler = async (request: ClaimVerifyRequest): Promise<ClaimVerifyResult> 
     if (claim.token_use !== 'access') {
       throw new Error('claim use is not access');
     }
+    // Verify the Audience (use claims['client_id'] if verifying an access token)
+    if (claim.client_id !== CLIENT_ID) {
+      throw new Error('token was not issued for this audience');
+    }
+
     console.log(`claim confirmed for ${claim.username}`);
     result = {userName: claim.username, clientId: claim.client_id, isValid: true};
   } catch (error) {
