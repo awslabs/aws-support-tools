@@ -3,7 +3,7 @@ import boto3
 import os
 import pytest
 
-from moto import mock_s3
+from moto import mock_s3, mock_s3control, mock_ec2
 from verify_env import verify_env
 
 @pytest.fixture
@@ -41,15 +41,21 @@ def test_validation_region():
     https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/
     '''
     regions = [
-        'us-east-2',
-        'us-east-1',
-        'us-west-2',
+        'ap-northeast-1',
+        'ap-northeast-2',
+        'ap-south-1',
         'ap-southeast-1',
         'ap-southeast-2',
-        'ap-northeast-1',
+        'ca-central-1',
         'eu-central-1',
+        'eu-north-1',
         'eu-west-1',
-        'eu-north-1'
+        'eu-west-2',
+        'eu-west-3',
+        'sa-east-1',
+        'us-east-1',
+        'us-east-2',
+        'us-west-2'
     ]
     for region in regions:
         assert verify_env.validation_region(region) == region
@@ -57,15 +63,9 @@ def test_validation_region():
         'us-west-1',
         'af-south-1',
         'ap-east-1',
-        'ap-south-1',
         'ap-northeast-3',
-        'ap-northeast-2',
-        'ca-central-1',
-        'eu-west-2',
         'eu-south-1',
-        'eu-west-3',
-        'me-sourth-1',
-        'sa-east-1'
+        'me-south-1',
     ]
     for unsupport_region in unsupport_regions:
         with pytest.raises(argparse.ArgumentTypeError) as excinfo:
@@ -250,6 +250,7 @@ def init_s3():
     permisions
     '''
     @mock_s3
+    @mock_s3control
     def _init_s3(is_bucket_access_blocked, is_account_access_blocked):
         s3_client = boto3.client('s3', region_name=TEST_ACCOUNT_REGION)
         s3_client.create_bucket(Bucket=TEST_BUCKET_NAME)
@@ -290,3 +291,45 @@ def test_s3_public_access_block(init_s3, env_info, capfd, is_bucket_access_block
     out, _ = capfd.readouterr()
 
     assert expected.format(bucket_arn=TEST_BUCKET_ARN) in out
+
+
+VPC_DNS_TEST_CASES = [
+    # DNS resolution enabled
+    (True, "DNS resolution enabled"),
+    # DNS resolution disabled
+    (False, "DNS resolution is disabled")
+]
+
+
+@pytest.fixture(scope="function")
+def init_vpcs():
+    @mock_ec2
+    def _init_vpcs(dns_support_enabled):
+        ec2_client = boto3.client("ec2", region_name=TEST_ACCOUNT_REGION)
+        vpc = ec2_client.create_vpc(
+            CidrBlock="10.10.0.0/16"
+        )
+
+        if dns_support_enabled is not None:
+            ec2_client.modify_vpc_attribute(
+                VpcId=vpc.get("Vpc").get("VpcId"),
+                EnableDnsSupport={
+                    "Value": dns_support_enabled
+                }
+            )
+
+        return vpc.get("Vpc").get("VpcId")
+
+    return _init_vpcs
+
+
+@mock_ec2
+@pytest.mark.parametrize("dns_support_enabled, expected_string", VPC_DNS_TEST_CASES)
+def test_check_vpc_dns_resolution(init_vpcs, capfd, dns_support_enabled, expected_string):
+    vpc_id = init_vpcs(dns_support_enabled)
+    ec2_client = boto3.client("ec2", region_name=TEST_ACCOUNT_REGION)
+
+    verify_env.check_vpc_dns_resolution(vpc_id, ec2_client)
+    out, _ = capfd.readouterr()
+
+    assert expected_string in out
