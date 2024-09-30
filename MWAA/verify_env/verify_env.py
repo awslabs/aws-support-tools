@@ -30,10 +30,19 @@ from botocore.exceptions import ClientError, ProfileNotFound
 from boto3.session import Session
 ENV_NAME = ""
 REGION = ""
+OUTPUT_PATH = ""
 
 S3_CHECK_SUCCESS_MSG = 's3 bucket, {bucket_arn}, or account blocks public access ✅'
 S3_CHECK_FAILURE_MSG = 's3 bucket, {bucket_arn}, or account does NOT block public access 🚫'
+sys_print = print
 
+def print(*args, **kargs):
+    '''override print function to add output stream'''
+    sys_print(*args, **kargs)
+    if output_handler and not output_handler.closed:
+        kargs['file'] = output_handler
+        sys_print(*args, **kargs)
+        
 
 def verify_boto3(boto3_current_version):
     '''
@@ -963,16 +972,21 @@ if __name__ == '__main__':
     parser.add_argument('--envname', type=validate_envname, required=True, help="name of the MWAA environment")
     parser.add_argument('--region', type=validation_region, default=boto3.session.Session().region_name,
                         required=False, help="region, Ex: us-east-1")
-    parser.add_argument('--profile', type=validation_profile, default='default',
+    parser.add_argument('--profile', type=validation_profile, default=None,
                         required=False, help="AWS CLI profile, Ex: dev")
+    parser.add_argument('--output', default="")
     args, _ = parser.parse_known_args()
     ENV_NAME = args.envname
     REGION = args.region
     PARTITION = boto3.session.Session().get_partition_for_region(args.region)
     TOP_LEVEL_DOMAIN = '.amazonaws.com.cn' if PARTITION == 'aws-cn' else '.amazonaws.com'
     PROFILE = args.profile
+    OUTPUT_PATH = args.output
+    output_handler = None
     try:
-        boto3.setup_default_session(profile_name=PROFILE)
+        output_handler = open(OUTPUT_PATH, 'w') if OUTPUT_PATH else None
+        session_args = {} if PROFILE is None else {"profile_name":PROFILE}
+        boto3.setup_default_session(**session_args)
         ec2 = boto3.client('ec2', region_name=REGION)
         s3 = boto3.client('s3', region_name=REGION)
         s3control = boto3.client('s3control', region_name=REGION)
@@ -1009,3 +1023,8 @@ if __name__ == '__main__':
     except IndexError as error:
         print("Found index error suggesting there are no ENIs for MWAA")
         print("Error:", error)
+    finally:
+        if output_handler is not None:
+            output_handler.close()
+            print(f"Output saved into {OUTPUT_PATH}")
+        print("Exit.")
