@@ -1,3 +1,11 @@
+# Important Notice
+
+The **MGN-TOOLKIT** has been rehosted to a new repository. Please visit the new location for the latest updates and contributions.
+
+[New Repository Link](https://github.com/awslabs/mgn-toolkit/tree/main)
+
+---
+
 # MGN toolkit
 
 The **MGN-Toolkit** is a set of PowerShell scripts developed to run multiple checks for common MGN related tasks to help migrating to AWS.
