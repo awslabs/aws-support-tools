@@ -38,4 +38,4 @@ if is_master == "true":
     primary_ip = subprocess.check_output(['TOKEN=`/usr/bin/curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` && /usr/bin/curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4'], shell=True, universal_newlines=True).strip()
     subprocess.check_call(['sudo iptables -t nat -A PREROUTING -d %s -j DNAT --to-destination %s' % (private_ip, primary_ip)], shell=True)
 else:
-    print "Not the master node"
+    print ("Not the master node")
