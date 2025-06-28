@@ -13,7 +13,7 @@
 
 import sys, subprocess
 
-is_master = subprocess.check_output(['cat /emr/instance-controller/lib/info/instance.json | jq .isMaster'], shell=True).strip()
+is_master = subprocess.check_output(['cat /emr/instance-controller/lib/info/instance.json | jq .isMaster'], shell=True).decode('utf-8').strip()
 
 if is_master == "true":
     private_ip = str(sys.argv[1])
