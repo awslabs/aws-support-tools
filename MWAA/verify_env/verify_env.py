@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from __future__ import print_function
 import argparse
 import json
+import os
 import socket
 import time
 import re
@@ -972,7 +973,8 @@ if __name__ == '__main__':
     TOP_LEVEL_DOMAIN = '.amazonaws.com.cn' if PARTITION == 'aws-cn' else '.amazonaws.com'
     PROFILE = args.profile
     try:
-        boto3.setup_default_session(profile_name=PROFILE)
+        if PROFILE != 'default' or (not os.environ.get('AWS_ACCESS_KEY_ID') and not os.environ.get('AWS_PROFILE')):
+            boto3.setup_default_session(profile_name=PROFILE)
         ec2 = boto3.client('ec2', region_name=REGION)
         s3 = boto3.client('s3', region_name=REGION)
         s3control = boto3.client('s3control', region_name=REGION)
