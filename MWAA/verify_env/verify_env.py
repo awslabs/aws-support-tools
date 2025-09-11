@@ -228,7 +228,9 @@ def check_iam_permissions(input_env, iam_client):
                 "logs:CreateLogGroup",
                 "logs:PutLogEvents",
                 "logs:GetLogEvents",
-                "logs:GetLogGroupFields"
+                "logs:GetLogRecord",
+                "logs:GetLogGroupFields",
+                "logs:GetQueryResults"
             ],
             ResourceArns=[
                 "arn:" + PARTITION + ":logs:" + REGION + ":" + account_id + ":log-group:airflow-" + ENV_NAME + "-*"
@@ -384,7 +386,9 @@ def check_iam_permissions(input_env, iam_client):
                 "logs:CreateLogGroup",
                 "logs:PutLogEvents",
                 "logs:GetLogEvents",
-                "logs:GetLogGroupFields"
+                "logs:GetLogRecord",
+                "logs:GetLogGroupFields",
+                "logs:GetQueryResults"
             ],
             ResourceArns=[
                 "arn:" + PARTITION + ":logs:" + REGION + ":" + account_id + ":log-group:airflow-" + ENV_NAME + "-*"
