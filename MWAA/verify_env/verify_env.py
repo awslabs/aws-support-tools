@@ -488,14 +488,13 @@ def check_iam_permissions(input_env, iam_client):
     print('https://docs.aws.amazon.com/mwaa/latest/userguide/mwaa-create-role.html#mwaa-create-role-json\n')
 
 
-def prompt_user_and_print_info(input_env_name, ec2_client):
+def prompt_user_and_print_info(input_env_name, ec2_client, mwaa):
     '''method to get environment, print that information to stdout, and prompt the use to send it to support'''
     print('please send support the following information')
     print('If a case is not opened you may open one here https://console.aws.amazon.com/support/home#/case/create')
     print('Please make sure to NOT include any personally identifiable information in the case\n')
     # get mwaa environment
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/mwaa.html#MWAA.Client.get_environment
-    mwaa = boto3.client('mwaa', region_name=REGION)
     environment = mwaa.get_environment(
         Name=input_env_name
     )['Environment']
@@ -956,6 +955,101 @@ def get_mwaa_utilized_services(ec2_client, vpc):
     return mwaa_utilized_services
 
 
+def check_airflow_rest_api_iam(input_env, iam_client):
+    ''' Check which airflow roles the user gave access for REST API using IAM simulation to check policy permissions'''
+    account_id = get_account_id(input_env)
+    airflow_roles = {"Admin":"", "Op":"", "User":"", "Viewer":"", "Public":""}
+    policies = iam_client.list_attached_role_policies(
+        RoleName=input_env["ExecutionRoleArn"].split("/")[-1]
+    )["AttachedPolicies"]
+    policy_list = []
+    for policy in policies:
+        policy_arn = policy["PolicyArn"]
+        policy_version = iam_client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
+        policy_doc = iam_client.get_policy_version(PolicyArn=policy_arn,
+                                                   VersionId=policy_version)['PolicyVersion']['Document']
+        policy_list.append(json.dumps(policy_doc))
+    policy_list.extend(get_inline_policies(iam_client, input_env['ExecutionRoleArn'].split("/")[-1]))
+    for role in airflow_roles.keys():
+        results = iam_client.simulate_custom_policy(
+                PolicyInputList=policy_list,
+                ActionNames=[
+                    "airflow:InvokeRestApi"
+                ],
+                ResourceArns=[
+                    "arn:aws:airflow:" + REGION + ":" + account_id + ":role/" + ENV_NAME + "/" + role
+                ]
+            )["EvaluationResults"]
+    
+        for result in results:
+            airflow_roles[result["EvalResourceName"].split("/")[-1]] = result["EvalDecision"]
+
+    if "allowed" in airflow_roles.values():
+        print("🔐 The following Airflow roles have IAM permissions to access the Airflow REST API: ")
+        for role in airflow_roles.keys():
+            if airflow_roles[role] == "allowed":
+                print(role, end=" ")
+        print("\n")
+
+    if list(airflow_roles.values()).count("allowed") < len(airflow_roles.values()):
+        print("🔒 The following Airflow roles do not have IAM permissions to access the Airflow REST API: ")
+        for role in airflow_roles.keys():
+            if airflow_roles[role] != "allowed":
+                print(role, end=" ")
+        print("\n")
+    return airflow_roles
+
+
+def check_airflow_rest_api_health(input_env, mwaa_client):
+    request_params = {
+        "Name": input_env["Name"],
+        "Path": "/monitor/health" if int(input_env["AirflowVersion"].split(".")[0]) >= 3 else "/health",
+        "Method": "GET"
+        }
+
+    print("Airflow REST API /health endpoint is invoked.")
+
+    try:
+        response = mwaa_client.invoke_rest_api(
+            **request_params
+        )
+    except ClientError as client_error:
+        print("🚫 Airflow REST API invocation failed with the following error:\n", client_error)
+        return
+
+    print("✅ Airflow REST API invocation succeeded.")
+
+    for component, info in response['RestApiResponse'].items():
+        status = info['status']
+        emoji = '✅' if status == 'healthy' else '🚫'
+        print(f"{emoji} {component.replace('_', ' ').title()}: {status}")
+        
+        # Find heartbeat key
+        heartbeat_key = next((k for k in info.keys() if 'heartbeat' in k), None)
+        if heartbeat_key:
+            heartbeat = info[heartbeat_key].split('T')[0] + ' ' + info[heartbeat_key].split('T')[1][:8]
+            print(f"   Last heartbeat: {heartbeat}")
+        else:
+            print(f"   This resource does not publish a heartbeat")
+
+def check_airflow_rest_api(env, mwaa, iam):
+    print("### Checking Airflow REST API health...")
+
+    roles_rest_api_allowed_status = check_airflow_rest_api_iam(env, iam)
+
+    if "allowed" in roles_rest_api_allowed_status.values():
+        print("Do you allow the following tests to trigger Airflow REST API and access inside your Airflow environment?\n" +
+            "The gathered information will be saved on your device. It will not be shared with AWS.")
+        if input("(Y/n):").lower().strip() in ["y", "yes", ""]:
+            print()
+            check_airflow_rest_api_health(env, mwaa)
+        else:
+            print("Skipping Airflow REST API test because user did not allow test to access REST API")
+    else:
+        print("Skipping Airflow REST API test because no role have IAM permissions to access REST API.")
+        print("If you would like to allow REST API access: https://docs.aws.amazon.com/mwaa/latest/userguide/access-mwaa-apache-airflow-rest-api.html#granting-access-MWAA-Enhanced-REST-API")
+
+
 if __name__ == '__main__':
     if sys.version_info[0] < 3:
         print("python2 detected, please use python3. Will try to run anyway")
@@ -985,7 +1079,9 @@ if __name__ == '__main__':
         cloudtrail = boto3.client('cloudtrail', region_name=REGION)
         ssm = boto3.client('ssm', region_name=REGION)
         iam = boto3.client('iam', region_name=REGION)
-        env, subnets, subnet_ids = prompt_user_and_print_info(ENV_NAME, ec2)
+        mwaa = boto3.client('mwaa', region_name=REGION)
+        sqs = boto3.client('sqs', region_name=REGION)
+        env, subnets, subnet_ids = prompt_user_and_print_info(ENV_NAME, ec2, mwaa)
         check_iam_permissions(env, iam)
         check_kms_key_policy(env, kms)
         log_groups = check_log_groups(env, ENV_NAME, logs, cloudtrail)
@@ -995,6 +1091,7 @@ if __name__ == '__main__':
         check_security_groups(env, ec2)
         mwaa_services = get_mwaa_utilized_services(ec2, subnets[0]['VpcId'])
         check_connectivity_to_dep_services(env, subnets, ec2, ssm, mwaa_services)
+        check_airflow_rest_api(env, mwaa, iam)
         check_for_failing_logs(log_groups, logs)
     except ClientError as client_error:
         if client_error.response['Error']['Code'] == 'LimitExceededException':
