@@ -23,8 +23,7 @@ import socket
 import time
 import re
 import sys
-from datetime import timedelta
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import boto3
 from botocore.exceptions import ClientError, ProfileNotFound
 from boto3.session import Session
@@ -1049,6 +1048,56 @@ def check_airflow_rest_api(env, mwaa, iam):
         print("Skipping Airflow REST API test because no role have IAM permissions to access REST API.")
         print("If you would like to allow REST API access: https://docs.aws.amazon.com/mwaa/latest/userguide/access-mwaa-apache-airflow-rest-api.html#granting-access-MWAA-Enhanced-REST-API")
 
+def check_celery_sqs_health(env, cw):
+    print("### Checking Celery executor SQS queue health...")
+    metrics = ["TaskQueued", "TaskPulled", "TaskExecuted"]
+    dimensions = [
+            {
+                "Name": "Environment",
+                "Value": env["Name"]
+            },
+            {
+                "Name": "Function",
+                "Value": "Celery"
+            }
+        ]
+    
+    for metric in metrics:
+        response = cw.get_metric_statistics(
+            Namespace="AmazonMWAA",
+            MetricName=metric,
+            Dimensions=dimensions,
+            StartTime=datetime.now(timezone.utc) - timedelta(hours=24),
+            EndTime=datetime.now(timezone.utc),
+            Period=300,  # 5 minutes
+            Statistics=["Average"]
+        )
+
+        # Find the latest datapoint
+        if response["Datapoints"]:
+            latest = max(response["Datapoints"], key=lambda x: x["Timestamp"])
+            delta = datetime.now(timezone.utc) - latest['Timestamp']
+            hours = int(delta.total_seconds() // 3600)
+            minutes = int((delta.total_seconds() % 3600) // 60)
+            print(f"{metric} Latest Datapoint - {hours}h {minutes}m ago - Time: {latest['Timestamp']}, Value: {latest['Average']}")
+        else:
+            print(f"⚠️ {metric} did not have any datapoints in last 24 hours.")
+
+    response = cw.get_metric_statistics(
+        Namespace="AmazonMWAA",
+        MetricName="CeleryWorkerHeartbeat",
+        Dimensions=dimensions,
+        StartTime=datetime.now(timezone.utc) - timedelta(minutes=20),
+        EndTime=datetime.now(timezone.utc),
+        Period=300,  # 5 minutes
+        Statistics=["Average"]
+    )
+
+    if response["Datapoints"]:
+        print("✅ Celery worker heartbeat received in last 20 minutes.")
+    else:
+        print("🚫 No Celery Worker heartbeat received in last 20 minutes")
+
 
 if __name__ == '__main__':
     if sys.version_info[0] < 3:
@@ -1081,6 +1130,7 @@ if __name__ == '__main__':
         iam = boto3.client('iam', region_name=REGION)
         mwaa = boto3.client('mwaa', region_name=REGION)
         sqs = boto3.client('sqs', region_name=REGION)
+        cw = boto3.client('cloudwatch', region_name=REGION)
         env, subnets, subnet_ids = prompt_user_and_print_info(ENV_NAME, ec2, mwaa)
         check_iam_permissions(env, iam)
         check_kms_key_policy(env, kms)
@@ -1092,6 +1142,7 @@ if __name__ == '__main__':
         mwaa_services = get_mwaa_utilized_services(ec2, subnets[0]['VpcId'])
         check_connectivity_to_dep_services(env, subnets, ec2, ssm, mwaa_services)
         check_airflow_rest_api(env, mwaa, iam)
+        check_celery_sqs_health(env, cw)
         check_for_failing_logs(log_groups, logs)
     except ClientError as client_error:
         if client_error.response['Error']['Code'] == 'LimitExceededException':
