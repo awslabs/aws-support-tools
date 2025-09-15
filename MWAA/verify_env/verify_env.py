@@ -623,7 +623,7 @@ def check_log_groups(input_env, env_name, logs_client, cloudtrail_client, report
         for logConfig in input_env['LoggingConfiguration']
     )
     num_of_found_log_groups = len(loggroups)
-    report.write_all_locations('### Log groups\nChecking if log groups were created successfully...')
+    report.write_all_locations('### Log groups')
     if num_of_found_log_groups < num_of_enabled_log_groups:
         report.write_all_locations('🚫 The number of log groups is less than the number of enabled suggesting an error.')
         report.write_all_locations('checking cloudtrail for CreateLogGroup/DeleteLogGroup requests...\n')
@@ -1196,6 +1196,110 @@ def check_celery_sqs_health(env, cw, report: ReportWriter):
     else:
         report.write_all_locations("🚫 No Celery Worker heartbeat received in last 20 minutes")
 
+def check_environment_class_utilization(env, cw, report: ReportWriter):
+    '''https://docs.aws.amazon.com/mwaa/latest/userguide/environment-class.html
+    
+    For one of BaseWorker, Scheduler, or WebServer clusters,
+    if the average CPU Utilization or Memory Utilization for 
+    last 7 days is above a certain percentage, suggest upgrade.
+    '''
+    report.write_all_locations("### Environment Class - Cluster Utilization")
+    THRESHOLD = 85
+
+    clusters = ["BaseWorker", "Scheduler", "WebServer"]
+    metrics = ["CPUUtilization", "MemoryUtilization"]
+    env_classes = ["mw1.micro", "mw1.small", "mw1.medium", "mw1.large", "mw1.xlarge", "mw1.2xlarge"]
+
+    suggest_upgrade = False
+    for metric in metrics:
+        for cluster in clusters:
+            dimensions = [
+                {
+                    "Name": "Environment",
+                    "Value": env["Name"]
+                },
+                {
+                    "Name": "Cluster",
+                    "Value": cluster
+                }
+            ]
+
+            response = cw.get_metric_statistics(
+                Namespace="AWS/MWAA",
+                MetricName=metric,
+                Dimensions=dimensions,
+                StartTime=datetime.now(timezone.utc) - timedelta(days=7),
+                EndTime=datetime.now(timezone.utc),
+                Period=604800,  # 7 days
+                Statistics=["Average"]
+            )
+
+            if response["Datapoints"][0]["Average"] > THRESHOLD:
+                suggest_upgrade = True
+                report.write_all_locations("⚠️ The", cluster, "cluster had an average", metric, "of",
+                                           int(response["Datapoints"][0]["Average"]), response["Datapoints"][0]["Unit"].lower(),
+                                           "over last 7 days. MWAA recommends this value to be less than", THRESHOLD, "percent.")
+            else:
+                report.write_full_report("✅ The", cluster, "cluster had an average", metric, "of",
+                                           int(response["Datapoints"][0]["Average"]), response["Datapoints"][0]["Unit"].lower(),
+                                           "over last 7 days. This is under the MWAA recommended threshold of", THRESHOLD, "percent.")
+
+    if suggest_upgrade:
+        if env["EnvironmentClass"] == env_classes[-1]:
+            report.write_all_locations("⚠️ Your utilization is higher than the threshold although you use the largest environment class.")
+            report.write_all_locations("Consider MWAA best practices for performance tuning: https://docs.aws.amazon.com/mwaa/latest/userguide/best-practices-tuning.html")
+        else:
+            report.write_all_locations("⚠️ MWAA recommends the environment class to be upgraded to " + env_classes[env_classes.index(env["EnvironmentClass"]) + 1])
+            report.write_all_locations("You can also consider MWAA best practices for performance tuning: https://docs.aws.amazon.com/mwaa/latest/userguide/best-practices-tuning.html")
+    else:
+        report.write_all_locations("✅ The average CPU and memory utilizations of all clusters were under the threshold of", THRESHOLD, "percent for the last 7 days.")
+
+def check_environment_class_dag_count(env, cw, report):
+    report.write_all_locations("### Environment Class - DAG Count")
+    env_class_dag_capacities = [
+        ("mw1.micro", 25),
+        ("mw1.small", 50),
+        ("mw1.medium", 250),
+        ("mw1.large", 1000),
+        ("mw1.xlarge", 2000),
+        ("mw1.2xlarge", 4000)
+    ]
+
+    dimensions = [
+        {
+            "Name": "Environment",
+            "Value": env["Name"]
+        },
+        {
+            "Name": "Function",
+            "Value": "DAG Processing"
+        }
+    ]
+
+    response = cw.get_metric_statistics(
+        Namespace="AmazonMWAA",
+        MetricName="DagBagSize",
+        Dimensions=dimensions,
+        StartTime=datetime.now(timezone.utc) - timedelta(minutes=6),
+        EndTime=datetime.now(timezone.utc),
+        Period=300,  # 5 minutes
+        Statistics=["Average"]
+    )
+
+    dagcount = int(response["Datapoints"][0]["Average"])
+    report.write_all_locations("Dag count:", dagcount)
+
+    current_capacity = 0
+    for env_class, capacity in env_class_dag_capacities:
+        if env["EnvironmentClass"] == env_class:
+            current_capacity = capacity
+            break
+
+    if dagcount > current_capacity:
+        report.write_all_locations("⚠️ The DAG count exceeds the capacity of the environment class. Consider upgrading to a larger environment class.")
+    else:
+        report.write_all_locations("✅ The DAG count is within the capacity of the", env["EnvironmentClass"], "environment class.")
+
 def hello_message():
     print("Hello")
 
@@ -1253,8 +1357,10 @@ if __name__ == '__main__':
         check_security_groups(env, ec2, report)
         mwaa_services = get_mwaa_utilized_services(ec2, subnets[0]['VpcId'])
         check_connectivity_to_dep_services(env, subnets, ec2, ssm, mwaa_services, report)
-        check_airflow_rest_api(env, mwaa, iam, report)
         check_celery_sqs_health(env, cw, report)
+        check_environment_class_utilization(env, cw, report)
+        check_environment_class_dag_count(env, cw, report)
+        check_airflow_rest_api(env, mwaa, iam, report)
         check_for_failing_logs(log_groups, logs, report)
 
         report.close()
