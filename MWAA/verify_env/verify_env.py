@@ -1300,6 +1300,86 @@ def check_environment_class_dag_count(env, cw, report):
     else:
         report.write_all_locations("✅ The DAG count is within the capacity of the", env["EnvironmentClass"], "environment class.")
 
+def check_airflowignore(env, s3, report: ReportWriter):
+
+    common_ignores = [".ipynb_checkpoints", ".git", "__pycache__"]
+
+    report.write_all_locations("### Check `.airflowignore`")
+    
+    print("Do you allow the following test to use the S3 API to read your dags folder structure including subfolders and filenames?")
+    if input("(Y/n):").lower().strip() not in ["y", "yes", ""]:
+        report.write_all_locations("Skipping Airflow ignore test because user did not allow test to read dags folder structure.")
+        return
+    
+    print()
+    
+    bucket_name = env['SourceBucketArn'].split(':')[-1]
+    dags_prefix = env['DagS3Path']
+    
+    files_and_folders = []
+
+    try:
+        paginator = s3.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=bucket_name, Prefix=dags_prefix)
+        
+        for page in pages:
+            if 'Contents' in page:
+                for obj in page['Contents']:
+                    files_and_folders.append(obj['Key'])
+    except Exception as e:
+        report.write_all_locations(f"Error reading S3 folder structure: {e}")
+    
+    found_paths_in_dags = []
+    found_names_in_dags = []
+    for path in files_and_folders:
+        for ignore in common_ignores:
+            if ignore in path:
+                found_paths_in_dags.append(path)
+                found_names_in_dags.append(ignore)
+    
+    if not found_paths_in_dags:
+        report.write_all_locations("✅ The dags folder does not include any folder names that are knwon to be commonly included by mistake.")
+        return
+    
+    report.write_full_report("The dags folder includes the following folders / files that might be included by mistake:")
+    for path in found_paths_in_dags:
+        report.write_full_report("   ", path)
+
+    if (dags_prefix + ".airflowignore") not in files_and_folders:
+        report.write_all_locations("⚠️ The dags folder does not include a .airflowignore file but includes the following folders / files that might be included by mistake:")
+        for path in found_paths_in_dags:
+            report.write_all_locations("   ", path)
+        report.write_all_locations("Consider adding a .airflowignore file to your dags folder to exclude these folders / files.")
+        return
+
+    report.write_all_locations("✅ The dags folder includes a .airflowignore file.")
+    print("Do you allow the test to read the .airflowignore file?")
+    if input("(Y/n):").lower().strip() not in ["y", "yes", ""]:
+        report.write_all_locations("Skipping reading .airflowignore file because user did not allow read.")
+        return
+
+    airflowignore_content = None
+    try:
+        response = s3.get_object(Bucket=bucket_name, Key=dags_prefix + ".airflowignore")
+        airflowignore_content = response['Body'].read().decode('utf-8')
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'NoSuchKey':
+            report.write_all_locations("⚠️ .airflowignore file not found at location:", dags_prefix + ".airflowignore")
+        else:
+            report.write_all_locations(f"Error reading .airflowignore file: {e}")
+
+    all_ignores_found = True
+    for ignore in found_names_in_dags:
+        if ignore not in airflowignore_content:
+            report.write_all_locations("⚠️ The .airflowignore file does not include", ignore, "but it is present in your dags folder. Please consider if this is intentional or by mistake.")
+            all_ignores_found = False
+        else:
+            report.write_full_report("✅ Found", ignore, "in .airflowignore file on lines:\n\n```")
+            report.write_full_report("\n".join([line for line in airflowignore_content.splitlines() if ignore in line]),"\n```")
+
+    if all_ignores_found:
+        report.write_all_locations("✅ No immediate issue found with .airflowignore. Note that this check does not cover all potential issues with .airflowignore")
+
 def hello_message():
     print("Hello")
 
@@ -1361,6 +1441,7 @@ if __name__ == '__main__':
         check_environment_class_utilization(env, cw, report)
         check_environment_class_dag_count(env, cw, report)
         check_airflow_rest_api(env, mwaa, iam, report)
+        check_airflowignore(env, s3, report)
         check_for_failing_logs(log_groups, logs, report)
 
         report.close()
