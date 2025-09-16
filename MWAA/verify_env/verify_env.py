@@ -1146,6 +1146,245 @@ def check_airflow_rest_api(env, mwaa, iam, report: ReportWriter):
         report.write_all_locations("Skipping Airflow REST API test because no role have IAM permissions to access REST API.")
         report.write_all_locations("If you would like to allow REST API access: https://docs.aws.amazon.com/mwaa/latest/userguide/access-mwaa-apache-airflow-rest-api.html#granting-access-MWAA-Enhanced-REST-API")
 
+def upload_file_to_dags_folder(env, file_path, s3_client):
+    """
+    Upload a file to the environment's DAGs folder in S3
+    
+    Args:
+        env: MWAA environment dict containing SourceBucketArn and DagS3Path
+        file_path: Local path to file to upload
+        s3_client: Boto3 S3 client
+    """
+    # Get bucket name from ARN
+    bucket_name = env['SourceBucketArn'].split(':')[-1]
+    # Get file name from path
+    file_name = file_path.split('/')[-1]
+    s3_key = env['DagS3Path'] + file_name
+    
+    try:
+        s3_client.upload_file(file_path, bucket_name, s3_key)
+        return True
+        
+    except ClientError as e:
+        print(f"Error uploading file to S3: {e}")
+        return False
+
+def delete_file_from_dags_folder(env, file_path, s3_client):
+    """
+    Delete a file from the environment's DAGs folder in S3
+    
+    Args:
+        env: MWAA environment dict containing SourceBucketArn and DagS3Path 
+        file_path: Local path to file to delete
+        s3_client: Boto3 S3 client
+    """
+    # Get bucket name from ARN
+    bucket_name = env['SourceBucketArn'].split(':')[-1]
+    # Get file name from path 
+    file_name = file_path.split('/')[-1]
+    s3_key = env['DagS3Path'] + file_name
+    
+    try:
+        s3_client.delete_object(Bucket=bucket_name, Key=s3_key)
+        return True
+        
+    except ClientError as e:
+        print(f"Error deleting file from S3: {e}")
+        return False
+
+def perform_dag_run(input_env, dag_id, mwaa_client, report: ReportWriter):
+    # Unpause and trigger the DAG run
+    try:
+        unpause_request_params = {
+            "Name": input_env["Name"],
+            "Path": f"/dags/{dag_id}",
+            "Method": "PATCH",
+            "Body": {"is_paused": False}
+        }
+        unpause_response = mwaa_client.invoke_rest_api(**unpause_request_params)
+        
+        if unpause_response.get('RestApiStatusCode') not in [200, 201]:
+            report.write_all_locations("🚫 Failed to unpause DAG:", unpause_response.get('RestApiResponse', {}))
+            return
+            
+    except ClientError as client_error:
+        report.write_all_locations("🚫 Failed to unpause DAG:", client_error.response)
+        return
+    
+    report.write_all_locations(f"✅ DAG '{dag_id}' unpaused successfully")
+
+    try:
+        dag_run_id = f"test_run_{int(time.time())}"
+        trigger_request_params = {
+            "Name": input_env["Name"],
+            "Path": f"/dags/{dag_id}/dagRuns",
+            "Method": "POST",
+            "Body": {
+                "dag_run_id": dag_run_id,
+                "logical_date": datetime.now(timezone.utc).isoformat(),
+                "conf": {}
+            }
+        }
+        trigger_response = mwaa_client.invoke_rest_api(**trigger_request_params)
+        
+        if trigger_response.get('RestApiStatusCode') not in [200, 201]:
+            report.write_all_locations("🚫 Failed to trigger DAG run:", trigger_response.get('RestApiResponse', {}))
+            return
+            
+    except ClientError as client_error:
+        report.write_all_locations("🚫 Failed to trigger DAG run:", client_error.response)
+        return
+    
+    report.write_all_locations(f"✅ Successfully triggered DAG run with ID: {dag_run_id}")
+
+    # Monitor the DAG run status
+    print("Monitoring DAG run progress...")
+    
+    max_wait_time = 300  # 5 minutes
+    check_interval = 10  # 10 seconds
+    elapsed_time = 0
+    
+    while elapsed_time < max_wait_time:
+        try:
+            status_request_params = {
+                "Name": input_env["Name"],
+                "Path": f"/dags/{dag_id}/dagRuns/{dag_run_id}",
+                "Method": "GET"
+            }
+            
+            status_response = mwaa_client.invoke_rest_api(**status_request_params)
+            dag_run_info = status_response.get('RestApiResponse', {})
+            
+            state = dag_run_info.get('state', 'unknown')
+            
+            if state == 'success':
+                report.write_all_locations(f"✅ DAG run completed successfully!")
+                report.write_all_locations(f"   Start time: {dag_run_info.get('start_date', 'N/A')}")
+                report.write_all_locations(f"   End time: {dag_run_info.get('end_date', 'N/A')}")
+                
+                # Get task instances to show detailed results
+                try:
+                    tasks_request_params = {
+                        "Name": input_env["Name"],
+                        "Path": f"/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances",
+                        "Method": "GET"
+                    }
+                    
+                    tasks_response = mwaa_client.invoke_rest_api(**tasks_request_params)
+                    task_instances = tasks_response.get('RestApiResponse', {}).get('task_instances', [])
+                    
+                    report.write_all_locations("Task execution results:")
+                    for task in task_instances:
+                        task_state = task.get('state', 'unknown')
+                        task_emoji = '✅' if task_state == 'success' else '🚫'
+                        report.write_all_locations(f"   {task_emoji} {task.get('task_id', 'unknown')}: {task_state}")
+                        
+                except ClientError:
+                    report.write_full_report("Could not retrieve detailed task information")
+                
+                return
+                
+            elif state == 'failed':
+                report.write_all_locations(f"🚫 DAG run failed!")
+                report.write_all_locations(f"   Start time: {dag_run_info.get('start_date', 'N/A')}")
+                report.write_all_locations(f"   End time: {dag_run_info.get('end_date', 'N/A')}")
+                return
+                
+            elif state in ['running', 'queued']:
+                print(f"DAG run status: {state} (elapsed: {elapsed_time}s)")
+                time.sleep(check_interval)
+                elapsed_time += check_interval
+                
+            else:
+                report.write_all_locations(f"⚠️ DAG run in unexpected state: {state}")
+                return
+                
+        except ClientError as client_error:
+            report.write_all_locations("🚫 Failed to check DAG run status:", client_error.response['Error']['Message'])
+            return
+    
+    # If we reach here, the DAG run timed out
+    report.write_all_locations(f"⚠️ DAG run monitoring timed out after {max_wait_time} seconds.")
+    report.write_all_locations("The DAG may still be running. Check the Airflow UI for current status.")
+
+
+def check_full_dag_run(input_env, mwaa_client, s3, report: ReportWriter):
+    """
+    Test a full DAG run using the MWAA REST API to trigger and monitor a simple test DAG
+    """
+    report.write_all_locations("### Full DAG Run Test")
+    
+    print("Do you allow the following test to:")
+    print("    1. Use Airflow REST API to check if MWAA_OWNED_TEST_DAG.py is already uploaded.")
+    print("    2. Upload MWAA_OWNED_TEST_DAG.py if not found.")
+    print("    3. Use Airflow REST API to invoke the dag run")
+    print("The gathered information will be saved on your device. It will not be shared with AWS.")
+    if input("(Y/n):").lower().strip() not in ["y", "yes", ""]:
+        report.write_all_locations("Skipping full DAG run test because user did not give permission.")
+        return
+    print()
+    
+    dag_id = "mwaa_owned_test_dag"
+    
+    # First, check if the DAG exists
+    dag_request_params = {
+        "Name": input_env["Name"],
+        "Path": f"/dags/{dag_id}",
+        "Method": "GET"
+    }
+    
+    status_code = 400
+    dag_response = None
+    try:
+        dag_response = mwaa_client.invoke_rest_api(**dag_request_params)
+    except ClientError as client_error:
+        dag_response = client_error.response
+    status_code = dag_response.get('RestApiStatusCode')
+
+    if status_code == 200:
+        report.write_all_locations(f"✅ Test DAG '{dag_id}' is found in the environment.") 
+    elif status_code == 404:
+        report.write_all_locations(f"Test DAG '{dag_id}' not found in the environment. Uploading...")
+        upload_file_to_dags_folder(input_env, os.path.join(os.path.dirname(os.path.realpath(__file__)), "MWAA_OWNED_TEST_DAG.py"), s3)
+
+        print("Waiting for DAG to be uploaded and recognized by Airflow. This can take up to 10 minutes.")
+
+        dag_found = False
+        for i in range(30):
+            try:
+                dag_response = mwaa_client.invoke_rest_api(**dag_request_params)
+            except ClientError as client_error:
+                dag_response = client_error.response
+            status_code = dag_response.get('RestApiStatusCode')
+            if status_code == 200:
+                dag_found = True
+                break
+            elif status_code != 404:
+                report.write_all_locations(f"🚫 Error checking if upload is successful:", dag_response.get('RestApiResponse', {}))
+                return
+            print(f"DAG is not recognized by Airflow yet. Waiting... (elapsed {(i+1)*20}s)")
+            time.sleep(20)
+
+        if not dag_found:
+            report.write_all_locations("🚫 Automatic upload failed.")
+            report.write_all_locations("Please upload MWAA_OWNED_TEST_DAG.py to your DAGs folder.")
+            return
+        
+        report.write_all_locations(f"✅ Test DAG '{dag_id}' is uploaded.")
+    else:
+        report.write_all_locations(f"🚫 Failed to check if test DAG '{dag_id}' exists:", dag_response.get('RestApiResponse', {}))
+        return
+    
+    perform_dag_run(input_env, dag_id, mwaa_client, report)
+
+    print("Do you want to delete the dag used for the test?")
+    if input("(y/N):").lower().strip() in ["y", "yes"]:
+        delete_file_from_dags_folder(input_env, os.path.join(os.path.dirname(os.path.realpath(__file__)), "MWAA_OWNED_TEST_DAG.py"), s3)
+        report.write_all_locations(f"✅ Test DAG '{dag_id}' is deleted.")
+    else:
+        report.write_all_locations(f"✅ The user selected to keep the test DAG '{dag_id}'.")
+
+
 def check_celery_sqs_health(env, cw, report: ReportWriter):
     report.write_all_locations("### Checking Celery executor SQS queue health...")
     metrics = ["TaskQueued", "TaskPulled", "TaskExecuted"]
@@ -1442,6 +1681,7 @@ if __name__ == '__main__':
         check_environment_class_dag_count(env, cw, report)
         check_airflow_rest_api(env, mwaa, iam, report)
         check_airflowignore(env, s3, report)
+        check_full_dag_run(env, mwaa, s3, report)
         check_for_failing_logs(log_groups, logs, report)
 
         report.close()
