@@ -33,6 +33,27 @@ ENV_NAME = ""
 REGION = ""
 
 class ReportWriter:
+    """
+    A utility class for managing diagnostic report output to both files and console.
+    
+    This class handles the creation and management of two types of diagnostic reports:
+    1. Full Report: Comprehensive diagnostic information including all test results
+    2. Key Findings: Summary of critical issues and important findings
+    
+    The class provides interactive prompts to allow users to choose whether to write
+    reports to files or display them on standard output. It automatically generates
+    unique filenames with timestamps to prevent conflicts.
+    
+    Example:
+        >>> report = ReportWriter()
+        Do you allow the results to be written to the following file: MWAA_DIAGNOSTICS_FULL_REPORT_17Sep2025_1045UTC.md?
+        If you select no, the same information will be written to standard output.
+        (Y/n): y
+        
+        >>> report.write_full_report("Test completed successfully")
+        >>> report.write_key_findings("Critical issue found")
+        >>> report.close()
+    """
     def __init__(self):
         self.full_report_file = None
         self.key_findings_file = None
@@ -58,6 +79,26 @@ class ReportWriter:
 
     @staticmethod
     def _generate_unique_filepath(base_name, ext):
+        """
+        Generate a unique file path with timestamp to avoid file conflicts.
+        If a file with the generated name already exists, appends a counter to ensure
+        uniqueness. Tries up to 1000 variations before giving up.
+        
+        Args:
+            base_name (str): Base name for the file (e.g., "MWAA_DIAGNOSTICS_FULL_REPORT")
+            ext (str): File extension including the dot (e.g., ".md")
+        
+        Returns:
+            str: Unique file path in the current working directory
+        
+        Raises:
+            SystemExit: If unable to generate a unique filename after 1000 attempts
+        
+        Example:
+            >>> path = ReportWriter._generate_unique_filepath("TEST_REPORT", ".txt")
+            >>> print(path)
+            /current/dir/TEST_REPORT_17Sep2025_1045UTC.txt
+        """
         counter = 0
         while counter < 1000:
             name = base_name + "_" + datetime.now(timezone.utc).strftime("%d%b%Y_%H%M") + "UTC"
@@ -73,12 +114,45 @@ class ReportWriter:
 
     @staticmethod
     def _setup_report_file(name, path):
+        """
+        Opens a file for writing and adds a markdown header with the report name
+        and current UTC timestamp. The file is left open for subsequent writes.
+        
+        Args:
+            name (str): Human-readable name for the report (e.g., "MWAA Diagnostics Full Report")
+            path (str): File path where the report should be created
+        
+        Returns:
+            file (object): Open file handle ready for writing
+        
+        Example:
+            >>> file_handle = ReportWriter._setup_report_file("Test Report", "/tmp/test.md")
+            >>> # File now contains:
+            >>> # # Test Report
+            >>> # 
+            >>> # Date: 17 Sep 2025 10:45 UTC
+        """
         file = open(path, "w")
         file.write("# " + name + "\n\n")
         file.write("Date: " + datetime.now(timezone.utc).strftime("%d %b %Y %H:%M") + " UTC\n\n")
         return file
 
     def write_full_report(self, *args, sep=' ', end='\n\n'):
+        """
+        Write detailed diagnostic information to the full report.
+        
+        Outputs either to the full report file (if user opted for file output)
+        or to standard output.
+        
+        Args:
+            *args: Variable number of arguments to be written
+            sep (str, optional): Separator between arguments. Defaults to ' '
+            end (str, optional): String appended after the last argument. Defaults to '\n\n'
+        
+        Example:
+            >>> report.write_full_report("Checking security group:", "sg-12345")
+            >>> report.write_full_report("Status", "PASSED", sep=": ")
+        """
         text = sep.join(str(arg) for arg in args) + end
         if self.full_report_requested:
             self.full_report_file.write(text)
@@ -86,6 +160,21 @@ class ReportWriter:
             print(*args, sep=sep, end=end)
 
     def write_key_findings(self, *args, sep=' ', end='\n\n'):
+        """
+        Write critical findings and important issues to the key findings report.
+        
+        Outputs either to the key findings file (if user opted for file output)
+        or to standard output.
+        
+        Args:
+            *args: Variable number of arguments to be written
+            sep (str, optional): Separator between arguments. Defaults to ' '
+            end (str, optional): String appended after the last argument. Defaults to '\n\n'
+        
+        Example:
+            >>> report.write_key_findings("🚫 Critical issue found in IAM permissions")
+            >>> report.write_key_findings("✅ All security groups configured correctly")
+        """
         text = sep.join(str(arg) for arg in args) + end
         if self.key_findings_requested:
             self.key_findings_file.write(text)
@@ -93,6 +182,21 @@ class ReportWriter:
             print(*args, sep=sep, end=end)
 
     def write_all_locations(self, *args, sep=' ', end='\n\n'):
+        """
+        Write information to all output locations: both reports and console.
+        
+        Outputs the same information to the key findings file, full report file
+        (if user opted for file outputs), and standard output.
+        
+        Args:
+            *args: Variable number of arguments to be written
+            sep (str, optional): Separator between arguments. Defaults to ' '
+            end (str, optional): String appended after the last argument. Defaults to '\n\n'
+        
+        Example:
+            >>> report.write_all_locations("### Starting IAM Permission Check")
+            >>> report.write_all_locations("🚫 CRITICAL: Environment configuration invalid")
+        """
         text = sep.join(str(arg) for arg in args) + end
         if self.key_findings_requested:
             self.key_findings_file.write(text)
@@ -102,6 +206,19 @@ class ReportWriter:
 
 
     def close(self):
+        """
+        Close all open report files and display file locations to user.
+                
+        Should be called in a try/finally block or similar error handling
+        to ensure files are closed even if an exception occurs during
+        diagnostic operations.
+        
+        Example:
+            >>> report = ReportWriter()
+            ... report.close()
+            📝 Full report is written to MWAA_DIAGNOSTICS_FULL_REPORT_17Sep2025_1045UTC.md
+            📝 Key findings are written to MWAA_DIAGNOSTICS_KEY_FINDINGS_17Sep2025_1045UTC.md
+        """
         if self.full_report_requested:
             self.full_report_file.close()
             print("📝 Full report is written to", self.full_report_path)
@@ -1053,7 +1170,7 @@ def get_mwaa_utilized_services(ec2_client, vpc):
 
 
 def check_airflow_rest_api_iam(input_env, iam_client, report: ReportWriter):
-    ''' Check which airflow roles the user gave access for REST API using IAM simulation to check policy permissions'''
+    ''' Check which airflow roles (Admin, Op, User, etc.) have access to call REST API using IAM simulation to check policy permissions'''
     account_id = get_account_id(input_env)
     airflow_roles = {"Admin":"", "Op":"", "User":"", "Viewer":"", "Public":""}
     policies = iam_client.list_attached_role_policies(
@@ -1097,7 +1214,11 @@ def check_airflow_rest_api_iam(input_env, iam_client, report: ReportWriter):
     return airflow_roles
 
 
-def check_airflow_rest_api_health(input_env, mwaa_client):
+def check_airflow_rest_api_health(input_env, mwaa_client, report: ReportWriter):
+    '''
+    Check if Airflow REST API invocation to GET /health endpoint succeeds,
+    output the API response that includes status and heartbeat of Airflow components.
+    '''
     request_params = {
         "Name": input_env["Name"],
         "Path": "/monitor/health" if int(input_env["AirflowVersion"].split(".")[0]) >= 3 else "/health",
@@ -1130,6 +1251,7 @@ def check_airflow_rest_api_health(input_env, mwaa_client):
             report.write_full_report(f"   This resource does not publish a heartbeat")
 
 def check_airflow_rest_api(env, mwaa, iam, report: ReportWriter):
+    ''' Perform REST API IAM access check, ask user permission to invoke API, perform health entpoint invocation check'''
     report.write_all_locations("### Airflow REST API")
 
     roles_rest_api_allowed_status = check_airflow_rest_api_iam(env, iam, report)
@@ -1139,7 +1261,7 @@ def check_airflow_rest_api(env, mwaa, iam, report: ReportWriter):
             "The gathered information will be saved on your device. It will not be shared with AWS.")
         if input("(Y/n):").lower().strip() in ["y", "yes", ""]:
             print()
-            check_airflow_rest_api_health(env, mwaa)
+            check_airflow_rest_api_health(env, mwaa, report)
         else:
             report.write_all_locations("Skipping Airflow REST API test because user did not allow test to access REST API")
     else:
@@ -1193,6 +1315,12 @@ def delete_file_from_dags_folder(env, file_path, s3_client):
         return False
 
 def perform_dag_run(input_env, dag_id, mwaa_client, report: ReportWriter):
+    '''
+    Given the ID of a DAG already available in your environment, 
+    1. unpause the DAG, 
+    2. trigger a dag run, 
+    3. monitor the dag run until it is done. 
+    '''
     # Unpause and trigger the DAG run
     try:
         unpause_request_params = {
@@ -1386,6 +1514,10 @@ def check_full_dag_run(input_env, mwaa_client, s3, report: ReportWriter):
 
 
 def check_celery_sqs_health(env, cw, report: ReportWriter):
+    '''
+    Check CloudWatch metrics for task queue activity (TaskQueued, TaskPulled, TaskExecuted)
+    over the last 24 hours and worker heartbeats over the last 20 minutes.
+    '''
     report.write_all_locations("### Checking Celery executor SQS queue health...")
     metrics = ["TaskQueued", "TaskPulled", "TaskExecuted"]
     dimensions = [
@@ -1436,11 +1568,12 @@ def check_celery_sqs_health(env, cw, report: ReportWriter):
         report.write_all_locations("🚫 No Celery Worker heartbeat received in last 20 minutes")
 
 def check_environment_class_utilization(env, cw, report: ReportWriter):
-    '''https://docs.aws.amazon.com/mwaa/latest/userguide/environment-class.html
-    
+    '''
     For one of BaseWorker, Scheduler, or WebServer clusters,
     if the average CPU Utilization or Memory Utilization for 
     last 7 days is above a certain percentage, suggest upgrade.
+
+    https://docs.aws.amazon.com/mwaa/latest/userguide/environment-class.html
     '''
     report.write_all_locations("### Environment Class - Cluster Utilization")
     THRESHOLD = 85
@@ -1494,6 +1627,13 @@ def check_environment_class_utilization(env, cw, report: ReportWriter):
         report.write_all_locations("✅ The average CPU and memory utilizations of all clusters were under the threshold of", THRESHOLD, "percent for the last 7 days.")
 
 def check_environment_class_dag_count(env, cw, report):
+    '''
+    Suggest the use of a specific environment class based on the number
+    of DAGs present in the environment. The following link outlines the
+    DAG capacity of different environment classes:
+
+    https://docs.aws.amazon.com/mwaa/latest/userguide/environment-class.html
+    '''
     report.write_all_locations("### Environment Class - DAG Count")
     env_class_dag_capacities = [
         ("mw1.micro", 25),
@@ -1620,7 +1760,7 @@ def check_airflowignore(env, s3, report: ReportWriter):
         report.write_all_locations("✅ No immediate issue found with .airflowignore. Note that this check does not cover all potential issues with .airflowignore")
 
 def hello_message():
-    print("Hello")
+    print("This is the start of the MWAA verify environment script.")
 
 def goodbye_message():
     print('please send support the collected information including the full report and key findings.')
