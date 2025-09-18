@@ -1827,6 +1827,7 @@ def check_secrets_manager(env, iam, report: ReportWriter):
     
     https://docs.aws.amazon.com/mwaa/latest/userguide/connections-secrets-manager.html#connections-sm-aa-uri
     '''
+    report.write_all_locations("### AWS Secrets Manager")
     _, not_found_actions = check_secrets_manager_iam(env, iam)
     iam_check_passed = len(not_found_actions) == 0
     config_check_passed = check_secrets_manager_config(env)
@@ -1846,6 +1847,27 @@ def check_secrets_manager(env, iam, report: ReportWriter):
     else:
         report.write_all_locations("AWS Secrets Manager is not being used. This is not necessarily an error since the use of secrets manager is optional.")
 
+def check_airflow_config(env, report: ReportWriter):
+    report.write_all_locations("### Airflow Configuration")
+    config = env["AirflowConfigurationOptions"]
+
+    config_test_passed = True
+    if "celery.worker_concurrency" in config.keys():
+        report.write_all_locations("🚫 MWAA ignores / overrides values specified for celery.worker_concurrency option.")
+        report.write_all_locations("For more info: https://docs.aws.amazon.com/mwaa/latest/userguide/best-practices-tuning.html#best-practices-tuning-tasks-params")
+        config_test_passed = False
+
+    plugins_path = env.get("PluginsS3Path", None)
+    if (plugins_path != None) and (config.get("core.lazy_load_plugins", "True") == "True"):
+        report.write_all_locations("If you're using custom plugins in Apache Airflow v2, you must add `core.lazy_load_plugins : False` \n" \
+                                    "as an Apache Airflow configuration option to load plugins at the start of each Airflow process to \n" \
+                                    "override the default setting.")
+        config_test_passed = False
+
+    if config_test_passed:
+        report.write_all_locations("✅ No immediate issue found with Airflow configuration. Note that this check does not cover all potential issues with Airflow configurations.")
+    else:
+        report.write_all_locations("⚠️ Please consider the messages above for potential Airflow configuration issues.")
 
 def hello_message():
     print("This is the start of the MWAA verify environment script.")
@@ -1911,6 +1933,7 @@ if __name__ == '__main__':
         check_airflowignore(env, s3, report)
         check_full_dag_run(env, mwaa, s3, report)
         check_secrets_manager(env, iam, report)
+        check_airflow_config(env, report)
         check_for_failing_logs(log_groups, logs, report)
 
         report.close()
