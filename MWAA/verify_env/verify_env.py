@@ -977,8 +977,9 @@ def _check_access_blocked(block_config_type, client, report: ReportWriter, **req
         if client_error.response['Error']['Code'] == 'NoSuchPublicAccessBlockConfiguration':
             # If the config isn't set then act as if it's public
             return False
-        # if it's any other exception scenario raise so that the user is notified
-        raise
+        # if it's any other exception scenario, the user is notified of the exception
+        report.write_all_locations('⚠️ Unexpected error while checking public access block config:', client_error.response)
+        return False
 
     # If we successfully got a config, check if public access is blocked or not
     return public_access_block['PublicAccessBlockConfiguration']['BlockPublicAcls']
