@@ -1759,6 +1759,94 @@ def check_airflowignore(env, s3, report: ReportWriter):
     if all_ignores_found:
         report.write_all_locations("✅ No immediate issue found with .airflowignore. Note that this check does not cover all potential issues with .airflowignore")
 
+def check_secrets_manager_iam(input_env, iam_client):
+    account_id = get_account_id(input_env)
+    policies = iam_client.list_attached_role_policies(
+        RoleName=input_env["ExecutionRoleArn"].split("/")[-1]
+    )["AttachedPolicies"]
+
+    policy_list = []
+    for policy in policies:
+        policy_arn = policy["PolicyArn"]
+        policy_version = iam_client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
+        policy_doc = iam_client.get_policy_version(PolicyArn=policy_arn,
+                                                   VersionId=policy_version)['PolicyVersion']['Document']
+        policy_list.append(json.dumps(policy_doc))
+    policy_list.extend(get_inline_policies(iam_client, input_env['ExecutionRoleArn'].split("/")[-1]))
+
+    # Because we don't know the names of the secrets user set up for airflow,
+    # we cannot use policy simulations. Instead, we check if the action is included
+    # in the policy document.
+    required_actions = [
+        "secretsmanager:GetResourcePolicy",
+        "secretsmanager:GetSecretValue", 
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:ListSecretVersionIds",
+        "secretsmanager:ListSecrets"
+    ]
+
+    all_actions = []
+    for policy_json in policy_list:
+        policy = json.loads(policy_json)
+        for statement in policy.get('Statement', []):
+            if statement.get('Effect') == 'Allow':
+                actions = statement.get('Action', [])
+                if isinstance(actions, str):
+                    actions = [actions]
+                all_actions += actions
+
+    found = []
+    not_found = []
+    for act in required_actions:
+        if act in all_actions:
+            found.append(act)
+        else:
+            not_found.append(act)
+    return found, not_found
+
+def check_secrets_manager_config(env):
+    secrets_backend = env["AirflowConfigurationOptions"].get("secrets.backend", None)
+    secrets_backend_kwargs = env["AirflowConfigurationOptions"].get("secrets.backend_kwargs", None)
+    if (secrets_backend is None) or (secrets_backend_kwargs is None):
+        return False
+
+    if secrets_backend != "airflow.providers.amazon.aws.secrets.secrets_manager.SecretsManagerBackend":
+        return False
+    
+    if ("connections_prefix" not in secrets_backend_kwargs) or ("variables_prefix" not in secrets_backend_kwargs):
+        return False
+        
+    return True
+
+def check_secrets_manager(env, iam, report: ReportWriter):
+    '''
+    There are five steps needed to connect AWS Secrets Manager with
+    the Airflow environment. These steps are outlined in the following
+    document. This function checks that the first two steps are completed
+    correctly.
+    
+    https://docs.aws.amazon.com/mwaa/latest/userguide/connections-secrets-manager.html#connections-sm-aa-uri
+    '''
+    _, not_found_actions = check_secrets_manager_iam(env, iam)
+    iam_check_passed = len(not_found_actions) == 0
+    config_check_passed = check_secrets_manager_config(env)
+
+    # The user might not be using secrets manager, so only output error if one check passes and other fails
+    if iam_check_passed and config_check_passed:
+        report.write_all_locations("✅ AWS Secrets Manager is configured correctly.")
+    elif not iam_check_passed:
+        report.write_all_locations("🚫 AWS Secrets Manager is not configured correctly. Please check that the execution role has the correct IAM permissions.")
+        report.write_all_locations("The following actions are missing from the execution role's policy:")
+        for action in not_found_actions:
+            report.write_all_locations("   ", action)
+        report.write_all_locations("https://docs.aws.amazon.com/mwaa/latest/userguide/connections-secrets-manager.html#connections-sm-policy")
+    elif not config_check_passed:
+        report.write_all_locations("🚫 AWS Secrets Manager is not configured correctly. Please check that the Airflow configuration for the secrets backend is correct.")
+        report.write_all_locations("https://docs.aws.amazon.com/mwaa/latest/userguide/connections-secrets-manager.html#connections-sm-aa-configuration")
+    else:
+        report.write_all_locations("AWS Secrets Manager is not being used. This is not necessarily an error since the use of secrets manager is optional.")
+
+
 def hello_message():
     print("This is the start of the MWAA verify environment script.")
 
@@ -1822,6 +1910,7 @@ if __name__ == '__main__':
         check_airflow_rest_api(env, mwaa, iam, report)
         check_airflowignore(env, s3, report)
         check_full_dag_run(env, mwaa, s3, report)
+        check_secrets_manager(env, iam, report)
         check_for_failing_logs(log_groups, logs, report)
 
         report.close()
