@@ -708,7 +708,7 @@ def prompt_user_and_print_info(input_env_name, ec2_client, mwaa, report: ReportW
     return environment, network_subnets, network_subnet_ids
 
 
-def check_kms_key_policy(input_env, kms_client):
+def check_kms_key_policy(input_env, kms_client, report: ReportWriter):
     '''
     check kms key and if its customer managed if it has a policy like this
     https://docs.aws.amazon.com/mwaa/latest/userguide/mwaa-create-role.html#mwaa-create-role-json
@@ -897,8 +897,7 @@ def check_service_vpc_endpoints(ec2_client, subnets, report: ReportWriter):
     ])['VpcEndpoints']
     # filter by subnet ids here, if the vpc endpoints include the env's subnet ids then check those
     s_ids = [subnet['SubnetId'] for subnet in subnets]
-    vpc_endpoints = [endpoint for endpoint in vpc_endpoints if all(subnet in s_ids for subnet in
-                     endpoint['SubnetIds'])]
+    vpc_endpoints = [endpoint for endpoint in vpc_endpoints if all(subnet in endpoint['SubnetIds'] for subnet in s_ids)]
     if len(vpc_endpoints) != 9:
         report.write_full_report("The route for the subnets do not have a NAT gateway." +
                                  "This suggests vpc endpoints are needed to connect to:")
@@ -911,7 +910,7 @@ def check_service_vpc_endpoints(ec2_client, subnets, report: ReportWriter):
         for i, service_endpoint in enumerate(service_endpoints):
             if service_endpoint not in vpc_service_endpoints:
                 report.write_all_locations(service_endpoint)
-        check_vpc_endpoint_private_dns_enabled(vpc_endpoints)
+        check_vpc_endpoint_private_dns_enabled(vpc_endpoints, report)
         return True
     else:
         report.write_full_report("✅ The route for the subnets do not have a NAT Gateway. However, there are sufficient VPC endpoints")
@@ -1919,7 +1918,7 @@ if __name__ == '__main__':
 
         env, subnets, subnet_ids = prompt_user_and_print_info(ENV_NAME, ec2, mwaa, report)
         check_iam_permissions(env, iam, report)
-        check_kms_key_policy(env, kms)
+        check_kms_key_policy(env, kms, report)
         log_groups = check_log_groups(env, ENV_NAME, logs, cloudtrail, report)
         check_nacl(subnets, subnet_ids, ec2, report)
         check_routes(env, subnets, subnet_ids, ec2, report)
