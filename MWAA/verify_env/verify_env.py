@@ -23,17 +23,208 @@ import socket
 import time
 import re
 import sys
-from datetime import timedelta
-from datetime import datetime
+import os
+from datetime import datetime, timedelta, timezone
 import boto3
 from botocore.exceptions import ClientError, ProfileNotFound
 from boto3.session import Session
+import os
 ENV_NAME = ""
 REGION = ""
 
-S3_CHECK_SUCCESS_MSG = 's3 bucket, {bucket_arn}, or account blocks public access ✅'
-S3_CHECK_FAILURE_MSG = 's3 bucket, {bucket_arn}, or account does NOT block public access 🚫'
+class ReportWriter:
+    """
+    A utility class for managing diagnostic report output to both files and console.
+    
+    This class handles the creation and management of two types of diagnostic reports:
+    1. Full Report: Comprehensive diagnostic information including all test results
+    2. Key Findings: Summary of critical issues and important findings
+    
+    The class provides interactive prompts to allow users to choose whether to write
+    reports to files or display them on standard output. It automatically generates
+    unique filenames with timestamps to prevent conflicts.
+    
+    Example:
+        >>> report = ReportWriter()
+        Do you allow the results to be written to the following file: MWAA_DIAGNOSTICS_FULL_REPORT_17Sep2025_1045UTC.md?
+        If you select no, the same information will be written to standard output.
+        (Y/n): y
+        
+        >>> report.write_full_report("Test completed successfully")
+        >>> report.write_key_findings("Critical issue found")
+        >>> report.close()
+    """
+    def __init__(self):
+        self.full_report_file = None
+        self.key_findings_file = None
 
+        self.full_report_path = self._generate_unique_filepath("MWAA_DIAGNOSTICS_FULL_REPORT", ".md")
+        self.key_findings_path = self._generate_unique_filepath("MWAA_DIAGNOSTICS_KEY_FINDINGS", ".md")
+        
+        self.full_report_requested = False
+        print("Do you allow the results to be written to the following file: " + self.full_report_path + "?")
+        print("If you select no, the same information will be written to standard output.")
+        if input("(Y/n):").lower().strip() in ["y", "yes", ""]:
+            print()
+            self.full_report_requested = True
+            self.full_report_file = self._setup_report_file("MWAA Diagnostics Full Report", self.full_report_path)
+
+        self.key_findings_requested = False
+        print("Do you allow key findings to be written to the following file: " + self.key_findings_path + "?")
+        print("If you select no, the same information will be written to standard output.")
+        if input("(Y/n):").lower().strip() in ["y", "yes", ""]:
+            print()
+            self.key_findings_requested = True
+            self.key_findings_file = self._setup_report_file("MWAA Diagnostics Key Findings", self.key_findings_path)
+
+    @staticmethod
+    def _generate_unique_filepath(base_name, ext):
+        """
+        Generate a unique file path with timestamp to avoid file conflicts.
+        If a file with the generated name already exists, appends a counter to ensure
+        uniqueness. Tries up to 1000 variations before giving up.
+        
+        Args:
+            base_name (str): Base name for the file (e.g., "MWAA_DIAGNOSTICS_FULL_REPORT")
+            ext (str): File extension including the dot (e.g., ".md")
+        
+        Returns:
+            str: Unique file path in the current working directory
+        
+        Raises:
+            SystemExit: If unable to generate a unique filename after 1000 attempts
+        
+        Example:
+            >>> path = ReportWriter._generate_unique_filepath("TEST_REPORT", ".txt")
+            >>> print(path)
+            /current/dir/TEST_REPORT_17Sep2025_1045UTC.txt
+        """
+        counter = 0
+        while counter < 1000:
+            name = base_name + "_" + datetime.now(timezone.utc).strftime("%d%b%Y_%H%M") + "UTC"
+            if counter > 0:
+                name = name + "_" + str(counter)
+            name += ext
+            path = os.path.join(os.getcwd(), name)
+            if not os.path.exists(path):
+                return path
+            counter += 1
+        print("Could not generate unique filepath. Exiting...")
+        exit(1)
+
+    @staticmethod
+    def _setup_report_file(name, path):
+        """
+        Opens a file for writing and adds a markdown header with the report name
+        and current UTC timestamp. The file is left open for subsequent writes.
+        
+        Args:
+            name (str): Human-readable name for the report (e.g., "MWAA Diagnostics Full Report")
+            path (str): File path where the report should be created
+        
+        Returns:
+            file (object): Open file handle ready for writing
+        
+        Example:
+            >>> file_handle = ReportWriter._setup_report_file("Test Report", "/tmp/test.md")
+            >>> # File now contains:
+            >>> # # Test Report
+            >>> # 
+            >>> # Date: 17 Sep 2025 10:45 UTC
+        """
+        file = open(path, "w")
+        file.write("# " + name + "\n\n")
+        file.write("Date: " + datetime.now(timezone.utc).strftime("%d %b %Y %H:%M") + " UTC\n\n")
+        return file
+
+    def write_full_report(self, *args, sep=' ', end='\n\n'):
+        """
+        Write detailed diagnostic information to the full report.
+        
+        Outputs either to the full report file (if user opted for file output)
+        or to standard output.
+        
+        Args:
+            *args: Variable number of arguments to be written
+            sep (str, optional): Separator between arguments. Defaults to ' '
+            end (str, optional): String appended after the last argument. Defaults to '\n\n'
+        
+        Example:
+            >>> report.write_full_report("Checking security group:", "sg-12345")
+            >>> report.write_full_report("Status", "PASSED", sep=": ")
+        """
+        text = sep.join(str(arg) for arg in args) + end
+        if self.full_report_requested:
+            self.full_report_file.write(text)
+        else:
+            print(*args, sep=sep, end=end)
+
+    def write_key_findings(self, *args, sep=' ', end='\n\n'):
+        """
+        Write critical findings and important issues to the key findings report.
+        
+        Outputs either to the key findings file (if user opted for file output)
+        or to standard output.
+        
+        Args:
+            *args: Variable number of arguments to be written
+            sep (str, optional): Separator between arguments. Defaults to ' '
+            end (str, optional): String appended after the last argument. Defaults to '\n\n'
+        
+        Example:
+            >>> report.write_key_findings("🚫 Critical issue found in IAM permissions")
+            >>> report.write_key_findings("✅ All security groups configured correctly")
+        """
+        text = sep.join(str(arg) for arg in args) + end
+        if self.key_findings_requested:
+            self.key_findings_file.write(text)
+        else:
+            print(*args, sep=sep, end=end)
+
+    def write_all_locations(self, *args, sep=' ', end='\n\n'):
+        """
+        Write information to all output locations: both reports and console.
+        
+        Outputs the same information to the key findings file, full report file
+        (if user opted for file outputs), and standard output.
+        
+        Args:
+            *args: Variable number of arguments to be written
+            sep (str, optional): Separator between arguments. Defaults to ' '
+            end (str, optional): String appended after the last argument. Defaults to '\n\n'
+        
+        Example:
+            >>> report.write_all_locations("### Starting IAM Permission Check")
+            >>> report.write_all_locations("🚫 CRITICAL: Environment configuration invalid")
+        """
+        text = sep.join(str(arg) for arg in args) + end
+        if self.key_findings_requested:
+            self.key_findings_file.write(text)
+        if self.full_report_requested:
+            self.full_report_file.write(text)
+        print(*args, sep=sep, end=end)
+
+
+    def close(self):
+        """
+        Close all open report files and display file locations to user.
+                
+        Should be called in a try/finally block or similar error handling
+        to ensure files are closed even if an exception occurs during
+        diagnostic operations.
+        
+        Example:
+            >>> report = ReportWriter()
+            ... report.close()
+            📝 Full report is written to MWAA_DIAGNOSTICS_FULL_REPORT_17Sep2025_1045UTC.md
+            📝 Key findings are written to MWAA_DIAGNOSTICS_KEY_FINDINGS_17Sep2025_1045UTC.md
+        """
+        if self.full_report_requested:
+            self.full_report_file.close()
+            print("📝 Full report is written to", self.full_report_path)
+        if self.key_findings_requested:
+            self.key_findings_file.close()
+            print("📝 Key findings are written to", self.key_findings_path)
 
 def verify_boto3(boto3_current_version):
     '''
@@ -89,7 +280,7 @@ def validation_profile(profile_name):
     '''
     verify profile name doesn't have path to files or unexpected input
     '''
-    if re.match(r"^[a-zA-Z0-9]*$", profile_name):
+    if re.match(r"^[a-zA-Z0-9_-]+$", profile_name):
         return profile_name
     raise argparse.ArgumentTypeError("%s is an invalid profile name value" % profile_name)
 
@@ -169,9 +360,10 @@ def get_inline_policies(iam_client, role_arn):
     ]
 
 
-def check_iam_permissions(input_env, iam_client):
+def check_iam_permissions(input_env, iam_client, reprot: ReportWriter):
     '''uses iam simulation to check permissions of the role assigned to the environment'''
-    print('### Checking the IAM execution role', input_env['ExecutionRoleArn'], 'using iam policy simulation')
+    report.write_all_locations("### IAM Permissions")
+    report.write_all_locations('Checking the IAM execution role', input_env['ExecutionRoleArn'], 'using iam policy simulation')
     account_id = get_account_id(input_env)
     policies = iam_client.list_attached_role_policies(
         RoleName=input_env['ExecutionRoleArn'].split("/")[-1]
@@ -187,7 +379,7 @@ def check_iam_permissions(input_env, iam_client):
     # Add inline policies
     policy_list.extend(get_inline_policies(iam_client, input_env['ExecutionRoleArn'].split("/")[-1]))
     if "KmsKey" in input_env:
-        print('Found Customer managed CMK')
+        report.write_full_report('Found Customer managed CMK')
         if PARTITION != 'aws-cn':
             eval_results = eval_results + iam_client.simulate_custom_policy(
                 PolicyInputList=policy_list,
@@ -228,7 +420,9 @@ def check_iam_permissions(input_env, iam_client):
                 "logs:CreateLogGroup",
                 "logs:PutLogEvents",
                 "logs:GetLogEvents",
-                "logs:GetLogGroupFields"
+                "logs:GetLogRecord",
+                "logs:GetLogGroupFields",
+                "logs:GetQueryResults"
             ],
             ResourceArns=[
                 "arn:" + PARTITION + ":logs:" + REGION + ":" + account_id + ":log-group:airflow-" + ENV_NAME + "-*"
@@ -343,7 +537,7 @@ def check_iam_permissions(input_env, iam_client):
             ],
         )['EvaluationResults']
     else:
-        print('Using AWS CMK')
+        report.write_full_report('Using AWS CMK')
         if PARTITION != 'aws-cn':
             eval_results = eval_results + iam_client.simulate_custom_policy(
                 PolicyInputList=policy_list,
@@ -384,7 +578,9 @@ def check_iam_permissions(input_env, iam_client):
                 "logs:CreateLogGroup",
                 "logs:PutLogEvents",
                 "logs:GetLogEvents",
-                "logs:GetLogGroupFields"
+                "logs:GetLogRecord",
+                "logs:GetLogGroupFields",
+                "logs:GetQueryResults"
             ],
             ResourceArns=[
                 "arn:" + PARTITION + ":logs:" + REGION + ":" + account_id + ":log-group:airflow-" + ENV_NAME + "-*"
@@ -461,69 +657,80 @@ def check_iam_permissions(input_env, iam_client):
                 }
             ],
         )['EvaluationResults']
+
+    iam_issue_detected = False
     for eval_result in eval_results:
-        if eval_result['EvalDecision'] != 'allowed' and eval_result['EvalActionName'] == "s3:ListAllMyBuckets":
-            print("Action:", eval_result['EvalActionName'], "is blocked successfully on resource",
-                  eval_result['EvalResourceName'], '✅')
+        # s3:ListAllMyBuckets should be denied. Raise an issue if it is not.
+        if eval_result['EvalActionName'] == "s3:ListAllMyBuckets":
+            if eval_result['EvalDecision'] != 'allowed':
+                report.write_full_report('✅', "Action", eval_result['EvalActionName'], "is blocked successfully on resource", eval_result['EvalResourceName'])
+            else:
+                report.write_all_locations('🚫', "MWAA expects action", eval_result['EvalActionName'], "to be blocked on resource", eval_result['EvalResourceName'], "but it is not blocked.")
+                iam_issue_detected = True
+        # Other policies should be allowed.
         elif eval_result['EvalDecision'] != 'allowed':
-            print("Action:", eval_result['EvalActionName'], "is not allowed on resource",
-                  eval_result['EvalResourceName'])
-            print("failed with", eval_result['EvalDecision'], "🚫")
-        elif eval_result['EvalDecision'] == 'allowed' and eval_result['EvalActionName'] == "s3:ListAllMyBuckets":
-            print("Action:", eval_result['EvalActionName'], "is not blocked successfully on resource",
-                  eval_result['EvalResourceName'], '🚫')
+            report.write_all_locations("🚫", "MWAA expects action", eval_result['EvalActionName'], "to be allowed on resource", eval_result['EvalResourceName'], "but it is not allowed.")
+            report.write_all_locations("Failed with the following eval decision:", eval_result['EvalDecision'])
+            iam_issue_detected = True
         elif eval_result['EvalDecision'] == 'allowed':
-            print("Action:", eval_result['EvalActionName'], "is allowed on resource",
-                  eval_result['EvalResourceName'], '✅')
+            report.write_full_report('✅', "Action", eval_result['EvalActionName'], "is allowed on resource", eval_result['EvalResourceName'])
         else:
-            print(eval_result)
-    print('If the policy is denied you can investigate more at ')
-    print("https://policysim.aws.amazon.com/home/index.jsp?#roles/" + input_env['ExecutionRoleArn'].split("/")[-1])
-    print("")
-    print('These simulations are based off of the sample policies here ')
-    print('https://docs.aws.amazon.com/mwaa/latest/userguide/mwaa-create-role.html#mwaa-create-role-json\n')
+            report.write_all_locations("There is a result with unknown fields:", eval_result)
+    
+    if iam_issue_detected:
+        report.write_all_locations('⚠️ You can investigate the detected policy issue more at')
+        report.write_all_locations("https://policysim.aws.amazon.com/home/index.jsp?#roles/" + input_env['ExecutionRoleArn'].split("/")[-1])
+    else:
+        report.write_all_locations('✅ All IAM policies are as expected.')
+    report.write_full_report('These simulations are based off of the sample policies here:')
+    report.write_full_report('https://docs.aws.amazon.com/mwaa/latest/userguide/mwaa-create-role.html#mwaa-create-role-json\n')
 
 
-def prompt_user_and_print_info(input_env_name, ec2_client):
+def prompt_user_and_print_info(input_env_name, ec2_client, mwaa, report: ReportWriter):
     '''method to get environment, print that information to stdout, and prompt the use to send it to support'''
-    print('please send support the following information')
-    print('If a case is not opened you may open one here https://console.aws.amazon.com/support/home#/case/create')
-    print('Please make sure to NOT include any personally identifiable information in the case\n')
     # get mwaa environment
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/mwaa.html#MWAA.Client.get_environment
-    mwaa = boto3.client('mwaa', region_name=REGION)
     environment = mwaa.get_environment(
         Name=input_env_name
     )['Environment']
     network_subnet_ids = environment['NetworkConfiguration']['SubnetIds']
     network_subnets = ec2_client.describe_subnets(SubnetIds=network_subnet_ids)['Subnets']
+
+    report.write_all_locations("### Environment Info:")
+
     for key in environment.keys():
-        print(key, ': ', environment[key])
-    print('VPC: ', network_subnets[0]['VpcId'], "\n")
+        if key in ['Name', 'Status', 'Arn']:
+            print(key, ":", environment[key])
+            report.write_key_findings(key, ":", environment[key])
+        report.write_full_report(key, ':\n```json\n', json.dumps(environment[key], default=str, indent=2), '\n```')
+    report.write_full_report('VPC: ', network_subnets[0]['VpcId'], "\n")
+    print()
     return environment, network_subnets, network_subnet_ids
 
 
-def check_kms_key_policy(input_env, kms_client):
+def check_kms_key_policy(input_env, kms_client, report: ReportWriter):
     '''
     check kms key and if its customer managed if it has a policy like this
     https://docs.aws.amazon.com/mwaa/latest/userguide/mwaa-create-role.html#mwaa-create-role-json
     '''
+    report.write_all_locations("### KMS Key Policy")
     if "KmsKey" in input_env:
-        print("### Checking the kms key policy and if it includes reference to airflow")
+        report.write_all_locations("Checking the kms key policy and if it includes reference to airflow")
         policy = kms_client.get_key_policy(
             KeyId=env['KmsKey'],
             PolicyName='default'
         )['Policy']
         if "airflow" not in policy and "aws:logs:arn" not in policy:
-            print("text 'airflow' and 'logs' do not appear in KMS key policy. Please check KMS key: ",
-                  input_env['KmsKey'], "🚫")
-            print("for an example resource policy please see this doc: ")
-            print("https://docs.aws.amazon.com/mwaa/latest/userguide/mwaa-create-role.html#mwaa-create-role-json \n")
+            report.write_all_locations("🚫", "MWAA expects texts 'airflow' and 'logs' to appear in KMS key policy but diagnostics cannot find them. Please check KMS key: ",
+                  input_env['KmsKey'])
+            report.write_all_locations("For an example resource policy, please see this doc: ")
+            report.write_all_locations("https://docs.aws.amazon.com/mwaa/latest/userguide/mwaa-create-role.html#mwaa-create-role-json \n")
         else:
-            print("KMS includes text 'airflow' and 'logs'", "✅")
+            report.write_all_locations("✅", "KMS key policy includes text 'airflow' and 'logs' as expected.")
+    else:
+        report.write_all_locations("No KMS key is found in environment configuration. KMS Key is not always required, so this finding does not indicate an issue by itself.")
 
-
-def check_log_groups(input_env, env_name, logs_client, cloudtrail_client):
+def check_log_groups(input_env, env_name, logs_client, cloudtrail_client, report: ReportWriter):
     '''check if cloudwatch log groups exists, if not check cloudtrail to see why they weren't created'''
     loggroups = logs_client.describe_log_groups(
         logGroupNamePrefix='airflow-'+env_name
@@ -533,10 +740,10 @@ def check_log_groups(input_env, env_name, logs_client, cloudtrail_client):
         for logConfig in input_env['LoggingConfiguration']
     )
     num_of_found_log_groups = len(loggroups)
-    print('### Checking if log groups were created successfully...\n')
+    report.write_all_locations('### Log groups')
     if num_of_found_log_groups < num_of_enabled_log_groups:
-        print('The number of log groups is less than the number of enabled suggesting an error creating', "🚫")
-        print('checking cloudtrail for CreateLogGroup/DeleteLogGroup requests...\n')
+        report.write_all_locations('🚫 The number of log groups is less than the number of enabled suggesting an error.')
+        report.write_all_locations('checking cloudtrail for CreateLogGroup/DeleteLogGroup requests...\n')
         events = cloudtrail_client.lookup_events(
             LookupAttributes=[
                 {
@@ -568,10 +775,10 @@ def check_log_groups(input_env, env_name, logs_client, cloudtrail_client):
             EndTime=datetime.now()
         )['Events']
         for event in events:
-            print('Found CloudTrail event: ', event)
-        print('if events are failing, try creating the log groups manually\n')
+            report.write_all_locations('Found CloudTrail event: ', event)
+        report.write_all_locations('if events are failing, try creating the log groups manually\n')
     else:
-        print("number of log groups match suggesting they've been created successfully", "✅")
+        report.write_all_locations("✅ Number of log groups match suggesting they've been created successfully.")
     return loggroups
 
 
@@ -609,7 +816,7 @@ def check_ingress_acls(acls, src_port_from, src_port_to):
     return ""
 
 
-def check_nacl(input_subnets, input_subnet_ids, ec2_client):
+def check_nacl(input_subnets, input_subnet_ids, ec2_client, report: ReportWriter):
     '''
     check to see if the nacls for the subnets have port 5432 if they're even listing any specific ports
     '''
@@ -625,33 +832,38 @@ def check_nacl(input_subnets, input_subnet_ids, ec2_client):
             }
         ]
     )['NetworkAcls']
-    print("### Trying to verify nACLs on subnets...")
+    report.write_all_locations("### Verify nACLs on subnets")
+    nacl_issue_detected = False
     for nacl in nacls:
         egress_acls = [acl for acl in nacl['Entries'] if acl['Egress']]
         ingress_acls = [acl for acl in nacl['Entries'] if not acl['Egress']]
         src_egress_check_pass = check_egress_acls(egress_acls, 5432)
         src_ingress_check_pass = check_ingress_acls(ingress_acls, 5432, 5432)
         if src_egress_check_pass:
-            print("nacl:", nacl['NetworkAclId'], "allows port 5432 on egress", "✅")
+            report.write_full_report("✅ nacl:", nacl['NetworkAclId'], "allows port 5432 on egress")
         else:
-            print("nacl:", nacl['NetworkAclId'], "denied port 5432 on egress", "🚫")
+            report.write_all_locations("🚫 nacl:", nacl['NetworkAclId'], "denied port 5432 on egress")
         if src_ingress_check_pass:
-            print("nacl:", nacl['NetworkAclId'], "allows port 5432 on ingress", "✅")
+            report.write_full_report("✅ nacl:", nacl['NetworkAclId'], "allows port 5432 on ingress")
         else:
-            print("nacl:", nacl['NetworkAclId'], "denied port 5432 on ingress", "🚫")
-    print("")
+            report.write_all_locations("🚫 nacl:", nacl['NetworkAclId'], "denied port 5432 on ingress")
 
+    if nacl_issue_detected:
+        report.write_all_locations("⚠️", "Please investigate the nacl issue.")
+    else:
+        report.write_all_locations("✅", "All nacls are as expected.")
 
-def check_vpc_endpoint_private_dns_enabled(vpc_endpnts):
+def check_vpc_endpoint_private_dns_enabled(vpc_endpnts, report: ReportWriter):
     '''short method to check if the interface's private dns option is set to true'''
     for vpc_endpnt in vpc_endpnts:
         if not vpc_endpnt['PrivateDnsEnabled'] and vpc_endpnt['VpcEndpointType'] == 'Interface':
-            print('VPC endpoint:', vpc_endpnt['VpcEndpointId'], "does not have private dns enabled")
-            print('this means that the public dns name for the service will resolve to its public IP and not')
-            print('the vpc endpoint private ip. You should enabled this for use with MWAA')
+            report.write_all_locations('🚫 VPC endpoint', vpc_endpnt['VpcEndpointId'], "does not have private dns enabled.")
+            report.write_all_locations('This means that the public dns name for the service will resolve to its public IP and not')
+            report.write_all_locations('the vpc endpoint private ip. You should enable this for use with MWAA')
+        else:
+            report.write_full_report('✅ VPC endpoint', vpc_endpnt['VpcEndpointId'], "has private dns enabled.")
 
-
-def check_service_vpc_endpoints(ec2_client, subnets):
+def check_service_vpc_endpoints(ec2_client, subnets, report: ReportWriter):
     '''
     should be used if the environment does not have internet access through NAT Gateway
     '''
@@ -685,26 +897,27 @@ def check_service_vpc_endpoints(ec2_client, subnets):
     ])['VpcEndpoints']
     # filter by subnet ids here, if the vpc endpoints include the env's subnet ids then check those
     s_ids = [subnet['SubnetId'] for subnet in subnets]
-    vpc_endpoints = [endpoint for endpoint in vpc_endpoints if all(subnet in s_ids for subnet in
-                     endpoint['SubnetIds'])]
+    vpc_endpoints = [endpoint for endpoint in vpc_endpoints if all(subnet in endpoint['SubnetIds'] for subnet in s_ids)]
     if len(vpc_endpoints) != 9:
-        print("The route for the subnets do not have a NAT gateway." +
-              "This suggests vpc endpoints are needed to connect to:")
-        print('s3, ecr, kms, sqs, monitoring, airflow.api, airflow.env.')
-        print("The environment's subnets currently have these endpoints: ")
+        report.write_full_report("The route for the subnets do not have a NAT gateway." +
+                                 "This suggests vpc endpoints are needed to connect to:")
+        report.write_full_report('s3, ecr, kms, sqs, monitoring, airflow.api, airflow.env.')
+        report.write_full_report("The environment's subnets currently have these endpoints: ")
         for endpoint in vpc_endpoints:
-            print(endpoint['ServiceName'])
-        print("The environment's subnets do not have these endpoints: ")
+            report.write_full_report(endpoint['ServiceName'])
+        report.write_all_locations("🚫 The environment's subnets do not have these required endpoints: ")
         vpc_service_endpoints = [e['ServiceName'] for e in vpc_endpoints]
         for i, service_endpoint in enumerate(service_endpoints):
             if service_endpoint not in vpc_service_endpoints:
-                print(service_endpoint)
-        check_vpc_endpoint_private_dns_enabled(vpc_endpoints)
+                report.write_all_locations(service_endpoint)
+        check_vpc_endpoint_private_dns_enabled(vpc_endpoints, report)
+        return True
     else:
-        print("The route for the subnets do not have a NAT Gateway. However, there are sufficient VPC endpoints")
+        report.write_full_report("✅ The route for the subnets do not have a NAT Gateway. However, there are sufficient VPC endpoints")
+        return False
 
 
-def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
+def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client, report: ReportWriter):
     '''
     method to check and make sure routes have access to the internet if public and subnets are private
     '''
@@ -720,93 +933,94 @@ def check_routes(input_env, input_subnets, input_subnet_ids, ec2_client):
             }
     ])
     # check subnets are private
-    print("### Trying to verify if route tables are valid...")
+    report.write_all_locations("### Verify route table validity")
+    route_issue_detected = False
     for route_table in routes['RouteTables']:
         has_nat = False
         for route in route_table['Routes']:
             if route['State'] == "blackhole":
-                print("Route:", route_table['RouteTableId'], 'has a state of blackhole')
+                report.write_all_locations("🚫 Route:", route_table['RouteTableId'], 'has a state of blackhole.')
+                route_issue_detected = True
             if 'GatewayId' in route and route['GatewayId'].startswith('igw'):
-                print('Route:', route_table['RouteTableId'],
-                      'has a route to IGW making the subnet public. Needs to be private', '🚫')
-                print('please review ',
+                report.write_all_locations('🚫 Route:', route_table['RouteTableId'],
+                      'has a route to IGW making the subnet public. Needs to be private.')
+                report.write_all_locations('please review ',
                       'https://docs.aws.amazon.com/mwaa/latest/userguide/vpc-create.html#vpc-create-required')
-                print("")
+                route_issue_detected = True
             if 'NatGatewayId' in route:
                 has_nat = True
         if has_nat:
-            print('Route Table:', route_table['RouteTableId'], 'does have a route to a NAT Gateway', '✅')
+            report.write_full_report('✅ Route Table', route_table['RouteTableId'], 'does have a route to a NAT Gateway.')
         if not has_nat:
-            print('Route Table:', route_table['RouteTableId'], 'does not have a route to a NAT Gateway')
-            print('checking for VPC endpoints to airflow, s3, sqs, kms, ecr, and monitoring')
-            check_service_vpc_endpoints(ec2_client, input_subnets)
-    print("")
+            report.write_full_report('Route Table:', route_table['RouteTableId'], 'does not have a route to a NAT Gateway')
+            report.write_full_report('Checking for VPC endpoints to airflow, s3, sqs, kms, ecr, and monitoring...')
+            endpoint_issue_detected = check_service_vpc_endpoints(ec2_client, input_subnets, report)
+            if endpoint_issue_detected:
+                route_issue_detected = True
+    if route_issue_detected:
+        report.write_all_locations("⚠️", "Please investigate the route issue.")
+    else:
+        report.write_all_locations("✅", "All routes are as expected.")
 
-
-def _check_access_blocked(block_config_type, client, **request_kwargs):
+def _check_access_blocked(block_config_type, client, report: ReportWriter, **request_kwargs):
     '''
     Checks whether public access is blocked for <block_config_type> (either
     bucket or account) using the client and args passed in.
     '''
-    print('Checking if public access is blocked at the {config_type} level'.format(config_type=block_config_type))
+    report.write_all_locations('Checking if public access is blocked at the {config_type} level'.format(config_type=block_config_type))
     try:
         public_access_block = client.get_public_access_block(**request_kwargs)
     except ClientError as client_error:
         # The same client error is thrown for both account level and bucket level configs
-        print('The {config_type} level access block config is not set'.format(config_type=block_config_type))
+        report.write_all_locations('The {config_type} level access block config is not set'.format(config_type=block_config_type))
         if client_error.response['Error']['Code'] == 'NoSuchPublicAccessBlockConfiguration':
             # If the config isn't set then act as if it's public
             return False
-        # if it's any other exception scenario raise so that the user is notified
-        raise
+        # if it's any other exception scenario, the user is notified of the exception
+        report.write_all_locations('⚠️ Unexpected error while checking public access block config:', client_error.response)
+        return False
 
     # If we successfully got a config, check if public access is blocked or not
     return public_access_block['PublicAccessBlockConfiguration']['BlockPublicAcls']
 
-def check_s3_block_public_access(input_env, s3_client, s3_control_client):
+def check_s3_block_public_access(input_env, s3_client, s3_control_client, report: ReportWriter):
     '''check s3 bucket or account and make sure "block public access" is enabled'''
-    print("### Verifying 'block public access' is enabled on the s3 bucket or account...")
+    report.write_all_locations("### Verifying 'block public access' is enabled on the s3 bucket or account")
     account_id = get_account_id(input_env)
     bucket_arn = input_env['SourceBucketArn']
     bucket_name = bucket_arn.split(':')[-1]
     public_access_block = None
 
-    if any([_check_access_blocked('bucket', s3_client, Bucket=bucket_name),
-            _check_access_blocked('account', s3_control_client, AccountId=account_id)]):
-        print(S3_CHECK_SUCCESS_MSG.format(bucket_arn=bucket_arn))
+    if any([_check_access_blocked('bucket', s3_client, report, Bucket=bucket_name),
+            _check_access_blocked('account', s3_control_client, report, AccountId=account_id)]):
+        report.write_all_locations(f'✅ s3 bucket, {bucket_arn}, or account blocks public access.')
     else:
-        print(S3_CHECK_FAILURE_MSG.format(bucket_arn=bucket_arn))
+        report.write_all_locations(f'🚫 s3 bucket, {bucket_arn}, or account does NOT block public access.')
 
 
-def check_security_groups(input_env, ec2_client):
+def check_security_groups(input_env, ec2_client, report: ReportWriter):
     '''
     check MWAA environment's security groups for:
         - have at least 1 rule
         - checks ingress to see if sg allows itself
         - egress is checked by SSM document for 443 and 5432
     '''
-    print("")
     security_groups = input_env['NetworkConfiguration']['SecurityGroupIds']
     groups = ec2_client.describe_security_groups(
         GroupIds=security_groups
     )['SecurityGroups']
     # have a sanity check on ingress and egress to make sure it allows something
-    print('### Trying to verifying ingress on security groups...')
-    valid = True
+    report.write_all_locations('### Trying to verify ingress on security groups...')
+    ingress_self_allowed = True
     for security_group in groups:
         ingress = security_group['IpPermissions']
         egress = security_group['IpPermissionsEgress']
-        if not ingress and not egress:
-            print('ingress and egress for security group: ', security_group['GroupId'], ' requires at least one rule',
-                  "🚫")
-            valid = False
+        if not ingress:
+            report.write_all_locations('🚫 Ingress for security group: ', security_group['GroupId'], ' requires at least one rule')
+            ingress_self_allowed = False
             break
-        elif not ingress:
-            print('ingress for security group: ', security_group['GroupId'], ' requires at least one rule', "🚫")
-            valid = False
-            break
-        elif not egress:
-            print('egress for security group: ', security_group['GroupId'], ' requires at least one rule', "🚫")
+        if not egress:
+            report.write_all_locations('🚫 Egress for security group: ', security_group['GroupId'], ' requires at least one rule')
             break
         # check security groups to ensure port at least the same security group or everything is allowed ingress
         for rule in ingress:
@@ -814,12 +1028,12 @@ def check_security_groups(input_env, ec2_client):
                 if rule['UserIdGroupPairs'] and not (
                     any(x['GroupId'] == security_group['GroupId'] for x in rule['UserIdGroupPairs'])
                 ):
-                    valid = False
+                    ingress_self_allowed = False
                     break
-    if valid:
-        print("ingress for security groups have at least 1 rule to allow itself", "✅", "\n")
+    if ingress_self_allowed:
+        report.write_all_locations("✅ Ingress for security groups have at least 1 rule to allow itself.")
     else:
-        print("ingress for security groups do not have at least 1 rule to allow itself", "🚫", "\n")
+        report.write_all_locations("🚫 Ingress for security groups do not have at least 1 rule to allow itself.")
 
 
 def wait_for_ssm_step_one_to_finish(ssm_execution_id, ssm_client):
@@ -839,13 +1053,14 @@ def wait_for_ssm_step_one_to_finish(ssm_execution_id, ssm_client):
         )['AutomationExecution']['StepExecutions'][0]['StepStatus']
 
 
-def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm_client, mwaa_utilized_services):
+def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm_client, mwaa_utilized_services, report: ReportWriter):
     '''
     uses ssm document AWSSupport-ConnectivityTroubleshooter to check connectivity between MWAA's enis
     and a list of services. More information on this document can be found here
     https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-awssupport-connectivitytroubleshooter.html
     '''
-    print("### Testing connectivity to the following service endpoints from MWAA enis...")
+    report.write_all_locations("### Connectivity Check via ENIs\nPlease see the full report for results if no error in output.")
+    report.write_full_report("Testing connectivity to the following service endpoints from MWAA enis...")
     vpc = subnets[0]['VpcId']
     security_groups = input_env['NetworkConfiguration']['SecurityGroupIds']
     for service in mwaa_utilized_services:
@@ -855,8 +1070,8 @@ def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm
                 # get ENIs used by MWAA
                 enis = get_enis(subnet_ids, vpc, security_groups)
                 if not enis:
-                    print("no enis found for MWAA, exiting test for ", service['service'])
-                    print("please try accessing the airflow UI and then try running this script again")
+                    report.write_all_locations("🚫 no enis found for MWAA, exiting test for ", service['service'])
+                    report.write_all_locations("please try accessing the airflow UI and then try running this script again")
                     break
                 eni = list(enis.values())[0]
                 interface_ip = ec2_client.describe_network_interfaces(
@@ -881,23 +1096,21 @@ def check_connectivity_to_dep_services(input_env, input_subnets, ec2_client, ssm
                 )['AutomationExecution']
                 # check if the failure is due to not finding the eni. If it is, retry testing the service again
                 if execution['StepExecutions'][0]['StepStatus'] != 'Failed':
-                    print('Testing connectivity between eni', eni, "with private ip of",
+                    report.write_full_report('Testing connectivity between eni', eni, "with private ip of",
                           interface_ip, "and", service['service'], "on port", service['port'])
-                    print("Please follow this link to view the results of the test:")
-                    print("https://console.aws.amazon.com/systems-manager/automation/execution/" + ssm_execution_id +
+                    report.write_full_report("Please follow this link to view the results of the test:")
+                    report.write_full_report("https://console.aws.amazon.com/systems-manager/automation/execution/" + ssm_execution_id +
                           "?REGION=" + REGION + "\n")
                     break
             except ClientError as client_error:
-                print('Attempt', i, 'Encountered error', client_error.response['Error']['Message'], ' retrying...')
-    print("")
+                report.write_all_locations('🚫 Attempt', i, 'encountered error', client_error.response['Error']['Message'], ' retrying...')
 
 
-def check_for_failing_logs(loggroups, logs_client):
+def check_for_failing_logs(loggroups, logs_client, report: ReportWriter):
     '''look for any failing logs from CloudWatch in the past hour'''
-    print("### Checking CloudWatch logs for any errors less than 1 hour old")
+    report.write_all_locations("### Failing Cloudwatch Logs\nChecking CloudWatch logs for any errors less than 1 hour old")
     now = int(time.time() * 1000)
     past_day = now - 3600000
-    print('Found the following failing logs in cloudwatch: ')
     for log in loggroups:
         events = logs_client.filter_log_events(
             logGroupName=log['logGroupName'],
@@ -906,9 +1119,13 @@ def check_for_failing_logs(loggroups, logs_client):
             filterPattern='?ERROR ?Error ?error ?traceback ?Traceback ?exception ?Exception ?fail ?Fail'
         )['events']
         events = sorted(events, key=lambda i: i['timestamp'])
-        print('Log group: ', log['logGroupName'])
+        report.write_all_locations('Log group: ', log['logGroupName'])
+        if len(events) == 0:
+            report.write_all_locations('✅ No error logs found in the past hour')
+            continue
+        report.write_all_locations('⚠️ Please see the full report for logs.')
         for event in events:
-            print(str(event['timestamp']) + " " + event['message'], end='')
+            report.write_full_report(str(event['timestamp']) + " " + event['message'], end='')
 
 
 def print_err_msg(c_err):
@@ -952,6 +1169,716 @@ def get_mwaa_utilized_services(ec2_client, vpc):
     return mwaa_utilized_services
 
 
+def check_airflow_rest_api_iam(input_env, iam_client, report: ReportWriter):
+    ''' Check which airflow roles (Admin, Op, User, etc.) have access to call REST API using IAM simulation to check policy permissions'''
+    account_id = get_account_id(input_env)
+    airflow_roles = {"Admin":"", "Op":"", "User":"", "Viewer":"", "Public":""}
+    policies = iam_client.list_attached_role_policies(
+        RoleName=input_env["ExecutionRoleArn"].split("/")[-1]
+    )["AttachedPolicies"]
+    policy_list = []
+    for policy in policies:
+        policy_arn = policy["PolicyArn"]
+        policy_version = iam_client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
+        policy_doc = iam_client.get_policy_version(PolicyArn=policy_arn,
+                                                   VersionId=policy_version)['PolicyVersion']['Document']
+        policy_list.append(json.dumps(policy_doc))
+    policy_list.extend(get_inline_policies(iam_client, input_env['ExecutionRoleArn'].split("/")[-1]))
+    for role in airflow_roles.keys():
+        results = iam_client.simulate_custom_policy(
+                PolicyInputList=policy_list,
+                ActionNames=[
+                    "airflow:InvokeRestApi"
+                ],
+                ResourceArns=[
+                    "arn:aws:airflow:" + REGION + ":" + account_id + ":role/" + ENV_NAME + "/" + role
+                ]
+            )["EvaluationResults"]
+    
+        for result in results:
+            airflow_roles[result["EvalResourceName"].split("/")[-1]] = result["EvalDecision"]
+
+    if "allowed" in airflow_roles.values():
+        report.write_all_locations("🔐 The following Airflow roles have IAM permissions to access the Airflow REST API: ")
+        for role in airflow_roles.keys():
+            if airflow_roles[role] == "allowed":
+                report.write_all_locations(role, end=" ")
+        report.write_all_locations("\n")
+
+    if list(airflow_roles.values()).count("allowed") < len(airflow_roles.values()):
+        report.write_all_locations("🔒 The following Airflow roles do not have IAM permissions to access the Airflow REST API: ")
+        for role in airflow_roles.keys():
+            if airflow_roles[role] != "allowed":
+                report.write_all_locations(role, end=" ")
+        report.write_all_locations("\n")
+    return airflow_roles
+
+
+def check_airflow_rest_api_health(input_env, mwaa_client, report: ReportWriter):
+    '''
+    Check if Airflow REST API invocation to GET /health endpoint succeeds,
+    output the API response that includes status and heartbeat of Airflow components.
+    '''
+    request_params = {
+        "Name": input_env["Name"],
+        "Path": "/monitor/health" if int(input_env["AirflowVersion"].split(".")[0]) >= 3 else "/health",
+        "Method": "GET"
+        }
+
+    report.write_all_locations("Airflow REST API /health endpoint is invoked.")
+
+    try:
+        response = mwaa_client.invoke_rest_api(
+            **request_params
+        )
+    except ClientError as client_error:
+        report.write_all_locations("🚫 Airflow REST API invocation failed with the following error:\n", client_error)
+        return
+
+    report.write_all_locations("✅ Airflow REST API invocation succeeded.")
+
+    for component, info in response['RestApiResponse'].items():
+        status = info['status']
+        emoji = '✅' if status == 'healthy' else '🚫'
+        report.write_all_locations(f"{emoji} {component.replace('_', ' ').title()}: {status}")
+        
+        # Find heartbeat key
+        heartbeat_key = next((k for k in info.keys() if 'heartbeat' in k), None)
+        if heartbeat_key:
+            heartbeat = info[heartbeat_key].split('T')[0] + ' ' + info[heartbeat_key].split('T')[1][:8]
+            report.write_full_report(f"   Last heartbeat: {heartbeat}")
+        else:
+            report.write_full_report(f"   This resource does not publish a heartbeat")
+
+def check_airflow_rest_api(env, mwaa, iam, report: ReportWriter):
+    ''' Perform REST API IAM access check, ask user permission to invoke API, perform health entpoint invocation check'''
+    report.write_all_locations("### Airflow REST API")
+
+    roles_rest_api_allowed_status = check_airflow_rest_api_iam(env, iam, report)
+
+    if "allowed" in roles_rest_api_allowed_status.values():
+        print("Do you allow the following tests to trigger Airflow REST API and access inside your Airflow environment?\n" +
+            "The gathered information will be saved on your device. It will not be shared with AWS.")
+        if input("(Y/n):").lower().strip() in ["y", "yes", ""]:
+            print()
+            check_airflow_rest_api_health(env, mwaa, report)
+        else:
+            report.write_all_locations("Skipping Airflow REST API test because user did not allow test to access REST API")
+    else:
+        report.write_all_locations("Skipping Airflow REST API test because no role have IAM permissions to access REST API.")
+        report.write_all_locations("If you would like to allow REST API access: https://docs.aws.amazon.com/mwaa/latest/userguide/access-mwaa-apache-airflow-rest-api.html#granting-access-MWAA-Enhanced-REST-API")
+
+def upload_file_to_dags_folder(env, file_path, s3_client):
+    """
+    Upload a file to the environment's DAGs folder in S3
+    
+    Args:
+        env: MWAA environment dict containing SourceBucketArn and DagS3Path
+        file_path: Local path to file to upload
+        s3_client: Boto3 S3 client
+    """
+    # Get bucket name from ARN
+    bucket_name = env['SourceBucketArn'].split(':')[-1]
+    # Get file name from path
+    file_name = file_path.split('/')[-1]
+    s3_key = env['DagS3Path'] + file_name
+    
+    try:
+        s3_client.upload_file(file_path, bucket_name, s3_key)
+        return True
+        
+    except ClientError as e:
+        print(f"Error uploading file to S3: {e}")
+        return False
+
+def delete_file_from_dags_folder(env, file_path, s3_client):
+    """
+    Delete a file from the environment's DAGs folder in S3
+    
+    Args:
+        env: MWAA environment dict containing SourceBucketArn and DagS3Path 
+        file_path: Local path to file to delete
+        s3_client: Boto3 S3 client
+    """
+    # Get bucket name from ARN
+    bucket_name = env['SourceBucketArn'].split(':')[-1]
+    # Get file name from path 
+    file_name = file_path.split('/')[-1]
+    s3_key = env['DagS3Path'] + file_name
+    
+    try:
+        s3_client.delete_object(Bucket=bucket_name, Key=s3_key)
+        return True
+        
+    except ClientError as e:
+        print(f"Error deleting file from S3: {e}")
+        return False
+
+def perform_dag_run(input_env, dag_id, mwaa_client, report: ReportWriter):
+    '''
+    Given the ID of a DAG already available in your environment, 
+    1. unpause the DAG, 
+    2. trigger a dag run, 
+    3. monitor the dag run until it is done. 
+    '''
+    # Unpause and trigger the DAG run
+    try:
+        unpause_request_params = {
+            "Name": input_env["Name"],
+            "Path": f"/dags/{dag_id}",
+            "Method": "PATCH",
+            "Body": {"is_paused": False}
+        }
+        unpause_response = mwaa_client.invoke_rest_api(**unpause_request_params)
+        
+        if unpause_response.get('RestApiStatusCode') not in [200, 201]:
+            report.write_all_locations("🚫 Failed to unpause DAG:", unpause_response.get('RestApiResponse', {}))
+            return
+            
+    except ClientError as client_error:
+        report.write_all_locations("🚫 Failed to unpause DAG:", client_error.response)
+        return
+    
+    report.write_all_locations(f"✅ DAG '{dag_id}' unpaused successfully")
+
+    try:
+        dag_run_id = f"test_run_{int(time.time())}"
+        trigger_request_params = {
+            "Name": input_env["Name"],
+            "Path": f"/dags/{dag_id}/dagRuns",
+            "Method": "POST",
+            "Body": {
+                "dag_run_id": dag_run_id,
+                "logical_date": datetime.now(timezone.utc).isoformat(),
+                "conf": {}
+            }
+        }
+        trigger_response = mwaa_client.invoke_rest_api(**trigger_request_params)
+        
+        if trigger_response.get('RestApiStatusCode') not in [200, 201]:
+            report.write_all_locations("🚫 Failed to trigger DAG run:", trigger_response.get('RestApiResponse', {}))
+            return
+            
+    except ClientError as client_error:
+        report.write_all_locations("🚫 Failed to trigger DAG run:", client_error.response)
+        return
+    
+    report.write_all_locations(f"✅ Successfully triggered DAG run with ID: {dag_run_id}")
+
+    # Monitor the DAG run status
+    print("Monitoring DAG run progress...")
+    
+    max_wait_time = 300  # 5 minutes
+    check_interval = 10  # 10 seconds
+    elapsed_time = 0
+    
+    while elapsed_time < max_wait_time:
+        try:
+            status_request_params = {
+                "Name": input_env["Name"],
+                "Path": f"/dags/{dag_id}/dagRuns/{dag_run_id}",
+                "Method": "GET"
+            }
+            
+            status_response = mwaa_client.invoke_rest_api(**status_request_params)
+            dag_run_info = status_response.get('RestApiResponse', {})
+            
+            state = dag_run_info.get('state', 'unknown')
+            
+            if state == 'success':
+                report.write_all_locations(f"✅ DAG run completed successfully!")
+                report.write_all_locations(f"   Start time: {dag_run_info.get('start_date', 'N/A')}")
+                report.write_all_locations(f"   End time: {dag_run_info.get('end_date', 'N/A')}")
+                
+                # Get task instances to show detailed results
+                try:
+                    tasks_request_params = {
+                        "Name": input_env["Name"],
+                        "Path": f"/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances",
+                        "Method": "GET"
+                    }
+                    
+                    tasks_response = mwaa_client.invoke_rest_api(**tasks_request_params)
+                    task_instances = tasks_response.get('RestApiResponse', {}).get('task_instances', [])
+                    
+                    report.write_all_locations("Task execution results:")
+                    for task in task_instances:
+                        task_state = task.get('state', 'unknown')
+                        task_emoji = '✅' if task_state == 'success' else '🚫'
+                        report.write_all_locations(f"   {task_emoji} {task.get('task_id', 'unknown')}: {task_state}")
+                        
+                except ClientError:
+                    report.write_full_report("Could not retrieve detailed task information")
+                
+                return
+                
+            elif state == 'failed':
+                report.write_all_locations(f"🚫 DAG run failed!")
+                report.write_all_locations(f"   Start time: {dag_run_info.get('start_date', 'N/A')}")
+                report.write_all_locations(f"   End time: {dag_run_info.get('end_date', 'N/A')}")
+                return
+                
+            elif state in ['running', 'queued']:
+                print(f"DAG run status: {state} (elapsed: {elapsed_time}s)")
+                time.sleep(check_interval)
+                elapsed_time += check_interval
+                
+            else:
+                report.write_all_locations(f"⚠️ DAG run in unexpected state: {state}")
+                return
+                
+        except ClientError as client_error:
+            report.write_all_locations("🚫 Failed to check DAG run status:", client_error.response['Error']['Message'])
+            return
+    
+    # If we reach here, the DAG run timed out
+    report.write_all_locations(f"⚠️ DAG run monitoring timed out after {max_wait_time} seconds.")
+    report.write_all_locations("The DAG may still be running. Check the Airflow UI for current status.")
+
+
+def check_full_dag_run(input_env, mwaa_client, s3, report: ReportWriter):
+    """
+    Test a full DAG run using the MWAA REST API to trigger and monitor a simple test DAG
+    """
+    report.write_all_locations("### Full DAG Run Test")
+    
+    print("Do you allow the following test to:")
+    print("    1. Use Airflow REST API to check if MWAA_OWNED_TEST_DAG.py is already uploaded.")
+    print("    2. Upload MWAA_OWNED_TEST_DAG.py if not found.")
+    print("    3. Use Airflow REST API to invoke the dag run")
+    print("The gathered information will be saved on your device. It will not be shared with AWS.")
+    if input("(Y/n):").lower().strip() not in ["y", "yes", ""]:
+        report.write_all_locations("Skipping full DAG run test because user did not give permission.")
+        return
+    print()
+    
+    dag_id = "mwaa_owned_test_dag"
+    
+    # First, check if the DAG exists
+    dag_request_params = {
+        "Name": input_env["Name"],
+        "Path": f"/dags/{dag_id}",
+        "Method": "GET"
+    }
+    
+    status_code = 400
+    dag_response = None
+    try:
+        dag_response = mwaa_client.invoke_rest_api(**dag_request_params)
+    except ClientError as client_error:
+        dag_response = client_error.response
+    status_code = dag_response.get('RestApiStatusCode')
+
+    if status_code == 200:
+        report.write_all_locations(f"✅ Test DAG '{dag_id}' is found in the environment.") 
+    elif status_code == 404:
+        report.write_all_locations(f"Test DAG '{dag_id}' not found in the environment. Uploading...")
+        upload_file_to_dags_folder(input_env, os.path.join(os.path.dirname(os.path.realpath(__file__)), "MWAA_OWNED_TEST_DAG.py"), s3)
+
+        print("Waiting for DAG to be uploaded and recognized by Airflow. This can take up to 10 minutes.")
+
+        dag_found = False
+        for i in range(30):
+            try:
+                dag_response = mwaa_client.invoke_rest_api(**dag_request_params)
+            except ClientError as client_error:
+                dag_response = client_error.response
+            status_code = dag_response.get('RestApiStatusCode')
+            if status_code == 200:
+                dag_found = True
+                break
+            elif status_code != 404:
+                report.write_all_locations(f"🚫 Error checking if upload is successful:", dag_response.get('RestApiResponse', {}))
+                return
+            print(f"DAG is not recognized by Airflow yet. Waiting... (elapsed {(i+1)*20}s)")
+            time.sleep(20)
+
+        if not dag_found:
+            report.write_all_locations("🚫 Automatic upload failed.")
+            report.write_all_locations("Please upload MWAA_OWNED_TEST_DAG.py to your DAGs folder.")
+            return
+        
+        report.write_all_locations(f"✅ Test DAG '{dag_id}' is uploaded.")
+    else:
+        report.write_all_locations(f"🚫 Failed to check if test DAG '{dag_id}' exists:", dag_response.get('RestApiResponse', {}))
+        return
+    
+    perform_dag_run(input_env, dag_id, mwaa_client, report)
+
+    print("Do you want to delete the dag used for the test?")
+    if input("(y/N):").lower().strip() in ["y", "yes"]:
+        delete_file_from_dags_folder(input_env, os.path.join(os.path.dirname(os.path.realpath(__file__)), "MWAA_OWNED_TEST_DAG.py"), s3)
+        report.write_all_locations(f"✅ Test DAG '{dag_id}' is deleted.")
+    else:
+        report.write_all_locations(f"✅ The user selected to keep the test DAG '{dag_id}'.")
+
+
+def check_celery_sqs_health(env, cw, report: ReportWriter):
+    '''
+    Check CloudWatch metrics for task queue activity (TaskQueued, TaskPulled, TaskExecuted)
+    over the last 24 hours and worker heartbeats over the last 20 minutes.
+    '''
+    report.write_all_locations("### Checking Celery executor SQS queue health...")
+    metrics = ["TaskQueued", "TaskPulled", "TaskExecuted"]
+    dimensions = [
+            {
+                "Name": "Environment",
+                "Value": env["Name"]
+            },
+            {
+                "Name": "Function",
+                "Value": "Celery"
+            }
+        ]
+    
+    for metric in metrics:
+        response = cw.get_metric_statistics(
+            Namespace="AmazonMWAA",
+            MetricName=metric,
+            Dimensions=dimensions,
+            StartTime=datetime.now(timezone.utc) - timedelta(hours=24),
+            EndTime=datetime.now(timezone.utc),
+            Period=300,  # 5 minutes
+            Statistics=["Average"]
+        )
+
+        # Find the latest datapoint
+        if response["Datapoints"]:
+            latest = max(response["Datapoints"], key=lambda x: x["Timestamp"])
+            delta = datetime.now(timezone.utc) - latest['Timestamp']
+            hours = int(delta.total_seconds() // 3600)
+            minutes = int((delta.total_seconds() % 3600) // 60)
+            report.write_all_locations(f"{metric} Latest Datapoint - {hours}h {minutes}m ago - Time: {latest['Timestamp']}, Value: {latest['Average']}")
+        else:
+            report.write_all_locations(f"⚠️ {metric} did not have any datapoints in last 24 hours.")
+
+    response = cw.get_metric_statistics(
+        Namespace="AmazonMWAA",
+        MetricName="CeleryWorkerHeartbeat",
+        Dimensions=dimensions,
+        StartTime=datetime.now(timezone.utc) - timedelta(minutes=20),
+        EndTime=datetime.now(timezone.utc),
+        Period=300,  # 5 minutes
+        Statistics=["Average"]
+    )
+
+    if response["Datapoints"]:
+        report.write_all_locations("✅ Celery worker heartbeat received in last 20 minutes.")
+    else:
+        report.write_all_locations("🚫 No Celery Worker heartbeat received in last 20 minutes")
+
+def check_environment_class_utilization(env, cw, report: ReportWriter):
+    '''
+    For one of BaseWorker, Scheduler, or WebServer clusters,
+    if the average CPU Utilization or Memory Utilization for 
+    last 7 days is above a certain percentage, suggest upgrade.
+
+    https://docs.aws.amazon.com/mwaa/latest/userguide/environment-class.html
+    '''
+    report.write_all_locations("### Environment Class - Cluster Utilization")
+    THRESHOLD = 85
+
+    clusters = ["BaseWorker", "Scheduler", "WebServer"]
+    metrics = ["CPUUtilization", "MemoryUtilization"]
+    env_classes = ["mw1.micro", "mw1.small", "mw1.medium", "mw1.large", "mw1.xlarge", "mw1.2xlarge"]
+
+    suggest_upgrade = False
+    for metric in metrics:
+        for cluster in clusters:
+            dimensions = [
+                {
+                    "Name": "Environment",
+                    "Value": env["Name"]
+                },
+                {
+                    "Name": "Cluster",
+                    "Value": cluster
+                }
+            ]
+
+            response = cw.get_metric_statistics(
+                Namespace="AWS/MWAA",
+                MetricName=metric,
+                Dimensions=dimensions,
+                StartTime=datetime.now(timezone.utc) - timedelta(days=7),
+                EndTime=datetime.now(timezone.utc),
+                Period=604800,  # 7 days
+                Statistics=["Average"]
+            )
+
+            if response["Datapoints"][0]["Average"] > THRESHOLD:
+                suggest_upgrade = True
+                report.write_all_locations("⚠️ The", cluster, "cluster had an average", metric, "of",
+                                           int(response["Datapoints"][0]["Average"]), response["Datapoints"][0]["Unit"].lower(),
+                                           "over last 7 days. MWAA recommends this value to be less than", THRESHOLD, "percent.")
+            else:
+                report.write_full_report("✅ The", cluster, "cluster had an average", metric, "of",
+                                           int(response["Datapoints"][0]["Average"]), response["Datapoints"][0]["Unit"].lower(),
+                                           "over last 7 days. This is under the MWAA recommended threshold of", THRESHOLD, "percent.")
+
+    if suggest_upgrade:
+        if env["EnvironmentClass"] == env_classes[-1]:
+            report.write_all_locations("⚠️ Your utilization is higher than the threshold although you use the largest environment class.")
+            report.write_all_locations("Consider MWAA best practices for performance tuning: https://docs.aws.amazon.com/mwaa/latest/userguide/best-practices-tuning.html")
+        else:
+            report.write_all_locations("⚠️ MWAA recommends the environment class to be upgraded to " + env_classes[env_classes.index(env["EnvironmentClass"]) + 1])
+            report.write_all_locations("You can also consider MWAA best practices for performance tuning: https://docs.aws.amazon.com/mwaa/latest/userguide/best-practices-tuning.html")
+    else:
+        report.write_all_locations("✅ The average CPU and memory utilizations of all clusters were under the threshold of", THRESHOLD, "percent for the last 7 days.")
+
+def check_environment_class_dag_count(env, cw, report):
+    '''
+    Suggest the use of a specific environment class based on the number
+    of DAGs present in the environment. The following link outlines the
+    DAG capacity of different environment classes:
+
+    https://docs.aws.amazon.com/mwaa/latest/userguide/environment-class.html
+    '''
+    report.write_all_locations("### Environment Class - DAG Count")
+    env_class_dag_capacities = [
+        ("mw1.micro", 25),
+        ("mw1.small", 50),
+        ("mw1.medium", 250),
+        ("mw1.large", 1000),
+        ("mw1.xlarge", 2000),
+        ("mw1.2xlarge", 4000)
+    ]
+
+    dimensions = [
+        {
+            "Name": "Environment",
+            "Value": env["Name"]
+        },
+        {
+            "Name": "Function",
+            "Value": "DAG Processing"
+        }
+    ]
+
+    response = cw.get_metric_statistics(
+        Namespace="AmazonMWAA",
+        MetricName="DagBagSize",
+        Dimensions=dimensions,
+        StartTime=datetime.now(timezone.utc) - timedelta(minutes=6),
+        EndTime=datetime.now(timezone.utc),
+        Period=300,  # 5 minutes
+        Statistics=["Average"]
+    )
+
+    dagcount = int(response["Datapoints"][0]["Average"])
+    report.write_all_locations("Dag count:", dagcount)
+
+    current_capacity = 0
+    for env_class, capacity in env_class_dag_capacities:
+        if env["EnvironmentClass"] == env_class:
+            current_capacity = capacity
+            break
+
+    if dagcount > current_capacity:
+        report.write_all_locations("⚠️ The DAG count exceeds the capacity of the environment class. Consider upgrading to a larger environment class.")
+    else:
+        report.write_all_locations("✅ The DAG count is within the capacity of the", env["EnvironmentClass"], "environment class.")
+
+def check_airflowignore(env, s3, report: ReportWriter):
+
+    common_ignores = [".ipynb_checkpoints", ".git", "__pycache__"]
+
+    report.write_all_locations("### Check `.airflowignore`")
+    
+    print("Do you allow the following test to use the S3 API to read your dags folder structure including subfolders and filenames?")
+    if input("(Y/n):").lower().strip() not in ["y", "yes", ""]:
+        report.write_all_locations("Skipping Airflow ignore test because user did not allow test to read dags folder structure.")
+        return
+    
+    print()
+    
+    bucket_name = env['SourceBucketArn'].split(':')[-1]
+    dags_prefix = env['DagS3Path']
+    
+    files_and_folders = []
+
+    try:
+        paginator = s3.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=bucket_name, Prefix=dags_prefix)
+        
+        for page in pages:
+            if 'Contents' in page:
+                for obj in page['Contents']:
+                    files_and_folders.append(obj['Key'])
+    except Exception as e:
+        report.write_all_locations(f"Error reading S3 folder structure: {e}")
+    
+    found_paths_in_dags = []
+    found_names_in_dags = []
+    for path in files_and_folders:
+        for ignore in common_ignores:
+            if ignore in path:
+                found_paths_in_dags.append(path)
+                found_names_in_dags.append(ignore)
+    
+    if not found_paths_in_dags:
+        report.write_all_locations("✅ The dags folder does not include any folder names that are knwon to be commonly included by mistake.")
+        return
+    
+    report.write_full_report("The dags folder includes the following folders / files that might be included by mistake:")
+    for path in found_paths_in_dags:
+        report.write_full_report("   ", path)
+
+    if (dags_prefix + ".airflowignore") not in files_and_folders:
+        report.write_all_locations("⚠️ The dags folder does not include a .airflowignore file but includes the following folders / files that might be included by mistake:")
+        for path in found_paths_in_dags:
+            report.write_all_locations("   ", path)
+        report.write_all_locations("Consider adding a .airflowignore file to your dags folder to exclude these folders / files.")
+        return
+
+    report.write_all_locations("✅ The dags folder includes a .airflowignore file.")
+    print("Do you allow the test to read the .airflowignore file?")
+    if input("(Y/n):").lower().strip() not in ["y", "yes", ""]:
+        report.write_all_locations("Skipping reading .airflowignore file because user did not allow read.")
+        return
+
+    airflowignore_content = None
+    try:
+        response = s3.get_object(Bucket=bucket_name, Key=dags_prefix + ".airflowignore")
+        airflowignore_content = response['Body'].read().decode('utf-8')
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'NoSuchKey':
+            report.write_all_locations("⚠️ .airflowignore file not found at location:", dags_prefix + ".airflowignore")
+        else:
+            report.write_all_locations(f"Error reading .airflowignore file: {e}")
+
+    all_ignores_found = True
+    for ignore in found_names_in_dags:
+        if ignore not in airflowignore_content:
+            report.write_all_locations("⚠️ The .airflowignore file does not include", ignore, "but it is present in your dags folder. Please consider if this is intentional or by mistake.")
+            all_ignores_found = False
+        else:
+            report.write_full_report("✅ Found", ignore, "in .airflowignore file on lines:\n\n```")
+            report.write_full_report("\n".join([line for line in airflowignore_content.splitlines() if ignore in line]),"\n```")
+
+    if all_ignores_found:
+        report.write_all_locations("✅ No immediate issue found with .airflowignore. Note that this check does not cover all potential issues with .airflowignore")
+
+def check_secrets_manager_iam(input_env, iam_client):
+    account_id = get_account_id(input_env)
+    policies = iam_client.list_attached_role_policies(
+        RoleName=input_env["ExecutionRoleArn"].split("/")[-1]
+    )["AttachedPolicies"]
+
+    policy_list = []
+    for policy in policies:
+        policy_arn = policy["PolicyArn"]
+        policy_version = iam_client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
+        policy_doc = iam_client.get_policy_version(PolicyArn=policy_arn,
+                                                   VersionId=policy_version)['PolicyVersion']['Document']
+        policy_list.append(json.dumps(policy_doc))
+    policy_list.extend(get_inline_policies(iam_client, input_env['ExecutionRoleArn'].split("/")[-1]))
+
+    # Because we don't know the names of the secrets user set up for airflow,
+    # we cannot use policy simulations. Instead, we check if the action is included
+    # in the policy document.
+    required_actions = [
+        "secretsmanager:GetResourcePolicy",
+        "secretsmanager:GetSecretValue", 
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:ListSecretVersionIds",
+        "secretsmanager:ListSecrets"
+    ]
+
+    all_actions = []
+    for policy_json in policy_list:
+        policy = json.loads(policy_json)
+        for statement in policy.get('Statement', []):
+            if statement.get('Effect') == 'Allow':
+                actions = statement.get('Action', [])
+                if isinstance(actions, str):
+                    actions = [actions]
+                all_actions += actions
+
+    found = []
+    not_found = []
+    for act in required_actions:
+        if act in all_actions:
+            found.append(act)
+        else:
+            not_found.append(act)
+    return found, not_found
+
+def check_secrets_manager_config(env):
+    secrets_backend = env["AirflowConfigurationOptions"].get("secrets.backend", None)
+    secrets_backend_kwargs = env["AirflowConfigurationOptions"].get("secrets.backend_kwargs", None)
+    if (secrets_backend is None) or (secrets_backend_kwargs is None):
+        return False
+
+    if secrets_backend != "airflow.providers.amazon.aws.secrets.secrets_manager.SecretsManagerBackend":
+        return False
+    
+    if ("connections_prefix" not in secrets_backend_kwargs) or ("variables_prefix" not in secrets_backend_kwargs):
+        return False
+        
+    return True
+
+def check_secrets_manager(env, iam, report: ReportWriter):
+    '''
+    There are five steps needed to connect AWS Secrets Manager with
+    the Airflow environment. These steps are outlined in the following
+    document. This function checks that the first two steps are completed
+    correctly.
+    
+    https://docs.aws.amazon.com/mwaa/latest/userguide/connections-secrets-manager.html#connections-sm-aa-uri
+    '''
+    report.write_all_locations("### AWS Secrets Manager")
+    _, not_found_actions = check_secrets_manager_iam(env, iam)
+    iam_check_passed = len(not_found_actions) == 0
+    config_check_passed = check_secrets_manager_config(env)
+
+    # The user might not be using secrets manager, so only output error if one check passes and other fails
+    if iam_check_passed and config_check_passed:
+        report.write_all_locations("✅ AWS Secrets Manager is configured correctly.")
+    elif not iam_check_passed:
+        report.write_all_locations("🚫 AWS Secrets Manager is not configured correctly. Please check that the execution role has the correct IAM permissions.")
+        report.write_all_locations("The following actions are missing from the execution role's policy:")
+        for action in not_found_actions:
+            report.write_all_locations("   ", action)
+        report.write_all_locations("https://docs.aws.amazon.com/mwaa/latest/userguide/connections-secrets-manager.html#connections-sm-policy")
+    elif not config_check_passed:
+        report.write_all_locations("🚫 AWS Secrets Manager is not configured correctly. Please check that the Airflow configuration for the secrets backend is correct.")
+        report.write_all_locations("https://docs.aws.amazon.com/mwaa/latest/userguide/connections-secrets-manager.html#connections-sm-aa-configuration")
+    else:
+        report.write_all_locations("AWS Secrets Manager is not being used. This is not necessarily an error since the use of secrets manager is optional.")
+
+def check_airflow_config(env, report: ReportWriter):
+    report.write_all_locations("### Airflow Configuration")
+    config = env["AirflowConfigurationOptions"]
+
+    config_test_passed = True
+    if "celery.worker_concurrency" in config.keys():
+        report.write_all_locations("🚫 MWAA ignores / overrides values specified for celery.worker_concurrency option.")
+        report.write_all_locations("For more info: https://docs.aws.amazon.com/mwaa/latest/userguide/best-practices-tuning.html#best-practices-tuning-tasks-params")
+        config_test_passed = False
+
+    plugins_path = env.get("PluginsS3Path", None)
+    if (plugins_path != None) and (config.get("core.lazy_load_plugins", "True") == "True"):
+        report.write_all_locations("If you're using custom plugins in Apache Airflow v2, you must add `core.lazy_load_plugins : False` \n" \
+                                    "as an Apache Airflow configuration option to load plugins at the start of each Airflow process to \n" \
+                                    "override the default setting.")
+        config_test_passed = False
+
+    if config_test_passed:
+        report.write_all_locations("✅ No immediate issue found with Airflow configuration. Note that this check does not cover all potential issues with Airflow configurations.")
+    else:
+        report.write_all_locations("⚠️ Please consider the messages above for potential Airflow configuration issues.")
+
+def hello_message():
+    print("This is the start of the MWAA verify environment script.")
+
+def goodbye_message():
+    print('please send support the collected information including the full report and key findings.')
+    print('If you selected not to generate the files, the same information is written to standard output. Copy the output to the support ticket.')
+    print('If a case is not opened, you may open one here: https://console.aws.amazon.com/support/home#/case/create')
+    print('Please make sure to NOT include any personally identifiable information in the case\n')
+
+
 if __name__ == '__main__':
     if sys.version_info[0] < 3:
         print("python2 detected, please use python3. Will try to run anyway")
@@ -962,7 +1889,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--envname', type=validate_envname, required=True, help="name of the MWAA environment")
     parser.add_argument('--region', type=validation_region, default=boto3.session.Session().region_name,
-                        required=False, help="region, Ex: us-east-1")
+                        required=True, help="region, Ex: us-east-1")
     parser.add_argument('--profile', type=validation_profile, default='default',
                         required=False, help="AWS CLI profile, Ex: dev")
     args, _ = parser.parse_known_args()
@@ -981,17 +1908,36 @@ if __name__ == '__main__':
         cloudtrail = boto3.client('cloudtrail', region_name=REGION)
         ssm = boto3.client('ssm', region_name=REGION)
         iam = boto3.client('iam', region_name=REGION)
-        env, subnets, subnet_ids = prompt_user_and_print_info(ENV_NAME, ec2)
-        check_iam_permissions(env, iam)
-        check_kms_key_policy(env, kms)
-        log_groups = check_log_groups(env, ENV_NAME, logs, cloudtrail)
-        check_nacl(subnets, subnet_ids, ec2)
-        check_routes(env, subnets, subnet_ids, ec2)
-        check_s3_block_public_access(env, s3, s3control)
-        check_security_groups(env, ec2)
+        mwaa = boto3.client('mwaa', region_name=REGION)
+        sqs = boto3.client('sqs', region_name=REGION)
+        cw = boto3.client('cloudwatch', region_name=REGION)
+
+        hello_message()
+
+        report = ReportWriter()
+
+        env, subnets, subnet_ids = prompt_user_and_print_info(ENV_NAME, ec2, mwaa, report)
+        check_iam_permissions(env, iam, report)
+        check_kms_key_policy(env, kms, report)
+        log_groups = check_log_groups(env, ENV_NAME, logs, cloudtrail, report)
+        check_nacl(subnets, subnet_ids, ec2, report)
+        check_routes(env, subnets, subnet_ids, ec2, report)
+        check_s3_block_public_access(env, s3, s3control, report)
+        check_security_groups(env, ec2, report)
         mwaa_services = get_mwaa_utilized_services(ec2, subnets[0]['VpcId'])
-        check_connectivity_to_dep_services(env, subnets, ec2, ssm, mwaa_services)
-        check_for_failing_logs(log_groups, logs)
+        check_connectivity_to_dep_services(env, subnets, ec2, ssm, mwaa_services, report)
+        check_celery_sqs_health(env, cw, report)
+        check_environment_class_utilization(env, cw, report)
+        check_environment_class_dag_count(env, cw, report)
+        check_airflow_rest_api(env, mwaa, iam, report)
+        check_airflowignore(env, s3, report)
+        check_full_dag_run(env, mwaa, s3, report)
+        check_secrets_manager(env, iam, report)
+        check_airflow_config(env, report)
+        check_for_failing_logs(log_groups, logs, report)
+
+        report.close()
+        goodbye_message()
     except ClientError as client_error:
         if client_error.response['Error']['Code'] == 'LimitExceededException':
             print_err_msg(client_error)
@@ -1004,8 +1950,12 @@ if __name__ == '__main__':
             print('please retry the script')
         else:
             print_err_msg(client_error)
+        report.close()
+        goodbye_message()
     except ProfileNotFound as profile_not_found:
         print('profile', PROFILE, 'does not exist, please doublecheck the profile name')
     except IndexError as error:
         print("Found index error suggesting there are no ENIs for MWAA")
         print("Error:", error)
+        report.close()
+        goodbye_message()

@@ -97,24 +97,18 @@ def test_validate_envname():
 
 def test_validate_profile():
     '''
-    test invalid and valid names for MWAA environment
+    test invalid and valid names for AWS configuration and credential file profiles
     '''
-    with pytest.raises(argparse.ArgumentTypeError) as excinfo:
-        profile_name = 'test space'
-        verify_env.validation_profile(profile_name)
-    assert ("%s is an invalid profile name value" % profile_name) in str(excinfo.value)
-    profile_name = 'test'
-    result = verify_env.validation_profile(profile_name)
-    assert result == profile_name
-    profile_name = '42'
-    result = verify_env.validation_profile(profile_name)
-    assert result == profile_name
-    profile_name = '4HelloWorld2'
-    result = verify_env.validation_profile(profile_name)
-    assert result == profile_name
-    profile_name = 'HelloWorld'
-    result = verify_env.validation_profile(profile_name)
-    assert result == profile_name
+    allowed = ["test", "Hello_-_World2", "1Test_2-3", "123", "Test"]
+    for profile_name in allowed:
+        result = verify_env.validation_profile(profile_name)
+        assert result == profile_name
+
+    not_allowed = ["test space", "test/test", "test\ntest", "test&test", "test.py", " ", ""]
+    for profile_name in not_allowed:
+        with pytest.raises(argparse.ArgumentTypeError) as excinfo:
+            verify_env.validation_profile(profile_name)
+        assert ("%s is an invalid profile name value" % profile_name) in str(excinfo.value)
 
 
 def test_check_ingress_acls():
