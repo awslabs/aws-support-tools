@@ -1,0 +1,47 @@
+id: iam-allowed-principals
+title: "IAMAllowedPrincipals - LF Not Enforced"
+category: permissions
+severity: medium
+symptoms:
+  - "IAMAllowedPrincipals"
+  - "Lake Formation not enforced"
+  - "everyone can access my table"
+  - "permissions too open"
+  - "Super permission on database"
+  - "all IAM principals have access"
+keywords:
+  - IAMAllowedPrincipals
+  - super
+  - not enforced
+  - open access
+  - legacy mode
+causes:
+  - "Database/table was created before LF was enabled, retaining IAMAllowedPrincipals"
+  - "CreateDatabase default permissions include IAMAllowedPrincipals"
+  - "Data lake settings still have 'Use only IAM access control' for new databases"
+solutions:
+  - title: "Remove IAMAllowedPrincipals from the database"
+    steps:
+      - "Go to Lake Formation → Data lake permissions"
+      - "Find the IAMAllowedPrincipals entry for your database"
+      - "Revoke it"
+      - "⚠️ WARNING: This will break access for anyone relying on IAM-only permissions"
+      - "Ensure all required principals have explicit LF grants BEFORE revoking"
+  - title: "Revoke via CLI"
+    command: |
+      aws lakeformation revoke-permissions \
+        --principal DataLakePrincipalIdentifier=IAMAllowedPrincipals \
+        --resource '{"Database":{"Name":"mydb"}}' \
+        --permissions ALL
+  - title: "Change default settings for new databases"
+    steps:
+      - "Go to Lake Formation → Data lake settings"
+      - "Uncheck 'Use only IAM access control for new databases'"
+      - "Uncheck 'Use only IAM access control for new tables'"
+      - "This only affects NEW databases/tables going forward"
+  - title: "Audit current state"
+    command: |
+      lf-verify --resource-type database --database mydb --who-has-access --region us-east-1
+related:
+  - access-denied-glue-athena
+  - migration-to-lf

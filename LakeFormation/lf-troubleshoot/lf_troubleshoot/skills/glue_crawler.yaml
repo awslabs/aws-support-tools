@@ -1,0 +1,45 @@
+id: glue-crawler-lf
+title: "Glue Crawler Lake Formation Permission Issues"
+category: permissions
+severity: high
+symptoms:
+  - "crawler access denied"
+  - "crawler cannot create table"
+  - "crawler insufficient permissions"
+  - "crawler failed Lake Formation"
+  - "CREATE_TABLE permission"
+keywords:
+  - crawler
+  - glue crawler
+  - create table
+  - alter table
+  - drop table
+causes:
+  - "Crawler's IAM role lacks LF permissions (CREATE_TABLE, ALTER, DROP)"
+  - "Database is LF-managed but crawler role has no LF grant"
+  - "S3 location not registered — crawler can't access underlying data via LF"
+solutions:
+  - title: "Grant crawler role CREATE_TABLE on the database"
+    command: |
+      aws lakeformation grant-permissions \
+        --principal DataLakePrincipalIdentifier=arn:aws:iam::123456789012:role/GlueCrawlerRole \
+        --resource '{"Database":{"Name":"mydb"}}' \
+        --permissions CREATE_TABLE
+  - title: "Grant ALTER and DROP for table updates"
+    command: |
+      aws lakeformation grant-permissions \
+        --principal DataLakePrincipalIdentifier=arn:aws:iam::123456789012:role/GlueCrawlerRole \
+        --resource '{"Table":{"DatabaseName":"mydb","Name":"__ALL_TABLES__"}}' \
+        --permissions ALTER DROP
+  - title: "Also ensure the S3 location is registered"
+    steps:
+      - "If LF manages the S3 location, the crawler role needs DATA_LOCATION_ACCESS"
+      - "Grant data location access:"
+    command: |
+      aws lakeformation grant-permissions \
+        --principal DataLakePrincipalIdentifier=arn:aws:iam::123456789012:role/GlueCrawlerRole \
+        --resource '{"DataLocation":{"ResourceArn":"arn:aws:s3:::my-bucket/prefix/"}}' \
+        --permissions DATA_LOCATION_ACCESS
+related:
+  - access-denied-glue-athena
+  - s3-location-registration

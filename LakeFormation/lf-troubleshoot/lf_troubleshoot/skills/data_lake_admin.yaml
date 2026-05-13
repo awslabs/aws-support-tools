@@ -1,0 +1,45 @@
+id: data-lake-admin
+title: "Data Lake Administrator Issues"
+category: admin
+severity: medium
+symptoms:
+  - "cannot grant permissions"
+  - "not authorized to grant"
+  - "only admins can"
+  - "AccessDeniedException on grant-permissions"
+  - "cannot change data lake settings"
+  - "who is admin"
+keywords:
+  - admin
+  - data lake administrator
+  - grant permissions
+  - settings
+causes:
+  - "Caller is not a Data Lake Administrator"
+  - "Only DL admins can grant/revoke on resources they don't own"
+  - "Initial setup requires the IAM admin to designate a DL admin"
+solutions:
+  - title: "Add a Data Lake Administrator"
+    steps:
+      - "Go to Lake Formation → Administrative roles and tasks"
+      - "Click 'Choose administrators'"
+      - "Add the IAM role/user that needs admin access"
+      - "Note: The IAM principal doing this needs lakeformation:PutDataLakeSettings"
+  - title: "Add admin via CLI"
+    command: |
+      aws lakeformation put-data-lake-settings \
+        --data-lake-settings '{
+          "DataLakeAdmins": [
+            {"DataLakePrincipalIdentifier": "arn:aws:iam::123456789012:role/AdminRole"}
+          ]
+        }'
+  - title: "Check current admins"
+    command: |
+      aws lakeformation get-data-lake-settings
+  - title: "Grant WITH GRANT OPTION (non-admin alternative)"
+    steps:
+      - "Instead of making someone admin, grant them permissions WITH GRANT OPTION"
+      - "This lets them re-grant those specific permissions to others"
+      - "Use --permissions-with-grant-option in the grant command"
+related:
+  - access-denied-glue-athena

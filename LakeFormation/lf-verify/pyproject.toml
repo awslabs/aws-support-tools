@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lf-verify"
+version = "0.1.0"
+description = "Verify Lake Formation access for AWS principals"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+authors = [{name = "Enny"}]
+dependencies = ["boto3>=1.26"]
+
+[project.optional-dependencies]
+yaml = ["PyYAML>=5.0"]
+
+[project.scripts]
+lf-verify = "lf_verify.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["lf_verify*"]

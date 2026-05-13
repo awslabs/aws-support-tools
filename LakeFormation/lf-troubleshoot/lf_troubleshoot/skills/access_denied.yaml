@@ -1,0 +1,50 @@
+id: access-denied-glue-athena
+title: "Access Denied on Glue/Athena Queries"
+category: permissions
+severity: high
+symptoms:
+  - "AccessDeniedException"
+  - "access denied"
+  - "Insufficient Lake Formation permission"
+  - "unable to verify existence of default database"
+  - "FAILED: SemanticException"
+  - "Glue access denied"
+  - "athena query failed permission"
+keywords:
+  - access denied
+  - glue
+  - athena
+  - select
+  - query failed
+  - permission denied
+causes:
+  - "Principal lacks SELECT/DESCRIBE permission on the table in Lake Formation"
+  - "Lake Formation is enforced but no explicit grant exists for the role"
+  - "IAMAllowedPrincipals was removed but no LF grant was added"
+  - "The role has IAM permissions but not Lake Formation permissions (hybrid mode)"
+solutions:
+  - title: "Grant SELECT permission via Lake Formation console"
+    steps:
+      - "Go to AWS Lake Formation → Data permissions → Grant"
+      - "Select the principal (IAM role/user)"
+      - "Choose the database and table"
+      - "Grant SELECT (and DESCRIBE if needed)"
+      - "If using columns, grant column-level permissions"
+  - title: "Grant via AWS CLI"
+    command: |
+      aws lakeformation grant-permissions \
+        --principal DataLakePrincipalIdentifier=arn:aws:iam::ACCOUNT:role/ROLE \
+        --resource '{"Table":{"DatabaseName":"mydb","Name":"mytable"}}' \
+        --permissions SELECT DESCRIBE
+  - title: "Check if IAMAllowedPrincipals is the issue"
+    steps:
+      - "If IAMAllowedPrincipals was recently removed, all access now requires explicit LF grants"
+      - "Run: lf-verify --resource-type table --database mydb --table mytable --who-has-access"
+      - "If no principals listed, grants are missing"
+  - title: "Verify with lf-verify"
+    command: |
+      lf-verify --resource-type table --database mydb --table mytable \
+        --principal arn:aws:iam::123456789012:role/GlueJobRole --region us-east-1
+related:
+  - iam-allowed-principals
+  - cross-account-access

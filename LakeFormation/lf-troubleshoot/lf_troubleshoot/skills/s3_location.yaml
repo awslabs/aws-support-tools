@@ -1,0 +1,45 @@
+id: s3-location-registration
+title: "S3 Data Location Registration Issues"
+category: registration
+severity: medium
+symptoms:
+  - "data location not registered"
+  - "cannot register S3 location"
+  - "AlreadyExistsException"
+  - "S3 access denied from Glue"
+  - "underlying data not accessible"
+  - "InvalidInputException"
+  - "service linked role"
+keywords:
+  - register
+  - s3 location
+  - data location
+  - service role
+  - SLR
+causes:
+  - "S3 path not registered with Lake Formation"
+  - "Registered with wrong IAM role (role can't access the S3 data)"
+  - "Parent path already registered — child paths inherit"
+  - "Service-linked role doesn't have S3 access"
+solutions:
+  - title: "Register the S3 location"
+    steps:
+      - "Go to Lake Formation → Data lake locations → Register location"
+      - "Enter the S3 path (e.g. s3://my-bucket/data/)"
+      - "Choose a role that has S3 access to that path"
+      - "Or use the LF service-linked role (AWSServiceRoleForLakeFormationDataAccess)"
+  - title: "Register via CLI"
+    command: |
+      aws lakeformation register-resource \
+        --resource-arn arn:aws:s3:::my-bucket/prefix/ \
+        --role-arn arn:aws:iam::123456789012:role/LFDataAccessRole
+  - title: "Check if already registered"
+    command: |
+      aws lakeformation list-resources
+  - title: "Fix service-linked role permissions"
+    steps:
+      - "The SLR (AWSServiceRoleForLakeFormationDataAccess) needs S3 access"
+      - "Attach an inline policy to the SLR allowing s3:GetObject, s3:PutObject on the bucket"
+      - "Or use a custom role with the required S3 permissions"
+related:
+  - access-denied-glue-athena

@@ -1,0 +1,48 @@
+id: lf-tag-not-working
+title: "LF-Tag Based Access Not Working"
+category: tags
+severity: high
+symptoms:
+  - "tag based access not working"
+  - "LF-Tag grant not effective"
+  - "tag policy not applying"
+  - "tagged resource no access"
+  - "expression not matching"
+keywords:
+  - lf-tag
+  - tag policy
+  - tag expression
+  - TBAC
+  - tag-based access control
+causes:
+  - "Tag not assigned to the resource (database or table)"
+  - "Tag expression in the grant doesn't match the resource's tag values"
+  - "Grant is for DATABASE resource type but resource is a TABLE (or vice versa)"
+  - "Tag was assigned after the grant — may need time to propagate"
+  - "Principal has a named grant that conflicts with tag-based grant"
+solutions:
+  - title: "Verify tags are assigned to the resource"
+    steps:
+      - "Go to Lake Formation → Tables → select your table"
+      - "Check the 'LF-Tags' tab"
+      - "Ensure the tag key AND value match what's in the grant expression"
+  - title: "Check tag assignment via CLI"
+    command: |
+      aws lakeformation get-resource-lf-tags \
+        --resource '{"Table":{"DatabaseName":"mydb","Name":"mytable"}}'
+  - title: "Verify tag grants for a principal"
+    command: |
+      lf-verify --what-can-access \
+        --principal arn:aws:iam::123456789012:role/AnalystRole \
+        --tag-grants-only --region us-east-1
+  - title: "Find resources matching a tag"
+    command: |
+      lf-verify --resource-type lf-tag-policy --tag-key environment \
+        --tag-values production --find-resources --region us-east-1
+  - title: "Common fix: grant for both DATABASE and TABLE resource types"
+    steps:
+      - "LF-Tag grants are resource-type specific"
+      - "A grant for ResourceType=TABLE won't give access to the database itself"
+      - "Create separate grants for DATABASE and TABLE if both are needed"
+related:
+  - access-denied-glue-athena

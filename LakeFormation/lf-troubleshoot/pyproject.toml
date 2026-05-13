@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lf-troubleshoot"
+version = "0.1.0"
+description = "Lake Formation troubleshooter — recommend solutions from a skills knowledge base"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+authors = [{name = "Enny"}]
+dependencies = []
+
+[project.optional-dependencies]
+yaml = ["PyYAML>=5.0"]
+diagnose = ["lf-verify>=0.1.0"]
+all = ["PyYAML>=5.0", "lf-verify>=0.1.0"]
+
+[project.scripts]
+lf-troubleshoot = "lf_troubleshoot.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["lf_troubleshoot*"]
+
+[tool.setuptools.package-data]
+lf_troubleshoot = ["skills/*.yaml"]

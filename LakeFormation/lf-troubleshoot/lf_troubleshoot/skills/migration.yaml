@@ -1,0 +1,53 @@
+id: migration-to-lf
+title: "Migrating from IAM-Only to Lake Formation Permissions"
+category: migration
+severity: medium
+symptoms:
+  - "migrating to lake formation"
+  - "enable lake formation"
+  - "transition from IAM"
+  - "hybrid mode"
+  - "opt-in"
+keywords:
+  - migration
+  - hybrid
+  - opt-in
+  - transition
+  - enable
+causes:
+  - "Organization wants to move from IAM-only to LF-managed permissions"
+  - "Need to enable LF without breaking existing workloads"
+solutions:
+  - title: "Recommended migration approach"
+    steps:
+      - "1. Keep IAMAllowedPrincipals in place initially (hybrid mode)"
+      - "2. Identify all principals that access each database/table"
+      - "3. Create explicit LF grants for each principal"
+      - "4. Test that all workloads still function with LF grants"
+      - "5. Remove IAMAllowedPrincipals from one database at a time"
+      - "6. Monitor for access issues after each removal"
+  - title: "Audit current access before migration"
+    command: |
+      # For each database, check who currently has access
+      lf-verify --resource-type database --database mydb --who-has-access --region us-east-1
+
+      # Check all tables
+      lf-verify --resource-type table --database mydb --all-tables --who-has-access --region us-east-1
+  - title: "Change default settings (for new resources only)"
+    steps:
+      - "Go to Lake Formation → Data lake settings"
+      - "Uncheck both 'Use only IAM access control' options"
+      - "This ensures NEW databases/tables are LF-managed from creation"
+  - title: "Batch grant permissions for existing principals"
+    command: |
+      aws lakeformation batch-grant-permissions --entries '[
+        {
+          "Id": "1",
+          "Principal": {"DataLakePrincipalIdentifier": "arn:aws:iam::123456789012:role/Role1"},
+          "Resource": {"Database": {"Name": "mydb"}},
+          "Permissions": ["DESCRIBE"]
+        }
+      ]'
+related:
+  - iam-allowed-principals
+  - access-denied-glue-athena

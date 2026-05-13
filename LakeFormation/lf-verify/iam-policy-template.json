@@ -1,0 +1,64 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "LakeFormationReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "lakeformation:ListPermissions",
+        "lakeformation:GetDataLakeSettings",
+        "lakeformation:GetResourceLFTags",
+        "lakeformation:SearchDatabasesByLFTags",
+        "lakeformation:SearchTablesByLFTags"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "GlueCatalogReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "glue:GetTables",
+        "glue:GetDatabases"
+      ],
+      "Resource": [
+        "arn:aws:glue:*:ACCOUNT_ID:catalog",
+        "arn:aws:glue:*:ACCOUNT_ID:database/*",
+        "arn:aws:glue:*:ACCOUNT_ID:table/*"
+      ]
+    },
+    {
+      "Sid": "IAMPrincipalValidation",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetRole",
+        "iam:GetUser",
+        "iam:GetGroup",
+        "iam:ListRoles"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:PrincipalAccount": "ACCOUNT_ID"
+        }
+      }
+    },
+    {
+      "Sid": "STSCallerIdentity",
+      "Effect": "Allow",
+      "Action": "sts:GetCallerIdentity",
+      "Resource": "*"
+    },
+    {
+      "Sid": "IdentityStoreReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "identitystore:ListUsers",
+        "identitystore:ListGroups",
+        "identitystore:DescribeUser",
+        "identitystore:DescribeGroup",
+        "identitystore:ListGroupMembershipsForMember"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

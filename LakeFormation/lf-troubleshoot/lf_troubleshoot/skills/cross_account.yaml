@@ -1,0 +1,50 @@
+id: cross-account-access
+title: "Cross-Account Access Issues"
+category: sharing
+severity: high
+symptoms:
+  - "cross account"
+  - "external account cannot access"
+  - "shared database not visible"
+  - "resource link not working"
+  - "AcceptResource"
+  - "RAM share"
+  - "recipient account cannot query"
+keywords:
+  - cross account
+  - resource link
+  - RAM
+  - share
+  - external account
+  - recipient
+causes:
+  - "Resource share not accepted in recipient account"
+  - "Resource link not created in recipient account's Glue catalog"
+  - "Recipient principal lacks LF permissions on the resource link"
+  - "RAM share is pending acceptance"
+  - "Grantable permissions not passed (WITH GRANT OPTION missing)"
+solutions:
+  - title: "Accept the RAM resource share"
+    steps:
+      - "In the RECIPIENT account, go to AWS RAM → Shared with me"
+      - "Accept the pending resource share"
+      - "The shared database/table will appear in Lake Formation → Databases (shared)"
+  - title: "Create a resource link"
+    steps:
+      - "In the recipient account, go to Lake Formation → Databases"
+      - "Click 'Create database' → select 'Resource link'"
+      - "Point it to the shared database from the owner account"
+      - "Grant permissions on the resource link to local principals"
+  - title: "Grant cross-account via CLI (owner account)"
+    command: |
+      aws lakeformation grant-permissions \
+        --principal DataLakePrincipalIdentifier=RECIPIENT_ACCOUNT_ID \
+        --resource '{"Database":{"Name":"shared_db"}}' \
+        --permissions DESCRIBE \
+        --permissions-with-grant-option DESCRIBE
+  - title: "Verify cross-account grant"
+    command: |
+      lf-verify --resource-type database --database shared_db \
+        --principal 987654321098 --region us-east-1
+related:
+  - access-denied-glue-athena
