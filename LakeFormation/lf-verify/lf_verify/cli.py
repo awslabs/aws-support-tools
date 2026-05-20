@@ -225,9 +225,48 @@ def _handle_what_can_access(client, session, args, parser):
         matched = [p for p in combined if p.get("Principal", {}).get("DataLakePrincipalIdentifier") == pid]
         if args.tag_grants_only:
             matched = [p for p in matched if "LFTagPolicy" in p.get("Resource", {}) or "LFTagExpression" in p.get("Resource", {})]
-        all_results[label] = matched
-        if args.output == "table" and matched:
-            print_what_can_access(label, matched)
+
+        # Resolve LF-Tag policy grants to actual resources
+        resolved_entries = []
+        tag_expressions_resolved = set()
+        for perm in matched:
+            res = perm.get("Resource", {})
+            if "LFTagPolicy" in res:
+                expr = res["LFTagPolicy"].get("Expression", [])
+                rtype = res["LFTagPolicy"].get("ResourceType", "")
+                expr_key = (str(expr), rtype)
+                permissions = perm.get("Permissions", [])
+                grantable = perm.get("PermissionsWithGrantOption", [])
+                # Search for actual resources matching this tag expression
+                if expr_key not in tag_expressions_resolved:
+                    tag_expressions_resolved.add(expr_key)
+                    try:
+                        databases, tables = search_resources_by_lf_tags(client, expr, args.catalog_id)
+                        if rtype == "DATABASE":
+                            for db in databases:
+                                db_name = db.get("Database", {}).get("Name", "?")
+                                resolved_entries.append({
+                                    "Resource": {"Database": {"Name": db_name}},
+                                    "Permissions": permissions,
+                                    "PermissionsWithGrantOption": grantable,
+                                })
+                        elif rtype == "TABLE":
+                            for tbl in tables:
+                                tbl_info = tbl.get("Table", {})
+                                resolved_entries.append({
+                                    "Resource": {"Table": {"DatabaseName": tbl_info.get("DatabaseName", "?"), "Name": tbl_info.get("Name", "?")}},
+                                    "Permissions": permissions,
+                                    "PermissionsWithGrantOption": grantable,
+                                })
+                    except Exception:
+                        # If search fails, keep the original tag policy entry
+                        resolved_entries.append(perm)
+            else:
+                resolved_entries.append(perm)
+
+        all_results[label] = resolved_entries if resolved_entries else matched
+        if args.output == "table" and (resolved_entries or matched):
+            print_what_can_access(label, resolved_entries if resolved_entries else matched)
 
     any_access = any(v == "DATA_LAKE_ADMIN" or (isinstance(v, list) and v) for v in all_results.values())
     if args.output == "table" and not any_access:
@@ -275,6 +314,26 @@ def _handle_find_resources(client, args, parser):
 def _handle_all_tables(client, session, args, resource, parser):
     if not args.database:
         parser.error("--database required with --all-tables")
+
+    # Resolve principals and discover group memberships
+    resolved_for_tables = []
+    table_user_group_map = {}
+    if args.principal:
+        if any(p.startswith("sso:") for p in args.principal) and not args.sso_instance_id:
+            parser.error("--sso-instance-id is required when using sso:user/ or sso:group/ principals")
+        for p in args.principal:
+            is_sso_user = p.startswith("sso:user/")
+            resolved = resolve_sso_principal(session, p, args.sso_instance_id) if p.startswith("sso:") else p
+            if not resolved:
+                continue
+            if p != resolved:
+                print(f"  Resolved {p} \u2192 {resolved}")
+            resolved_for_tables.append((p, resolved))
+            if is_sso_user and args.sso_instance_id:
+                groups = list_sso_user_groups(session, args.sso_instance_id, resolved)
+                if groups:
+                    table_user_group_map[resolved] = [f"arn:aws:identitystore:::group/{gid}" for gid, _ in groups]
+
     tables = list_tables_in_database(session, args.database, args.catalog_id,
                                      getattr(args, "s3_table_bucket", None), args.region)
     print(f"Found {len(tables)} tables in {args.database}\n")
@@ -297,19 +356,22 @@ def _handle_all_tables(client, session, args, resource, parser):
                     all_rows.append([tbl, pid, ", ".join(direct), "Named Grant"])
                 for tag_label, perms in via_tags.items():
                     all_rows.append([tbl, pid, ", ".join(sorted(set(perms))), f"LF-Tag: {tag_label}"])
-        elif args.principal:
-            for p in args.principal:
-                r = verify_principal(client, tbl_resource, p, args.catalog_id, rtype, debug=args.debug)
+        elif resolved_for_tables:
+            for orig, resolved in resolved_for_tables:
+                effective = table_user_group_map.get(resolved, [])
+                r = verify_principal(client, tbl_resource, resolved, args.catalog_id, rtype,
+                                     debug=args.debug, effective_principals=effective if effective else None)
+                display_name = orig if orig != resolved else resolved
                 if r["is_admin"]:
-                    all_rows.append([tbl, p, "ALL (implicit)", "Data Lake Admin"])
+                    all_rows.append([tbl, display_name, "ALL (implicit)", "Data Lake Admin"])
                 if r["has_named_access"]:
-                    all_rows.append([tbl, p, ", ".join(r["named_permissions"]), "Named Grant"])
+                    all_rows.append([tbl, display_name, ", ".join(r["named_permissions"]), "Named Grant"])
                 for tag_label, perms in r.get("tag_access", {}).items():
-                    all_rows.append([tbl, p, ", ".join(perms), f"LF-Tag: {tag_label}"])
+                    all_rows.append([tbl, display_name, ", ".join(perms), f"LF-Tag: {tag_label}"])
                 if r["iam_allowed_principals"]:
-                    all_rows.append([tbl, p, "ALL (IAM)", "IAMAllowedPrincipals"])
+                    all_rows.append([tbl, display_name, "ALL (IAM)", "IAMAllowedPrincipals"])
                 if not r["is_admin"] and not r["has_named_access"] and not r["tag_access"] and not r["iam_allowed_principals"]:
-                    all_rows.append([tbl, p, "\u2014", "\u274c No Access"])
+                    all_rows.append([tbl, display_name, "\u2014", "\u274c No Access"])
 
     headers = ["Table", "Principal", "Permissions", "Access Type"]
     if args.output == "json":
@@ -343,7 +405,9 @@ def _handle_verify_principals(client, session, args, resource, parser):
         parser.error("--sso-instance-id is required when using sso:user/ or sso:group/ principals")
 
     resolved_principals = []
+    sso_user_ids = []
     for p in args.principal:
+        is_sso_user = p.startswith("sso:user/")
         resolved = resolve_sso_principal(session, p, args.sso_instance_id) if p.startswith("sso:") else p
         if not resolved:
             continue
@@ -355,10 +419,28 @@ def _handle_verify_principals(client, session, args, resource, parser):
         if not exists:
             continue
         resolved_principals.append(resolved)
+        if is_sso_user:
+            sso_user_ids.append(resolved)
+
+    # Discover SSO group memberships
+    user_group_map = {}
+    if sso_user_ids and args.sso_instance_id:
+        for uid in sso_user_ids:
+            groups = list_sso_user_groups(session, args.sso_instance_id, uid)
+            if groups:
+                print(f"\n  SSO user {uid} is a member of {len(groups)} group(s):")
+                group_arns = []
+                for gid, gname in groups:
+                    group_arn = f"arn:aws:identitystore:::group/{gid}"
+                    print(f"    - {gname} ({group_arn})")
+                    group_arns.append(group_arn)
+                user_group_map[uid] = group_arns
 
     results = []
     for principal in resolved_principals:
-        r = verify_principal(client, resource, principal, args.catalog_id, args.resource_type, debug=args.debug)
+        effective = user_group_map.get(principal, [])
+        r = verify_principal(client, resource, principal, args.catalog_id, args.resource_type,
+                             debug=args.debug, effective_principals=effective if effective else None)
         results.append(r)
 
     if args.output == "json":

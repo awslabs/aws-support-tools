@@ -120,8 +120,12 @@ def audit_resource(client, resource, resource_type, catalog_id=None, debug=False
     return principals, tag_info
 
 
-def verify_principal(client, resource, principal, catalog_id, resource_type, debug=False):
-    """Verify whether a specific principal has access to a resource."""
+def verify_principal(client, resource, principal, catalog_id, resource_type, debug=False, effective_principals=None):
+    """Verify whether a specific principal has access to a resource.
+    
+    effective_principals: optional list of additional principals to check (e.g. group memberships).
+    If provided, access granted to any of these principals counts as access for the primary principal.
+    """
     result = {
         "principal": principal,
         "is_admin": False,
@@ -132,21 +136,35 @@ def verify_principal(client, resource, principal, catalog_id, resource_type, deb
         "iam_allowed_principals": False,
     }
 
-    if is_data_lake_admin(client, principal, catalog_id):
-        result["is_admin"] = True
+    # Build list of all principals to check (primary + groups/memberships)
+    all_principals = [principal]
+    if effective_principals:
+        all_principals.extend(p for p in effective_principals if p != principal)
 
-    direct = list_permissions_for_principal(client, resource, principal, catalog_id)
-    if direct:
-        result["has_named_access"] = True
-        result["named_permissions"] = sorted(set(p for d in direct for p in d.get("Permissions", [])))
+    # 1. Check if any effective principal is a data lake admin
+    for p in all_principals:
+        if is_data_lake_admin(client, p, catalog_id):
+            result["is_admin"] = True
+            break
 
+    # 2. Check direct (named) grants for all effective principals
+    for p in all_principals:
+        direct = list_permissions_for_principal(client, resource, p, catalog_id)
+        if direct:
+            result["has_named_access"] = True
+            perms = sorted(set(perm for d in direct for perm in d.get("Permissions", [])))
+            result["named_permissions"] = sorted(set(result["named_permissions"] + perms))
+
+    # 3. Check LF-Tag grants for all effective principals
     if resource_type in ("database", "table", "column", "s3table"):
-        tag_info, matching_grants = find_tag_grants_for_resource(client, resource, resource_type, catalog_id, principal=principal, debug=debug)
-        result["resource_tags"] = tag_info.get("database", []) + tag_info.get("table", [])
-        for grant in matching_grants:
-            label = grant.get("_via_tag", "unknown")
-            perms = grant.get("Permissions", [])
-            result["tag_access"].setdefault(label, []).extend(perms)
+        for p in all_principals:
+            tag_info, matching_grants = find_tag_grants_for_resource(client, resource, resource_type, catalog_id, principal=p, debug=debug)
+            if not result["resource_tags"]:
+                result["resource_tags"] = tag_info.get("database", []) + tag_info.get("table", [])
+            for grant in matching_grants:
+                label = grant.get("_via_tag", "unknown")
+                perms = grant.get("Permissions", [])
+                result["tag_access"].setdefault(label, []).extend(perms)
         for k in result["tag_access"]:
             result["tag_access"][k] = sorted(set(result["tag_access"][k]))
 
