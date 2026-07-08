@@ -19,7 +19,7 @@ repo (via `gh label create` or the GitHub UI) so the taxonomy is versioned somew
 
 ## area (one per active top-level folder)
 `area: apigateway`, `area: cloudformation`, `area: cognito`, `area: connect`,
-`area: datapipeline`, `area: devicefarm`, `area: ebs`, `area: ec2`,
+`area: devicefarm`, `area: ebs`, `area: ec2`,
 `area: ec2-auto-scaling`, `area: emr`, `area: elasticsearch`, `area: fsx-netapp-ontap`,
 `area: lambda`, `area: mgn`, `area: mgndrs`, `area: drs`, `area: mwaa`, `area: opsworks`,
 `area: rds`, `area: s3`, `area: ses`, `area: sns`, `area: systems-manager`, `area: waf`
