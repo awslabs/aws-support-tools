@@ -1,1 +1,0 @@
-# Elastic Transcoder Support Tools

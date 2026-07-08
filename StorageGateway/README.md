@@ -1,1 +1,0 @@
-# Storage Gateway Support Tools

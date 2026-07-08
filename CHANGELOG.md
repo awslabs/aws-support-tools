@@ -2,6 +2,14 @@
 
 All notable changes to this repository will be documented in this file.
 
+## [v1.4.0] - 2026-07-08
+
+### Removed
+- 10 empty stub folders (CloudFront, CloudSearch, ElasticTranscoder, Glacier, IoT, MobileAnalytics, MobileHub, SQS, Snowball, StorageGateway). Each contained only a title-only README unchanged since the 2016 repo seed. Available at tag [v1.3.1](https://github.com/awslabs/aws-support-tools/tree/v1.3.1) if needed.
+
+### Added
+- Cross-reference READMEs for DRS/, MGN/, and MGNDRS/ explaining what each folder covers and linking to related folders
+
 ## [v1.3.1] - 2026-07-08
 
 ### Security
