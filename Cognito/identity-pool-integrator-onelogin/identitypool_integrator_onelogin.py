@@ -69,7 +69,7 @@ def main():
         get_oauth_tokens = get_oauth_tokens.json()
 
         if debugflag == "Y":
-            print("The OneLogin Access Token is ",get_oauth_tokens['access_token'])
+            print("The OneLogin Access Token has been obtained successfully (token redacted from logs)")
         else:
             print("The OneLogin Access Token has been obtained successfully")
 

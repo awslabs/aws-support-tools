@@ -2,6 +2,12 @@
 
 All notable changes to this repository will be documented in this file.
 
+## [v1.3.1] - 2026-07-08
+
+### Security
+- Fixed clear-text logging of OneLogin access token in Cognito identity-pool-integrator (CodeQL HIGH)
+- Added subresource integrity (SRI) hashes to CDN resources in SES/SESReports HTML templates (CodeQL MEDIUM x2)
+
 ## [v1.3.0] - 2026-07-08
 
 ### Added
