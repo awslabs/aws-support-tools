@@ -2,7 +2,7 @@
 
 ########################################################################
 
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2025 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file
 # except in compliance with the License. A copy of the License is located at
@@ -17,26 +17,44 @@
 ########################################################################
 
 
-# The aim of this script is to automate the installation and configuration of DNSMasq services on Amazon Linux 1 & 2
+# The aim of this script is to automate the installation and configuration of dnsmasq services on Amazon Linux 1, 2 and 2023.
 # The script needs no argument and could be use either stand-alone, injected as user-data or use with AWS Systems Manager Run Command AWS-RunShellScript
 
-# Check whether this is to run on VPC (default) or EC2 classic and set NAMESERVER accordingly
-INTERFACE=$(curl --silent http://169.254.169.254/latest/meta-data/network/interfaces/macs/ | head -n1)
-IS_IT_CLASSIC=$(curl --write-out %{http_code} --silent --output /dev/null http://169.254.169.254/latest/meta-data/network/interfaces/macs/${INTERFACE}/vpc-id)
+# Function to determine OS version
+get_os_version() {
+  if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    echo "$VERSION_ID"
+  fi
+}
 
-if [[ $IS_IT_CLASSIC == '404' ]]
-then
-  NAMESERVER="172.16.0.23"
-else
-  NAMESERVER="169.254.169.253"
-fi
+# Function to configure DNS based on OS version
+configure_dns() {
+  local os_version=$(get_os_version)
+    
+  if [[ "$os_version" == "2023" ]]; then
+    # AL2023 configuration using systemd-resolved
+    echo "DNS=127.0.0.1" >> /etc/systemd/resolved.conf
+    echo "DNS=${NAMESERVER}" >> /etc/systemd/resolved.conf
+    systemctl restart systemd-resolved.service
+  else
+    # AL1 or AL2 configuration using dhclient
+    echo "supersede domain-name-servers 127.0.0.1, ${NAMESERVER};" >> /etc/dhcp/dhclient.conf
+    dhclient
+  fi
+}
+
+# set NAMESERVER
+NAMESERVER="169.254.169.253"
 
 # Install dnsmasq package
 yum install -y dnsmasq bind-utils
 
-# Create the required User and Group
-groupadd -r dnsmasq
-useradd -r -g dnsmasq dnsmasq
+# Create dnsmasq user/group only for Amazon Linux 1 or 2
+if [[ $(get_os_version) != "2023" ]]; then
+  getent group dnsmasq || groupadd -r dnsmasq
+  getent passwd dnsmasq || useradd -r -g dnsmasq dnsmasq
+fi
 
 # Set dnsmasq.conf configuration
 cat << EOF > /etc/dnsmasq.conf
@@ -55,12 +73,15 @@ domain-needed
 bogus-priv
 EOF
 
-# Populate /etc/resolv.dnsmasq
+# Configure /etc/resolv.dnsmasq
 echo "nameserver ${NAMESERVER}" > /etc/resolv.dnsmasq
 
 # Enable and Start dnsmasq service
 pidof systemd && systemctl restart dnsmasq.service || service dnsmasq restart
 pidof systemd && systemctl enable  dnsmasq.service || chkconfig dnsmasq on
 
-# Test the service and configure dhclient accordingly
-dig aws.amazon.com @127.0.0.1 && echo "supersede domain-name-servers 127.0.0.1, ${NAMESERVER};" >> /etc/dhcp/dhclient.conf && dhclient
+# Test the service
+dig aws.amazon.com @127.0.0.1 
+
+# Configure DNS based on OS version
+configure_dns
