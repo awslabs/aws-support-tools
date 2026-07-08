@@ -1,2 +1,32 @@
+# OS
 .DS_Store
-.vscode
+Thumbs.db
+
+# IDEs and editors
+.vscode/
+.vs/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+*.egg-info/
+
+# Java
+*.class
+target/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Logs
+*.log
