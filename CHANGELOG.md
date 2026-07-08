@@ -2,6 +2,12 @@
 
 All notable changes to this repository will be documented in this file.
 
+## [v1.2.0] - 2026-07-08
+
+### Added
+- `EKS/subnet-fragmentation/` - Diagnose /28 block fragmentation in VPC subnets for EKS prefix delegation (contributed by @SelimSkhiri, PR #257)
+- `area: eks` label
+
 ## [v1.1.0] - 2026-07-08
 
 ### Added

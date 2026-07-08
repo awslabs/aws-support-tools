@@ -65,6 +65,12 @@ See also: [MGNDRS tools](#aws-mgn--drs-cross-service) for scripts that work acro
 |------|-------------|
 | [Multiple ENI Auto Scaling group](EC2%20Auto%20Scaling/) | Support tools for Auto Scaling groups with multiple ENIs |
 
+### Amazon EKS (Elastic Kubernetes Service)
+
+| Tool | Description |
+|------|-------------|
+| [subnet-fragmentation](EKS/subnet-fragmentation/) | Diagnose /28 block fragmentation in VPC subnets used for EKS prefix delegation. Identifies why a subnet with free IPs still fails prefix allocation with InsufficientCidrBlocks |
+
 ### Amazon EMR
 
 | Tool | Description |
