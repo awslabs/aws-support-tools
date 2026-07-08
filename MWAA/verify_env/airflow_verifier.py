@@ -283,7 +283,7 @@ class AirflowVerifier:
 
         print("Do you want to delete the dag used for the test?")
         if input("(y/N):").lower().strip() in ["y", "yes"]:
-            self.delete_file_from_dags_folder(self.env, os.path.join(os.path.dirname(os.path.realpath(__file__)), "MWAA_TEST_DAG.py"), s3)
+            self.delete_file_from_dags_folder(self.env, os.path.join(os.path.dirname(os.path.realpath(__file__)), "MWAA_TEST_DAG.py"), self.s3)
             self.report.write_all_locations(f"✅ Test DAG '{dag_id}' is deleted.")
         else:
             self.report.write_all_locations(f"✅ The user selected to keep the test DAG '{dag_id}'.")
