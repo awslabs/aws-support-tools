@@ -16,7 +16,15 @@
 
 check_NVMe_in_initrd () {
 
-find_distro=`cat /etc/os-release |sed -n 's|^ID="\([a-z]\{4\}\).*|\1|p'`      # Check if instance is using amazon AMI. 
+    # Detect distro ID from os-release (the standard, portable method).
+    # Sourcing handles both quoted (ID="amzn") and unquoted (ID=ubuntu) values.
+    # Older systems (RHEL 5/6) may lack this file entirely — fall through gracefully.
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        find_distro="$ID"
+    else
+        find_distro=""
+    fi
 
     if [ -f /etc/redhat-release ] ; then
         # Distribution is Red hat or a Red hat derivative such CentOS or Oracle Linux
