@@ -5,11 +5,15 @@ This is a simple bash script that when given an ENI identifier and an AWS region
 Requirements:
 - The [jq library](https://stedolan.github.io/jq/)
 - The [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
-- An IAM role configured with the AWS CLI that has permissions to query Lambda and EC2/VPC/ENIs
+- An IAM role configured with the AWS CLI that has permissions to query Lambda, EC2/VPC/ENIs, and CloudTrail (cloudtrail:LookupEvents)
 
 Arguments:
 - `--eni` the id of the ENI to check, __required__
 - `--region` the region to search lambda for, __required__
+- `--profile` the named AWS CLI profile to use, __optional__
 
  Usage:
  ```./findEniAssociations --eni eni-0123456789abcef01 --region us-east-1```
+
+ With a named profile:
+ ```./findEniAssociations --eni eni-0123456789abcef01 --region us-east-1 --profile my-profile```
