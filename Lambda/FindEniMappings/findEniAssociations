@@ -65,8 +65,30 @@ if [[ -n "${PROFILE:-}" ]]; then
   PROFILE_ARGS=(--profile "$PROFILE")
 fi
 
-# search for the ENI to get the subnet and security group(s) it uses
-METADATA="$(aws ec2 describe-network-interfaces --network-interface-ids ${ENI} --filters Name=network-interface-id,Values=${ENI} --region ${REGION} "${PROFILE_ARGS[@]}" --output json --query 'NetworkInterfaces[0].{Subnet:SubnetId,SecurityGroups:Groups[*].GroupId}')"
+# search for the ENI to get the subnet, security group(s), and description
+METADATA="$(aws ec2 describe-network-interfaces --network-interface-ids "${ENI}" --region "${REGION}" "${PROFILE_ARGS[@]}" --output json --query 'NetworkInterfaces[0].{Subnet:SubnetId,SecurityGroups:Groups[*].GroupId,Description:Description,InterfaceType:InterfaceType}')"
+
+# Check if the ENI is managed by Lambda
+ENI_DESCRIPTION=$(jq -r '.Description // "unknown"' <<< "$METADATA")
+ENI_TYPE=$(jq -r '.InterfaceType // "unknown"' <<< "$METADATA")
+
+if [[ "$ENI_DESCRIPTION" != *"AWS Lambda VPC"* && "$ENI_DESCRIPTION" != *"arn:aws:lambda"* && "$ENI_TYPE" != "lambda" ]]; then
+  printf "\nWARNING: This ENI does not appear to be managed by AWS Lambda.\n"
+  printf "ENI Description: %s\n" "$ENI_DESCRIPTION"
+  printf "Interface Type: %s\n\n" "$ENI_TYPE"
+  if [[ "$ENI_DESCRIPTION" == *"Grafana"* ]]; then
+    printf "This ENI appears to be managed by Amazon Managed Grafana.\nUse the Grafana console to identify the workspace using this ENI.\n"
+  elif [[ "$ENI_DESCRIPTION" == *"ECS"* || "$ENI_DESCRIPTION" == *"ecs"* ]]; then
+    printf "This ENI appears to be managed by Amazon ECS.\nUse 'aws ecs describe-tasks' to identify the task using this ENI.\n"
+  elif [[ "$ENI_DESCRIPTION" == *"RDS"* ]]; then
+    printf "This ENI appears to be managed by Amazon RDS.\n"
+  elif [[ "$ENI_DESCRIPTION" == *"ElastiCache"* ]]; then
+    printf "This ENI appears to be managed by Amazon ElastiCache.\n"
+  elif [[ "$ENI_DESCRIPTION" == *"EFS"* ]]; then
+    printf "This ENI appears to be managed by Amazon EFS.\n"
+  fi
+  printf "\nThis script is designed for Lambda-managed ENIs. Continuing anyway...\n\n"
+fi
 
 read Subnet < <(echo $METADATA | jq -ar '.Subnet')
 SecurityGroups=()
