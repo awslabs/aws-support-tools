@@ -161,7 +161,7 @@ echo -e "\n+----------------------------------------------------+"
 }
 ############################################################
 
-calculate_io_limits () {
+calculate_io1_limits () {
 
 if [[ $volumeIOPS -lt 100 || $volumeIOPS -gt 64000 ]]
     then
@@ -171,18 +171,42 @@ if [[ $volumeIOPS -lt 100 || $volumeIOPS -gt 64000 ]]
         exit 1
 fi
 
-
 if [ $volumeIOPS -le 32000 ]
         then
-                max_available_throughput=500                            # io1/io2 Volumes with less than equal to 32000 provisioned IOPS can achieve 500MiB/s of throughput at max. 
+                max_available_throughput=500                            # io1 Volumes with <= 32000 provisioned IOPS: 256 KiB I/O, max 500 MiB/s
                 calculate_tp=$(echo "scale=2; $volumeIOPS/4;" | bc)
                 baseline_throughput=$(min $max_available_throughput $calculate_tp)
         else
                 max_available_throughput=1000
-                calculate_tp=$(echo "scale=2; $volumeIOPS/64;" | bc)    # io1/io2 volume provisioned with more than 32,000 IOPS supports a maximum I/O size of 16 KiB
+                calculate_tp=$(echo "scale=2; $volumeIOPS/64;" | bc)    # io1 volume with > 32,000 IOPS: 16 KiB I/O size
                 baseline_throughput=$(min $max_available_throughput $calculate_tp)
 
 fi
+echo -e "+----------------------------------------------------+\n"
+echo -e "> Maximum available IOPS are equal to the provisioned IOPS i.e $volumeIOPS"
+echo -e "> Maximum Available throughput is $baseline_throughput MiB/s"
+echo -e "\n+----------------------------------------------------+"
+}
+
+############################################################
+
+calculate_io2_limits () {
+
+# io2 volumes are Block Express (all io2 volumes created after Nov 2022).
+# Max 256,000 IOPS, 4,000 MiB/s throughput, 256 KiB I/O size at all IOPS levels.
+
+if [[ $volumeIOPS -lt 100 || $volumeIOPS -gt 256000 ]]
+    then
+        echo -e "+----------------------------------------------------+\n"
+        echo -e "> Provisioned IOPS for io2 Block Express can not be less than 100 or greater than 256000."
+        echo -e "\n+----------------------------------------------------+"
+        exit 1
+fi
+
+max_available_throughput=4000                                       # io2 Block Express: max 4,000 MiB/s
+calculate_tp=$(echo "scale=2; $volumeIOPS*256/1024;" | bc)        # 256 KiB I/O size at all IOPS levels
+baseline_throughput=$(min $max_available_throughput $calculate_tp)
+
 echo -e "+----------------------------------------------------+\n"
 echo -e "> Maximum available IOPS are equal to the provisioned IOPS i.e $volumeIOPS"
 echo -e "> Maximum Available throughput is $baseline_throughput MiB/s"
@@ -286,11 +310,17 @@ case "$volumeType" in
         read volumeThroughput
         calculate_gp3_limits                    # Calling gp3 function to calculate maximum limits.
         ;;
-        [iI][oO][12])                           # If answer is io1
+        [iI][oO]1)                              # If answer is io1
         echo -e "Enter Provisioned IOPS:"
         read volumeIOPS
-        verify_input_as_integers $volumeIOPS                        # No need to ask for size for io1/io2 volumes. 
-        calculate_io_limits                    # Calling io1 function to calculate maximum limits.
+        verify_input_as_integers $volumeIOPS
+        calculate_io1_limits
+        ;;
+        [iI][oO]2)                              # If answer is io2 (Block Express)
+        echo -e "Enter Provisioned IOPS:"
+        read volumeIOPS
+        verify_input_as_integers $volumeIOPS
+        calculate_io2_limits
         ;;
         [sS][tT][1])                           # If answer is st1
         echo -e "Enter Volume Size in GiB:"
