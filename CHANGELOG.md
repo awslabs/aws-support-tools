@@ -1,3 +1,15 @@
+## [v1.5.0] - 2026-07-09
+
+### Fixed
+- **EC2/NitroInstanceChecks**: Replace fragile `cat /etc/os-release` with portable sourcing pattern; fixes error on RHEL 5/6 and silent failure on distros with unquoted ID values (#124)
+- **Lambda/CheckFunctionConcurrency**: Paginate `list_functions` results (was silently capped at 50); replace `get_function` with lighter `get_function_concurrency` API; fix STS credential inconsistency in manual-key path; add exponential backoff for throttling (#207)
+- **Lambda/FindEniMappings**: Detect non-Lambda ENIs (Grafana, ECS, RDS, ElastiCache, EFS) and warn the user before running Lambda-specific lookups (#215)
+- **EBS/VolumeLimitCalculator**: Correct io2 Block Express throughput calculation; split io1/io2 into separate handlers with proper limits (256K IOPS, 4,000 MiB/s, 256 KiB I/O at all levels) (#228)
+
+### Added
+- **Lambda/FindEniMappings**: `--profile` flag for named AWS CLI profiles; fix infinite loop on unknown arguments; document CloudTrail permission requirement (#166)
+
+
 # Changelog
 
 All notable changes to this repository will be documented in this file.
