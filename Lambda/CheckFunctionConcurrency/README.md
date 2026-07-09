@@ -14,7 +14,7 @@ The following IAM permissions are required in your AWS Account:
 Lambda
   * GetAccountSettings
   * ListFunctions
-  * GetFunction
+  * GetFunctionConcurrency
 
 STS
    * getCallerIdentity
