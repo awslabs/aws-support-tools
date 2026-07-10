@@ -3,8 +3,6 @@ Tests for AWSClients credential handling.
 Validates that the --profile argument is optional and that
 boto3's default credential chain is used when no profile is specified.
 """
-import boto3
-import pytest
 from unittest.mock import patch, MagicMock
 
 import sys
@@ -46,7 +44,7 @@ class TestAWSClientsProfile:
     def test_all_clients_created(self, mock_setup_session, mock_client):
         """All expected boto3 clients are created regardless of profile setting."""
         mock_client.return_value = MagicMock()
-        clients = AWSClients(region='eu-west-1', profile=None)
+        AWSClients(region='eu-west-1', profile=None)
         expected_services = ['ec2', 's3', 's3control', 'logs', 'kms',
                            'cloudtrail', 'ssm', 'iam', 'mwaa', 'cloudwatch']
         assert mock_client.call_count == len(expected_services)
