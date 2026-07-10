@@ -19,8 +19,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import boto3
 
 class AWSClients:
-    def __init__(self, region, profile='default'):
-        boto3.setup_default_session(profile_name=profile)
+    def __init__(self, region, profile=None):
+        if profile:
+            boto3.setup_default_session(profile_name=profile)
         self.ec2 = boto3.client('ec2', region_name=region)
         self.s3 = boto3.client('s3', region_name=region)
         self.s3control = boto3.client('s3control', region_name=region)

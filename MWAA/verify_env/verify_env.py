@@ -73,8 +73,8 @@ if __name__ == '__main__':
     parser.add_argument('--envname', type=validate_envname, required=True, help="name of the MWAA environment")
     parser.add_argument('--region', type=validation_region, default=boto3.session.Session().region_name,
                         required=True, help="region, Ex: us-east-1")
-    parser.add_argument('--profile', type=validation_profile, default='default',
-                        required=False, help="AWS CLI profile, Ex: dev")
+    parser.add_argument('--profile', type=validation_profile, default=None,
+                        required=False, help="AWS CLI profile name (optional). If omitted, uses the default credential chain (env vars, instance profile, etc.)")
     args, _ = parser.parse_known_args()
     ENV_NAME = args.envname
     REGION = args.region
