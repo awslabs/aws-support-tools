@@ -85,7 +85,8 @@ optional arguments:
   -h, --help         show this help message and exit
   --envname ENVNAME  name of the MWAA environment
   --region REGION    region, Ex: us-east-1
-  --profile PROFILE  profile, Ex: dev
+  --profile PROFILE  AWS CLI profile name (optional). If omitted, uses the
+                     default credential chain (env vars, instance profile, etc.)
 ```
 
 ### example output:
