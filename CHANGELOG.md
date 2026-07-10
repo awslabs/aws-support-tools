@@ -1,3 +1,8 @@
+## [v1.6.0] - 2026-07-10
+
+### Removed
+- `SES/SESReports/` folder. This CloudFormation-deployed Lambda tool targets end-of-life runtimes (Node.js aws-sdk v2 removed from Lambda, Python 2 syntax) and has not been maintained since 2019. For SES bounce/complaint reporting, use [Amazon Pinpoint email dashboards](https://docs.aws.amazon.com/pinpoint/latest/userguide/analytics-transactional-email.html). These scripts remain available at tag [v1.5.0](https://github.com/awslabs/aws-support-tools/tree/v1.5.0/SES/SESReports) for anyone who still needs them.
+
 ## [v1.5.0] - 2026-07-09
 
 ### Fixed
