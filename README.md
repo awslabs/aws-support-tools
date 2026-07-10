@@ -136,7 +136,6 @@ See also: [MGNDRS tools](#aws-mgn--drs-cross-service) for scripts that work acro
 |------|-------------|
 | [CheckSESQuota](SES/CheckSESQuota/) | Check SES daily sending quota usage and notify via SNS when usage exceeds 80% |
 | [SESMailer](SES/SESMailer/) | Demonstrates sending email using SES without a backend |
-| [SESReports](SES/SESReports/) | Lambda function that generates bounce and complaint reports, saved as searchable dashboards on S3 |
 
 ### Amazon SNS (Simple Notification Service)
 
