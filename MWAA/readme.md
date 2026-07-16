@@ -1,5 +1,7 @@
 # MWAA(Amazon Managed Workflows for Apache Airflow)
 
+> **Having trouble?** Start with the automated troubleshooting runbooks. Use [AWSSupport-TroubleshootMWAAEnvironmentCreation](https://docs.aws.amazon.com/systems-manager-automation-runbooks/latest/userguide/automation-troubleshoot-mwaa-environment-creation.html) to diagnose environment creation failures, or run [AWSSupport-ValidateMWAADependencies](https://docs.aws.amazon.com/systems-manager-automation-runbooks/latest/userguide/automation-awssupport-validatemwaadependencies.html) to validate your environment's dependencies and configuration. These runbooks are maintained with the latest diagnostics and are the recommended first step.
+
 ## verify environment
 An environment can fail to create for the following reasons [documented here](https://docs.aws.amazon.com/mwaa/latest/userguide/troubleshooting.html#t-create-environ-failed)
 
