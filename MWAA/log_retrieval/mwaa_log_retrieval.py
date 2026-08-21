@@ -1,3 +1,4 @@
+
 # Copyright 2024-2026 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file
@@ -10,6 +11,8 @@
 # License for the specific language governing permissions and limitations under the License.
 
 import boto3
+import os
+import sys
 import time
 import argparse
 from datetime import datetime, timezone
@@ -32,12 +35,6 @@ def to_utc_timestamp_ms(date_str):
     """
     dt = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     return int(dt.timestamp() * 1000)
-
-def filter_health_checks(event):
-    """Filter out health check logs and other unwanted entries"""
-    message = event['message']
-    return not ('GET /health HTTP/1.1' in message or 
-                'ELB-HealthChecker' in message)
 
 def construct_log_group_names(environment_name):
     """
@@ -110,10 +107,16 @@ Note: All times are interpreted as UTC.
         default=None,
         help='AWS region (optional, uses default if not specified)'
     )
+    parser.add_argument(
+        '--keep-local',
+        action='store_true',
+        default=False,
+        help='Keep local log files after S3 upload (default: delete after upload)'
+    )
     
     return parser.parse_args()
 
-def get_logs_and_upload_to_s3(log_group_name, start_time_str, end_time_str, bucket_name, s3_prefix='', region=None):
+def get_logs_and_upload_to_s3(log_group_name, start_time_str, end_time_str, bucket_name, s3_prefix='', region=None, keep_local=False):
     try:
         # Initialize AWS clients
         if region:
@@ -144,6 +147,7 @@ def get_logs_and_upload_to_s3(log_group_name, start_time_str, end_time_str, buck
         print(f"S3 Bucket    : {bucket_name}")
         print(f"S3 Prefix    : {s3_prefix if s3_prefix else 'None'}")
         print(f"AWS Region   : {region if region else 'Default'}")
+        print(f"Keep Local   : {keep_local}")
         print(f"{'='*60}\n")
 
         # Convert datetime strings to UTC Unix timestamp (milliseconds)
@@ -212,6 +216,14 @@ def get_logs_and_upload_to_s3(log_group_name, start_time_str, end_time_str, buck
             s3_client.upload_file(file_name, bucket_name, s3_key)
             print(f"✓ Logs successfully uploaded to: s3://{bucket_name}/{s3_key}")
             print(f"✓ Total log events retrieved: {len(all_events)}")
+
+            # Clean up local file unless --keep-local is set
+            if not keep_local:
+                os.remove(file_name)
+                print(f"✓ Local file removed: {file_name}")
+            else:
+                print(f"✓ Local file retained: {file_name}")
+
             return True
 
         except cloudwatch_logs.exceptions.ResourceNotFoundException:
@@ -260,7 +272,8 @@ if __name__ == "__main__":
                 end_time_str=args.end,
                 bucket_name=args.bucket,
                 s3_prefix=args.prefix,
-                region=args.region
+                region=args.region,
+                keep_local=args.keep_local
             )
             results[log_group] = success
         
@@ -277,12 +290,12 @@ if __name__ == "__main__":
         print(f"\nCompleted: {successful}/{total} log groups processed successfully.")
         print(f"{'='*60}")
         
-        exit(0 if any(results.values()) else 1)
+        sys.exit(0 if any(results.values()) else 1)
         
     except KeyboardInterrupt:
         print("\nOperation cancelled by user.")
-        exit(1)
+        sys.exit(1)
     except Exception as e:
         print(f"An unexpected error occurred: {str(e)}")
-        exit(1)
+        sys.exit(1)
 
