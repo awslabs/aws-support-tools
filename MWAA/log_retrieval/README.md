@@ -26,10 +26,10 @@ python mwaa_log_retrieval.py -n <ENVIRONMENT_NAME> -s <START_TIME> -e <END_TIME>
 **Example:**
 
 ```bash
-python mwaa_log_retrieval.py -l "airflow-MyAirflowEnvironment_test-Task" \
-                 -s "2024-07-08 13:00:00" \
-                 -e "2024-07-08 14:00:00" \
-                 -b "amzn-s3-demo-mwaa-logs"
+python mwaa_log_retrieval.py -n "MyAirflowEnvironment" \
+    -s "2024-07-08 13:00:00" \
+    -e "2024-07-08 14:00:00" \
+    -b "amzn-s3-demo-mwaa-logs"
 ```
 
 ## Parameters
@@ -43,6 +43,7 @@ python mwaa_log_retrieval.py -l "airflow-MyAirflowEnvironment_test-Task" \
 | Log Types | `-t` / `--log-types` | Specific log types to fetch (default: all 5). Choices: DAGProcessing, Scheduler, Task, WebServer, Worker | Yes |
 | S3 Prefix | `-p` / `--prefix` | S3 prefix/folder path | Yes |
 | AWS Region | `-r` / `--region` | AWS region (uses default if not specified) | Yes |
+| Keep Local | `--keep-local` | Keep local log files after S3 upload (default: files are deleted after upload) | Yes |
 | Log Group (legacy) | `-l` / `--log-group` | Direct log group name (legacy mode, use instead of `-n`) | Yes |
 
 **Note:** `-n` and `-l` are mutually exclusive. Use `-n` for auto log-group naming (recommended) or `-l` for direct log group specification (legacy).
@@ -72,12 +73,28 @@ python mwaa_log_retrieval.py -n "MyAirflowEnvironment" -t Task Scheduler \
     -b "amzn-s3-demo-mwaa-logs" -p "output_logs"
 ```
 
+**Keep local files after upload:**
+
+```bash
+python mwaa_log_retrieval.py -n "MyAirflowEnvironment" \
+    -s "2024-07-08 13:00:00" -e "2024-07-08 14:00:00" \
+    -b "amzn-s3-demo-mwaa-logs" --keep-local
+```
+
+**Legacy mode (direct log group specification):**
+
+```bash
+python mwaa_log_retrieval.py -l "airflow-MyAirflowEnvironment-Task" \
+    -s "2024-07-08 13:00:00" -e "2024-07-08 14:00:00" \
+    -b "amzn-s3-demo-mwaa-logs"
+```
+
 ## Output
 
 The script generates two outputs per log group:
 
-1. **Local text file:** `<log_group_name>_<timestamp>.txt`
-2. **S3 upload:** The local file is automatically uploaded to `s3://<bucket_name>/<prefix>/<filename>`
+1. **S3 upload:** Log file is uploaded to `s3://<bucket_name>/<prefix>/<filename>`
+2. **Local text file (optional):** `<log_group_name>_<timestamp>.txt` (retained only if `--keep-local` is used)
 
 **Sample output logs:**
 
@@ -148,8 +165,7 @@ The AWS credentials used must have the following permissions:
     {
       "Effect": "Allow",
       "Action": [
-        "s3:PutObject",
-        "s3:PutObjectAcl"
+        "s3:PutObject"
       ],
       "Resource": "arn:aws:s3:::<your-bucket-name>/*"
     }
@@ -164,3 +180,5 @@ The AWS credentials used must have the following permissions:
 - **Bucket name only.** For the `-b` flag, provide just the bucket name (e.g., `amzn-s3-demo-mwaa-logs`), not the full S3 URI. Use `-p` for the prefix/folder path.
 - **Large time ranges** will result in more events and longer execution times. For troubleshooting, start with a 1-2 hour window.
 - **MWAA logging must be enabled** in the MWAA console for the log groups to exist. If you get a "log group not found" error, verify logging is enabled for that log type.
+- **Local file cleanup:** By default, local log files are deleted after successful S3 upload. Use `--keep-local` to retain them.
+- **Health-check filtering:** The script applies a server-side filter to exclude ELB health-check entries (`GET /health` and `ELB-HealthChecker`). These entries only appear in WebServer logs, the filter is harmless for other log types but reduces noise when fetching WebServer logs.
