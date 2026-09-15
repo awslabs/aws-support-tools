@@ -236,12 +236,6 @@ require_bin() {
   command -v "$1" >/dev/null 2>&1 || die $E_USAGE "missing required binary: $1"
 }
 
-sha256_file() {
-  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'
-  elif command -v shasum >/dev/null 2>&1; then shasum -a 256 "$1" | awk '{print $1}'
-  else die $E_USAGE "need sha256sum or shasum"
-  fi
-}
 
 aws_cmd=()
 build_aws_cmd() {
@@ -1014,7 +1008,7 @@ s5_changelog() {
     return
   fi
 
-  local any_reached=0 any_signal=0 breaking_hits=0
+  local any_reached=0
   local i src type url content
   for i in $(seq 0 $((count-1))); do
     src=$(printf '%s' "$sources" | jq -c ".[$i]")
@@ -1029,7 +1023,6 @@ s5_changelog() {
           hits=$(printf '%s' "$content" | jq -c --arg from "$current" --arg to "$target" \
             '[.[]? | select(.tag_name!=null) | {tag:.tag_name, name:.name, body:.body, labels:[]} ]' 2>/dev/null || echo "[]")
           if [[ "$hits" != "[]" ]]; then
-            any_signal=1
             local hits_between
             hits_between=$(printf '%s' "$hits" | jq -c --arg cur "$current" --arg tgt "$target" \
               '[.[] | select(.tag != null)]' 2>/dev/null || echo "[]")
@@ -1052,7 +1045,6 @@ s5_changelog() {
                   if printf '%s' "$body" | grep -Eqi -- "$regex"; then hit=1; break; fi
                 done <<<"$regex_list"
                 if (( hit == 1 )); then
-                  breaking_hits=$((breaking_hits+1))
                   emit_finding \
                     "${addon}-${target}-upstream-breaking-${tag}" \
                     "changelog" "SOFT" "single-signal-heuristic" \
@@ -1079,8 +1071,6 @@ s5_changelog() {
           # regex "any char" wildcards (e.g. v1.49.0 must not match v1X49X0).
           if printf '%s' "$content" | grep -Fqi -- "$target"; then
             if printf '%s' "$content" | grep -Eqi -- "breaking|deprecat|removed"; then
-              any_signal=1
-              breaking_hits=$((breaking_hits+1))
               emit_finding \
                 "${addon}-${target}-aws-release-notes" \
                 "changelog" "FYI" "single-signal-heuristic" \

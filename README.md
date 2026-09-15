@@ -70,6 +70,8 @@ See also: [MGNDRS tools](#aws-mgn--drs-cross-service) for scripts that work acro
 | Tool | Description |
 |------|-------------|
 | [subnet-fragmentation](EKS/subnet-fragmentation/) | Diagnose /28 block fragmentation in VPC subnets used for EKS prefix delegation. Identifies why a subnet with free IPs still fails prefix allocation with InsufficientCidrBlocks |
+| [eks-addon-upgrade-check](EKS/eks-addon-upgrade-check/) | Pre-upgrade compatibility check for EKS managed add-ons. Grades an add-on upgrade across multiple signals and emits a Markdown/JSON report with a CI-gate exit code |
+
 
 ### Amazon EMR
 
