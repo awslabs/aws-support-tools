@@ -1,3 +1,8 @@
+## [Unreleased]
+
+### Fixed
+- **EC2/NitroInstanceChecks**: Read and set the NVMe `io_timeout` on the boot entries the system actually boots from (BLS entries via `grubby`, grubenv `kernelopts`, or `grub.cfg`). Previously the script edited `/etc/default/grub` and regenerated `grub.cfg`, which on RHEL 9.3+, RHEL 10 and Rocky 9 leaves the Boot Loader Specification entries untouched while the script reported success; it also reported "not set" on stock RHEL 8/9/10 AMIs that already set it. Detect a built-in NVMe driver via `modules.builtin` instead of `grep nvme System.map`, which matched the unrelated `nvmem` subsystem and skipped the initramfs check on every modular-NVMe kernel (#181). Resolve udev symlinks and match fstab fields exactly when converting device names to UUIDs (#63, #126). Treat an empty `lsinitrd` listing as "could not inspect" rather than "module missing" (#98). Never run a bare redirection as the grub command, which truncated `grub.cfg` when no generator was found. Add `-y`/`-n` flags, check-only mode when stdin is not a terminal, and a non-zero exit status when issues remain.
+
 ## [v1.6.0] - 2026-07-10
 
 ### Removed
