@@ -247,7 +247,7 @@ grub_default_add_param () {
 # the parameter), WITH = entries already at the required value, VALUES = every io_timeout value seen.
 timeout_coverage () {
     local lines
-    lines=$(bootloader_cmdlines | grep -vE '(^|[[:space:]])(recovery|single)([[:space:]]|$)|memtest' | grep -v '^[[:space:]]*$')
+    lines=$(bootloader_cmdlines | grep -vE '(^|[[:space:]])(recovery|single)([[:space:]]|$)|memtest86' | grep -v '^[[:space:]]*$')
     TOTAL=$(printf '%s\n' "$lines" | grep -c .)
     WITH=$(printf '%s\n' "$lines" | grep -cE "nvme(_core)?\.io_timeout=${NVME_MAX}([[:space:]]|$)")
     VALUES=$(printf '%s\n' "$lines" | grep -oE 'nvme(_core)?\.io_timeout=[0-9]+' | cut -d= -f2 | sort -un)
@@ -424,10 +424,10 @@ check_fstab () {
             [ -z "$uuid" ] && uuid=$(lsblk -no UUID "$resolved" 2>/dev/null | head -1)
         fi
         if [ -n "$uuid" ]; then
-            # Replace field 1 exactly (so /dev/xvdf never rewrites a /dev/xvdf1 line), then check the
-            # line really changed before counting it. mawk 1.3.3 can silently not match.
+            # Replace field 1 exactly (so /dev/xvdf never rewrites a /dev/xvdf1 line), then check no line
+            # still starts with the device name before counting it. mawk 1.3.3 can silently not match.
             awk -v d="$dev" -v u="UUID=${uuid}" '$0 !~ /^[ \t]*#/ && $1 == d {sub(/^[ \t]*[^ \t]+/, u)} {print}' "$tmp_new" > "${tmp_new}.1" && mv "${tmp_new}.1" "$tmp_new"
-            if grep -qE "^[ \t]*UUID=${uuid}[ \t]" "$tmp_new" && ! awk -v d="$dev" '$0 !~ /^[ \t]*#/ && $1 == d {f=1} END {exit !f}' "$tmp_new"; then
+            if ! awk -v d="$dev" '$0 !~ /^[ \t]*#/ && $1 == d {f=1} END {exit !f}' "$tmp_new"; then
                 changed=$((changed+1))
                 echo "  ${dev} -> UUID=${uuid}  (${resolved})"
             else
