@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 from __future__ import print_function
 
 import requests
@@ -111,14 +111,14 @@ else:
 
 print ("\n\nAre you sure that you have taken a manual snapshot? (Yes/No)")
 print ("> ", end="")
-choice = raw_input().upper()
+choice = input().upper()
 if ((choice == 'Y') or (choice == 'YES') or (choice == 'yes') or (choice == 'y')):
 
     # Index candidates found for deletion. Continuing on with the program.
     print ("\n\nAre you sure you wish to remove indices that were created before this threshold value? (Yes/No)")
     print ("This option can NOT be undone!")
     print ("> ", end="")
-    choice = raw_input().upper()
+    choice = input().upper()
 
 
     if ((choice == 'Y') or (choice == 'YES')):
