@@ -48,10 +48,18 @@ def main():
     try:
         s3_dest.head_bucket(Bucket=args.destination_bucket)
     except Exception:
-        constraint = {'us-east-1': 'US', 'eu-west-1': 'EU'}.get(args.destination_region, args.destination_region)
-        s3_dest.create_bucket(Bucket=args.destination_bucket, CreateBucketConfiguration={'LocationConstraint': constraint})
-        s3_dest.put_bucket_versioning(Bucket=args.destination_bucket, VersioningConfiguration={'Status': 'Enabled'})
-    
+        # us-east-1 does not accept a LocationConstraint ("US" is rejected with
+        # InvalidLocationConstraint); the bucket must be created without one.
+        if args.destination_region == 'us-east-1':
+            s3_dest.create_bucket(Bucket=args.destination_bucket)
+        else:
+            s3_dest.create_bucket(Bucket=args.destination_bucket,
+                                  CreateBucketConfiguration={'LocationConstraint': args.destination_region})
+
+    # Replication requires versioning on the destination too, including when the
+    # destination bucket already existed.
+    s3_dest.put_bucket_versioning(Bucket=args.destination_bucket, VersioningConfiguration={'Status': 'Enabled'})
+
     # Enable versioning on source
     s3_src.put_bucket_versioning(Bucket=args.source_bucket, VersioningConfiguration={'Status': 'Enabled'})
     
