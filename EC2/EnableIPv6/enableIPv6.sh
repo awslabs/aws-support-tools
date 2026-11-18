@@ -28,7 +28,7 @@
 exec > >(tee -ia log-enableIPv6.log)
 exec 2> >(tee -ia log-enableIPv6.log >&2)
 
-REGIONLIST=(`echo $(aws ec2 describe-regions --output text --query 'Regions[*].RegionName' | tr -s '\t' ' ')`)
+read -ra REGIONLIST <<< "$(aws ec2 describe-regions --output text --query 'Regions[*].RegionName' | tr -s '\t' ' ')"
 
 # By default the REGIONLIST is populated with all current regions. If you wish to curate your own list of regions,
 # uncomment the following line and edit the space-delimited list for your needs.
