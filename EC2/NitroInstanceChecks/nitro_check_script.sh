@@ -213,10 +213,16 @@ bootloader_cmdlines () {
         grub2-editenv - list 2>/dev/null | sed -n 's/^kernelopts=//p'
         return
     fi
+    # Use the first config that has kernel entries. Reading all of them picks up stale files, like the
+    # old /boot/grub/menu.lst still shipped on Ubuntu 18.04. Skip the os-prober block too: on a single
+    # OS host those are duplicate entries that never get GRUB_CMDLINE_LINUX_DEFAULT.
     for f in /boot/grub2/grub.cfg /boot/grub/grub.cfg /boot/efi/EFI/*/grub.cfg /boot/grub/menu.lst /boot/grub/grub.conf; do
         [ -f "$f" ] || continue
-        grep -hE '^[[:space:]]*(linux|linuxefi|linux16|kernel)[[:space:]]' "$f" 2>/dev/null
-        grep -hE '^[[:space:]]*set[[:space:]]+(default_)?kernelopts=' "$f" 2>/dev/null
+        if grep -qE '^[[:space:]]*(linux|linuxefi|linux16|kernel)[[:space:]]' "$f" 2>/dev/null; then
+            sed -e '/^### BEGIN \/etc\/grub.d\/30_os-prober ###/,/^### END \/etc\/grub.d\/30_os-prober ###/d' "$f" 2>/dev/null \
+              | grep -hE '^[[:space:]]*(linux|linuxefi|linux16|kernel)[[:space:]]|^[[:space:]]*set[[:space:]]+(default_)?kernelopts='
+            return
+        fi
     done
 }
 
@@ -237,11 +243,11 @@ grub_default_add_param () {
     fi
 }
 
-# timeout_coverage: sets TOTAL (boot entries, recovery entries excluded) and WITH (entries that
-# already carry io_timeout at the required value). Also sets VALUES to every io_timeout value seen.
+# timeout_coverage: TOTAL = boot entries (recovery, single and memtest86+ excluded, they never take
+# the parameter), WITH = entries already at the required value, VALUES = every io_timeout value seen.
 timeout_coverage () {
     local lines
-    lines=$(bootloader_cmdlines | grep -vE '(^|[[:space:]])(recovery|single)([[:space:]]|$)' | grep -v '^[[:space:]]*$')
+    lines=$(bootloader_cmdlines | grep -vE '(^|[[:space:]])(recovery|single)([[:space:]]|$)|memtest' | grep -v '^[[:space:]]*$')
     TOTAL=$(printf '%s\n' "$lines" | grep -c .)
     WITH=$(printf '%s\n' "$lines" | grep -cE "nvme(_core)?\.io_timeout=${NVME_MAX}([[:space:]]|$)")
     VALUES=$(printf '%s\n' "$lines" | grep -oE 'nvme(_core)?\.io_timeout=[0-9]+' | cut -d= -f2 | sort -un)
@@ -332,6 +338,14 @@ check_nvme_timeout () {
     if [ "$USE_GRUBBY" = 0 ]; then
         local cfg=""
         if [ "$gen" = update-grub ]; then
+            # update-grub rewrites grub.cfg; back it up first like the other paths do
+            for cfg in /boot/grub/grub.cfg /boot/grub2/grub.cfg; do
+                if [ -f "$cfg" ]; then
+                    cp -a "$cfg" "${cfg}.backup.${time_stamp}"
+                    echo "Original ${cfg} saved as ${cfg}.backup.${time_stamp}"
+                    break
+                fi
+            done
             update-grub
         elif [ -n "$gen" ]; then
             for cfg in /boot/grub2/grub.cfg /boot/grub/grub.cfg /boot/efi/EFI/*/grub.cfg; do
@@ -391,8 +405,9 @@ check_fstab () {
     tmp_dev=$(mktemp /tmp/fstab.dev.XXXXXX) || { rm -f "$tmp_new"; return; }
     trap 'rm -f "$tmp_new" "$tmp_dev"' RETURN
 
-    # First field of every non-comment line that is a /dev/sd* or /dev/xvd* name
-    awk '$0 !~ /^[[:space:]]*#/ && $1 ~ /^\/dev\/(sd|xvd)[a-z]+[0-9]*$/ {print $1}' /etc/fstab | sort -u > "$tmp_dev"
+    # First field of every non-comment line that is a /dev/sd* or /dev/xvd* name.
+    # [ \t] rather than [[:space:]]: mawk (Ubuntu 18.04 without gawk) does not support POSIX classes.
+    awk '$0 !~ /^[ \t]*#/ && $1 ~ /^\/dev\/(sd|xvd)[a-z]+[0-9]*$/ {print $1}' /etc/fstab | sort -u > "$tmp_dev"
 
     if [ ! -s "$tmp_dev" ]; then
         ok "fstab does not mount anything by /dev/sd* or /dev/xvd* device name"
@@ -409,10 +424,16 @@ check_fstab () {
             [ -z "$uuid" ] && uuid=$(lsblk -no UUID "$resolved" 2>/dev/null | head -1)
         fi
         if [ -n "$uuid" ]; then
-            # Replace field 1 exactly (so /dev/xvdf never rewrites a /dev/xvdf1 line)
-            awk -v d="$dev" -v u="UUID=${uuid}" '$0 !~ /^[[:space:]]*#/ && $1 == d {sub(/^[[:space:]]*[^[:space:]]+/, u)} {print}' "$tmp_new" > "${tmp_new}.1" && mv "${tmp_new}.1" "$tmp_new"
-            changed=$((changed+1))
-            echo "  ${dev} -> UUID=${uuid}  (${resolved})"
+            # Replace field 1 exactly (so /dev/xvdf never rewrites a /dev/xvdf1 line), then check the
+            # line really changed before counting it. mawk 1.3.3 can silently not match.
+            awk -v d="$dev" -v u="UUID=${uuid}" '$0 !~ /^[ \t]*#/ && $1 == d {sub(/^[ \t]*[^ \t]+/, u)} {print}' "$tmp_new" > "${tmp_new}.1" && mv "${tmp_new}.1" "$tmp_new"
+            if grep -qE "^[ \t]*UUID=${uuid}[ \t]" "$tmp_new" && ! awk -v d="$dev" '$0 !~ /^[ \t]*#/ && $1 == d {f=1} END {exit !f}' "$tmp_new"; then
+                changed=$((changed+1))
+                echo "  ${dev} -> UUID=${uuid}  (${resolved})"
+            else
+                unresolved=$((unresolved+1))
+                echo "  ${dev}: replacement did not apply; left unchanged"
+            fi
         else
             unresolved=$((unresolved+1))
             echo "  ${dev}: no filesystem UUID found (device absent or has no filesystem); left unchanged"
