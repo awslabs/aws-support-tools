@@ -1009,14 +1009,14 @@ s5_changelog() {
   fi
 
   local any_reached=0
-  local i src type url content
+  local i src type url content cache_path
   for i in $(seq 0 $((count-1))); do
     src=$(printf '%s' "$sources" | jq -c ".[$i]")
     type=$(printf '%s' "$src" | jq -r '.type')
     case "$type" in
       github-releases)
         url=$(printf '%s' "$src" | jq -r '.releasesApi')
-        local cache_path="$CACHE_DIR/changelogs/${addon}/gh_$(printf '%s' "$url" | { command -v sha256sum >/dev/null 2>&1 && sha256sum || shasum -a 256; } | awk '{print $1}').json"
+        cache_path="$CACHE_DIR/changelogs/${addon}/gh_$(printf '%s' "$url" | { command -v sha256sum >/dev/null 2>&1 && sha256sum || shasum -a 256; } | awk '{print $1}').json"
         if content=$(fetch_url "$url" "$cache_path"); then
           any_reached=1
           local hits
@@ -1063,7 +1063,7 @@ s5_changelog() {
         ;;
       aws-release-notes)
         url=$(printf '%s' "$src" | jq -r '.url')
-        local cache_path="$CACHE_DIR/changelogs/${addon}/aws_$(printf '%s' "$url" | { command -v sha256sum >/dev/null 2>&1 && sha256sum || shasum -a 256; } | awk '{print $1}').html"
+        cache_path="$CACHE_DIR/changelogs/${addon}/aws_$(printf '%s' "$url" | { command -v sha256sum >/dev/null 2>&1 && sha256sum || shasum -a 256; } | awk '{print $1}').html"
         if content=$(fetch_url "$url" "$cache_path"); then
           any_reached=1
           # very light heuristic — search page for target version + "breaking" nearby.
