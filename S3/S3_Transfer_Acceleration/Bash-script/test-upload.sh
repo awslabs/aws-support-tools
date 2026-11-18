@@ -67,7 +67,7 @@ fi
 endtime=$(date +"%s.%N")
 time_elapsed=$(calc "$endtime-$starttime")
 throughput=$(calc "$filesize*8/$time_elapsed")
-throughput_in_mbps=$(printf "%.2f" "$(calc "$throughput/(1024*1024)")")
+throughput_in_mbps=$(LC_ALL=C printf "%.2f" "$(calc "$throughput/(1024*1024)")")
 echo "File uploaded $use_acceleration_str at $throughput_in_mbps Mbps speed."
 
 delete_file=$(readyn 'Do you want to delete the uploaded file: (y/n)')
