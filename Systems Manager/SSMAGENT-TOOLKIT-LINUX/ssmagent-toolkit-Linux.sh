@@ -1,3 +1,4 @@
+#!/bin/bash
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  
 #  Licensed under the Apache License, Version 2.0 (the "License").
@@ -13,7 +14,6 @@
 #  limitations under the License.
 #  
 #
-#!/bin/bash
 
 
 # Diagnostic Test Function
@@ -32,13 +32,9 @@ echo "
 "
 
     Region=$fetchregion
-    METADATA_URL=169.254.169.254
     ec2end=ec2messages.$Region.amazonaws.com
     ssmend=ssm.$Region.amazonaws.com
     ssmmessagesend=ssmmessages.$Region.amazonaws.com
-    HTTPSPORT=443
-    HTTPPORT=80
-    TIMEOUT=1
 
     printf "Check|Value|Note\n" >> /tmp/ssmtoolkitscript-output.txt
     echo "-----|-----|-----" >> /tmp/ssmtoolkitscript-output.txt
@@ -163,7 +159,7 @@ echo "
        Note6="$SSMAGENTISSUE"
       fi
      else
-      if [ $(dpkg-query -W -f='${Status}' amazon-ssm-agent 2>/dev/null | grep -c "ok installed") -eq 1 ];
+      if [ "$(dpkg-query -W -f='${Status}' amazon-ssm-agent 2>/dev/null | grep -c "ok installed")" -eq 1 ];
       then
        Result6=`systemctl is-active  amazon-ssm-agent`
       else
@@ -172,7 +168,7 @@ echo "
       fi
      fi
     else
-     Results6="Unable to determine OS"
+     Result6="Unable to determine OS"
      Note6="$SSMAGENTISSUE"
     fi 
     printf "$Test6|$Result6|$Note6\n" >> /tmp/ssmtoolkitscript-output.txt
@@ -185,25 +181,25 @@ echo "
         Note7="SSM Agent not present. Skipping this test.."
         printf "$Test7|$Results7|$Note7\n" >> /tmp/ssmtoolkitscript-output.txt 
     else    
-        sudo xargs --null --max-args=1 < /proc/$(pidof amazon-ssm-agent)/environ | grep -e "http_proxy" > /dev/null 2>/dev/null
+        sudo xargs --null --max-args=1 < /proc/"$(pidof amazon-ssm-agent)"/environ | grep -e "http_proxy" > /dev/null 2>/dev/null
         if [ $? -eq 0 ];then
-            Results7a=`sudo xargs --null --max-args=1 < /proc/$(pidof amazon-ssm-agent)/environ | grep -e "http_proxy"`
+            Results7a=`sudo xargs --null --max-args=1 < /proc/"$(pidof amazon-ssm-agent)"/environ | grep -e "http_proxy"`
             Note7=N/A
         else
             Results7a="http_proxy=NULL"
             Note7=$Proxy_doc
         fi
-        sudo xargs --null --max-args=1 < /proc/$(pidof amazon-ssm-agent)/environ | grep -e "https_proxy" > /dev/null 2>/dev/null
+        sudo xargs --null --max-args=1 < /proc/"$(pidof amazon-ssm-agent)"/environ | grep -e "https_proxy" > /dev/null 2>/dev/null
         if [ $? -eq 0 ];then
-            Results7b=`sudo xargs --null --max-args=1 < /proc/$(pidof amazon-ssm-agent)/environ | grep -e "https_proxy"`
+            Results7b=`sudo xargs --null --max-args=1 < /proc/"$(pidof amazon-ssm-agent)"/environ | grep -e "https_proxy"`
             Note7=N/A
         else
             Results7b="http_proxys=NULL"
             Note7=$Proxy_doc
         fi
-        sudo xargs --null --max-args=1 < /proc/$(pidof amazon-ssm-agent)/environ | grep -e "no_proxy" > /dev/null 2>/dev/null
+        sudo xargs --null --max-args=1 < /proc/"$(pidof amazon-ssm-agent)"/environ | grep -e "no_proxy" > /dev/null 2>/dev/null
         if [ $? -eq 0 ];then
-            Results7c=`sudo xargs --null --max-args=1 < /proc/$(pidof amazon-ssm-agent)/environ | grep -e "no_proxy"`
+            Results7c=`sudo xargs --null --max-args=1 < /proc/"$(pidof amazon-ssm-agent)"/environ | grep -e "no_proxy"`
             Note7=N/A
         else
             Results7c="no_proxy=NULL"
@@ -245,12 +241,12 @@ echo "
     #-------Test9------
 
     Test9="Nameservers(DNS) configured on the server"
-    nameservers=($(cat /etc/resolv.conf  | grep -v '^#' | grep nameserver | awk '{print $2}'))
+    mapfile -t nameservers < <(grep -v '^#' /etc/resolv.conf | grep nameserver | awk '{print $2}')
     if [ ${#nameservers[@]} -eq 0 ]; then
         Results9="Fail"
         Note9="No DNS servers found in /etc/resolv.conf"
     else
-        Results9=${nameservers[@]}
+        Results9=${nameservers[*]}
         Note9="DNS servers found in /etc/resolv.conf"
     fi    
     printf "$Test9|$Results9|$Note9\n" >> /tmp/ssmtoolkitscript-output.txt
@@ -258,10 +254,10 @@ echo "
 
     #-------Test10------
 
-    Test10=""Resolving" $ssmend"
-    ip=($(dig +short $ssmend))
+    Test10="Resolving $ssmend"
+    mapfile -t ip < <(dig +short "$ssmend")
     if (( ${#ip[@]} ));then
-     Results10=${ip[@]}
+     Results10=${ip[*]}
      Note10="N/A"
     else
      Results10="Null"
@@ -296,7 +292,7 @@ read -t 4 -p "Press S for SSM agent Logs. Press R for Run Command Logs. Values a
 echo "No Input Provided. The default value is ${REPLY:=S}. Collecting SSM Agent logs.."
 
 if [ $REPLY == "S" ];then
- tar -cf AWS_SSMLOGS_$(date +%F).tar --absolute-names /var/log/amazon/ssm/ --exclude='/var/log/amazon/ssm/download'
+ tar -cf "AWS_SSMLOGS_$(date +%F).tar" --absolute-names /var/log/amazon/ssm/ --exclude='/var/log/amazon/ssm/download'
  echo "Logs stored in the current working directory : AWS_SSMLOGS_$(date +%F).tar"
 elif [ $REPLY == "R" ];then
  echo -n "Enter the Command execution ID: ";
