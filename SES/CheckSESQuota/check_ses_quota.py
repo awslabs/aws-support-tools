@@ -16,7 +16,7 @@ __author__ = 'Said Ali Samed'
 
 # Get Lambda environment variables
 region = os.environ['REGION']
-alert_threshold = os.environ['ALERT_THRESHOLD']
+alert_threshold = float(os.environ['ALERT_THRESHOLD'])
 sns_topic_arn = os.environ['TOPIC']
 
 
