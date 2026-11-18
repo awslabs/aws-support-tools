@@ -373,6 +373,17 @@ fetch_url() {
   printf '%s' "$content"
 }
 
+# sha256_of_string <text> → prints the hex digest via whichever hasher exists
+# Returns non-zero only when neither tool is on PATH; callers then keep the
+# previous behaviour (an empty digest) instead of aborting under `set -e`.
+sha256_of_string() {
+  local hasher=(shasum -a 256)
+  if command -v sha256sum >/dev/null 2>&1; then
+    hasher=(sha256sum)
+  fi
+  printf '%s' "$1" | "${hasher[@]}" | awk '{print $1}'
+}
+
 # ------------------------------------------------------------------------------
 # Rules manifest
 # ------------------------------------------------------------------------------
@@ -1016,7 +1027,9 @@ s5_changelog() {
     case "$type" in
       github-releases)
         url=$(printf '%s' "$src" | jq -r '.releasesApi')
-        local cache_path="$CACHE_DIR/changelogs/${addon}/gh_$(printf '%s' "$url" | { command -v sha256sum >/dev/null 2>&1 && sha256sum || shasum -a 256; } | awk '{print $1}').json"
+        local digest cache_path
+        digest=$(sha256_of_string "$url") || digest=""
+        cache_path="$CACHE_DIR/changelogs/${addon}/gh_${digest}.json"
         if content=$(fetch_url "$url" "$cache_path"); then
           any_reached=1
           local hits
@@ -1063,7 +1076,9 @@ s5_changelog() {
         ;;
       aws-release-notes)
         url=$(printf '%s' "$src" | jq -r '.url')
-        local cache_path="$CACHE_DIR/changelogs/${addon}/aws_$(printf '%s' "$url" | { command -v sha256sum >/dev/null 2>&1 && sha256sum || shasum -a 256; } | awk '{print $1}').html"
+        local digest cache_path
+        digest=$(sha256_of_string "$url") || digest=""
+        cache_path="$CACHE_DIR/changelogs/${addon}/aws_${digest}.html"
         if content=$(fetch_url "$url" "$cache_path"); then
           any_reached=1
           # very light heuristic — search page for target version + "breaking" nearby.
