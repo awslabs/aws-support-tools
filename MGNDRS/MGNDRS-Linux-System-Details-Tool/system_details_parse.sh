@@ -195,7 +195,7 @@ check_boot_device() {
     } >> /var/log/system_details.log 2>&1
 
     # Run the first command to get the parent disk name
-    disk_name=$(lsblk -no pkname $(df / | tail -1 | awk '{print $1}'))
+    disk_name=$(lsblk -no pkname "$(df / | tail -1 | awk '{print $1}')")
 
     # Check if the output of the first command is empty
     if [ -z "$disk_name" ]; then
@@ -210,7 +210,7 @@ check_boot_device() {
         } >> /var/log/system_details.log 2>&1
     else
         # If the first command was successful, get the full disk information
-        if [ -n "$(lsblk -no pkname $(df / | tail -1 | awk '{print $1}'))" ]; then
+        if [ -n "$(lsblk -no pkname "$(df / | tail -1 | awk '{print $1}')")" ]; then
             {
                 lsblk -no NAME,MAJ:MIN,RM,SIZE,RO,TYPE | grep "^$disk_name" 
             }  >> /var/log/system_details.log 2>&1
