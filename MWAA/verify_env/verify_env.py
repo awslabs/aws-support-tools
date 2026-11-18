@@ -16,7 +16,6 @@ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTIO
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
-from __future__ import print_function
 import argparse
 import json
 import sys
@@ -64,7 +63,8 @@ def goodbye_message():
 
 if __name__ == '__main__':
     if sys.version_info[0] < 3:
-        print("python2 detected, please use python3. Will try to run anyway")
+        print("python2 detected, please use python3.")
+        sys.exit(1)
     if not verify_boto3(boto3.__version__):
         print("boto3 version ", boto3.__version__, "is not valid for this script. Need 1.16.25 or higher")
         print("please run pip install boto3 --upgrade --user")
