@@ -30,7 +30,8 @@ get_os_version() {
 
 # Function to configure DNS based on OS version
 configure_dns() {
-  local os_version=$(get_os_version)
+  local os_version
+  os_version=$(get_os_version)
     
   if [[ "$os_version" == "2023" ]]; then
     # AL2023 configuration using systemd-resolved
