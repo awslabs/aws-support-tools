@@ -30,7 +30,13 @@ def lambda_handler(event, context):
         else:
 
             subnet_id = get_subnet_id(instance_result)
+            if not subnet_id:
+                return
             interface_id = create_interface(asg_response, instance_result, subnet_id)
+            # create_interface has already abandoned the lifecycle action if it could not
+            # create the ENI, so stop here instead of also sending CONTINUE.
+            if not interface_id:
+                return
             attachment = attach_interface(interface_id, instance_id)
 
 
@@ -97,8 +103,9 @@ def create_interface(asg_response,instance_result,subnet_id):
         #checks if the AZs that the auto scaling group is enabled in has 2 subnets in each AZ
         if AZsubnets[0]== subnet_id:
             if len(AZsubnets)==1:
-                log("The AZ {} has only one subnet in the auto scaling group".format(azones))
+                log("The AZ {} has only one subnet in the auto scaling group".format(instancezone))
                 abandon_lifecycle_action(LifecycleHookName, AutoScalingGroupName, instance_id, LifecycleActionToken)
+                return None
 
             else:
                 subnet_id=AZsubnets[1]
