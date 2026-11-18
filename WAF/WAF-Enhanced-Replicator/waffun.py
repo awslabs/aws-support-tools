@@ -4,7 +4,6 @@
 #!/usr/bin/env python3
 
 # Modules Importing
-from __future__ import print_function
 from datetime import datetime
 import sys, os, uuid
 import boto3

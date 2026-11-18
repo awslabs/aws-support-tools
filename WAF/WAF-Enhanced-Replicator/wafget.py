@@ -4,7 +4,6 @@
 #!/usr/bin/env python3
 
 # Modules importing
-from __future__ import print_function
 import os, sys
 import waffun as function
 import boto3
