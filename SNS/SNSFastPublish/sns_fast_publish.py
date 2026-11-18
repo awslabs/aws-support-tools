@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
@@ -16,8 +16,6 @@
 # Time logging to s3. Creates a file with time information for each uploaded file
 # Get total publish time by calculating difference between earliest and the latest logged time across all files
 
-
-from __future__ import print_function
 
 import json
 import os
@@ -102,8 +100,8 @@ def publish(endpoint, message=None):
         publish_errors.append('%s, %s, %s, %s' %
                               (current_time(),
                                target_arn,
-                               ', '.join("%s=%r" % (k, v) for (k, v) in e.response['ResponseMetadata'].iteritems()),
-                               e.message))
+                               ', '.join("%s=%r" % (k, v) for (k, v) in e.response['ResponseMetadata'].items()),
+                               str(e)))
 
 
 def lambda_handler(event, context):
@@ -133,7 +131,7 @@ def lambda_handler(event, context):
             e.submit(publish, endpoint, message)
         e.shutdown()
     except Exception as e:
-        print(e.message + ' Aborting...')
+        print(str(e) + ' Aborting...')
         raise e
 
     print('Publish complete.')
