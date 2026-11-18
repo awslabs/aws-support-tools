@@ -34,18 +34,30 @@ opt_keys['--name'] = 'Name'
 
 awscli = "aws emr create-cluster "
 for i in opt_keys.keys():
-    if clst_info[opt_keys[i]] is True:
+    # LogUri, AutoScalingRole, EbsRootVolumeSize, ... are omitted by describe_cluster
+    # when they are not set on the cluster, so skip missing keys instead of crashing.
+    if opt_keys[i] not in clst_info:
+        continue
+    value = clst_info[opt_keys[i]]
+    if value is True:
         awscli += " " + i
+    elif value is False:
+        # boolean flags take no value; False maps to the --no-<flag> form
+        # (e.g. --no-auto-terminate), "--auto-terminate False" is not a valid CLI argument
+        awscli += " --no-" + i[2:]
     else:
-        awscli += " " + i + " " + str(clst_info[opt_keys[i]])
+        awscli += " " + i + " " + str(value)
 
 InstanceAtt = clst_info['Ec2InstanceAttributes']
 cli_InstanceAtt = {}
-cli_InstanceAtt['InstanceProfile'] = InstanceAtt.pop('IamInstanceProfile')
-cli_InstanceAtt['KeyName'] = InstanceAtt.pop('Ec2KeyName')
-cli_InstanceAtt['SubnetId'] = InstanceAtt.pop('Ec2SubnetId')
-cli_InstanceAtt['EmrManagedSlaveSecurityGroup'] = InstanceAtt.pop('EmrManagedSlaveSecurityGroup')
-cli_InstanceAtt['EmrManagedMasterSecurityGroup'] = InstanceAtt.pop('EmrManagedMasterSecurityGroup')
+# Ec2KeyName, Ec2SubnetId, ... are only present when they were set on the cluster
+for cli_key, api_key in (('InstanceProfile', 'IamInstanceProfile'),
+                         ('KeyName', 'Ec2KeyName'),
+                         ('SubnetId', 'Ec2SubnetId'),
+                         ('EmrManagedSlaveSecurityGroup', 'EmrManagedSlaveSecurityGroup'),
+                         ('EmrManagedMasterSecurityGroup', 'EmrManagedMasterSecurityGroup')):
+    if api_key in InstanceAtt:
+        cli_InstanceAtt[cli_key] = InstanceAtt.pop(api_key)
 awscli += ' --ec2-attributes ' + '\'' + str(json.dumps(cli_InstanceAtt)) + '\''
 
 
@@ -59,8 +71,13 @@ awscli += ' --tags ' + " ".join(list(map(lambda a: '\'%s=%s\'' % (a['Key'], a['V
 
 # steps
 cli_steps = []
-steps = client.list_steps(ClusterId=cluster_id)
-for item in steps['Steps']:
+# list_steps returns steps newest first and is paginated; collect every page and
+# reverse so create-cluster replays the steps in their original order.
+all_steps = []
+for page in client.get_paginator('list_steps').paginate(ClusterId=cluster_id):
+    all_steps.extend(page['Steps'])
+all_steps.reverse()
+for item in all_steps:
     cli_step = {}
     cli_step['Name'] = item['Name']
     cli_step['ActionOnFailure'] = item['ActionOnFailure']
