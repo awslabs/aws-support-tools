@@ -22,12 +22,12 @@ logger = logging.getLogger()
 # Logging level can be changed between logging.INFO to logging.ERROR to show verbose information or errors only in CloudWatch
 logger.setLevel(logging.ERROR)
 s3 = boto3.resource("s3")
-e164_format = re.compile("^\+?[1-9]\d{1,14}$")
+e164_format = re.compile(r"^\+?[1-9]\d{1,14}$")
 
 def lambda_handler(event, context):
     try:
         customer_no = event["Details"]["ContactData"]["CustomerEndpoint"]["Address"]
-        if e164_format.match(customer_no) == False:
+        if not e164_format.match(customer_no):
             raise Exception(
                 "Is it a valid phone number?")
         customer_country = phonenumbers.phonenumberutil.region_code_for_country_code(
@@ -69,7 +69,7 @@ def lambda_handler(event, context):
             "default_queue_outbound_country": default_queue_outbound_country
         }
         numObj = phonenumbers.parse(response["outbound_number"])
-        if not phonenumbers.is_valid_number(numObj) and e164_format.match(response["outbound_number"]) == False:
+        if not phonenumbers.is_valid_number(numObj) and not e164_format.match(response["outbound_number"]):
             logger.error("Outbound number {} is not valid.".format(
                 response["outbound_number"]))
             return None
@@ -125,7 +125,7 @@ def lambda_handler(event, context):
         "default_queue_outbound_country": default_queue_outbound_country
     }
     numObj = phonenumbers.parse(response["outbound_number"])
-    if not phonenumbers.is_valid_number(numObj) and e164_format.match(response["outbound_number"]) == False:
+    if not phonenumbers.is_valid_number(numObj) and not e164_format.match(response["outbound_number"]):
             logger.error("Outbound number {} is not valid.".format(
                 response["outbound_number"]))
             return None
