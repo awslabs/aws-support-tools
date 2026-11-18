@@ -37,7 +37,6 @@ set -o pipefail
 # ---------------------------------------------------------------------------
 
 SCRIPT_VERSION="3.7.1"
-SCRIPT_NAME=$(basename "$0")
 OUTPUT_DIR=""
 LOG_FILE="fsx_collect.log"
 FSX_CMD_COUNTER=0
@@ -45,7 +44,6 @@ CLIENT_CMD_COUNTER=0
 SSH_CONTROL_PATH=""
 SSH_HOST=""
 SSH_USER=""
-SSH_PORT=""
 SMB_CREDS_FILE=""
 
 # Color codes
@@ -54,7 +52,6 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
-MAGENTA='\033[0;35m'
 BOLD='\033[1m'
 NC='\033[0m'
 
@@ -64,10 +61,7 @@ FSX_ENDPOINT=""
 FSX_USERNAME="fsxadmin"
 FSX_PORT=22
 FSX_KEY_FILE=""
-SVM=""
-VOLUMES=""
 INCLUDE_CLIENT=false
-FSX_ONLY=false
 TEST_MOUNT=false
 MOUNT_ENDPOINT=""
 MOUNT_PATH=""
@@ -313,7 +307,6 @@ setup_ssh_control_master() {
     
     SSH_HOST="$host"
     SSH_USER="$username"
-    SSH_PORT="$port"
     
     local control_dir="/tmp/ssh_fsx_$$"
     mkdir -p "$control_dir"
