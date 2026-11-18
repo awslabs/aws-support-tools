@@ -16,9 +16,8 @@ This script will use the credentials and region configured with the AWS CLI if a
 
 ## Requirements
 * If you wish the script to upload the Lambda layer and deploy the layer to a Lambda function you will need [jq](https://stedolan.github.io/jq/) and zip.
-* python 2.7 will need [virtualenv](https://pip.pypa.io/en/stable/installing/)
 * python 3.x will need [venv](https://docs.python.org/3/library/venv.html) 
-* [pip](https://virtualenv.pypa.io/en/latest/)
+* [pip](https://pip.pypa.io/en/stable/)
 * [AWSCLI](https://docs.aws.amazon.com/cli/latest/userguide/install-macos.html) will need to be installed and configured if you wish to upload layers and/or associate layers with Lambda functions.
 
 ## Permissions

@@ -67,10 +67,7 @@ fi
 
 echo "Python virtual environment start:"
 # Python3.x
-# Alternative is to use virtualenv -p /usr/bin/python3 v-env
 python3 -m venv v-env
-# Can comment out the line above and remove the # below to allow Python2.7 virtual environments if you have python 2.7 installed
-#python2 -m virtualenv v-env
 
 # Activate virtual environment
 source v-env/bin/activate
