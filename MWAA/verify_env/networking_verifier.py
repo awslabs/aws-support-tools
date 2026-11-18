@@ -283,8 +283,19 @@ class NetworkingVerifier:
             self.report.write_all_locations('⚠️ Unexpected error while checking public access block config:', client_error.response)
             return False
 
-        # If we successfully got a config, check if public access is blocked or not
-        return public_access_block['PublicAccessBlockConfiguration']['BlockPublicAcls']
+        # "Block all public access" is only in effect when all four settings
+        # are enabled. BlockPublicAcls alone still allows a public bucket
+        # policy, so it must not be reported as blocked.
+        block_config = public_access_block['PublicAccessBlockConfiguration']
+        return all(
+            block_config.get(setting, False)
+            for setting in (
+                'BlockPublicAcls',
+                'IgnorePublicAcls',
+                'BlockPublicPolicy',
+                'RestrictPublicBuckets'
+            )
+        )
 
     def get_mwaa_utilized_services(self, vpc):
         '''return an array objects for the services checking for ecr.dks and if it exists add it to the array'''
