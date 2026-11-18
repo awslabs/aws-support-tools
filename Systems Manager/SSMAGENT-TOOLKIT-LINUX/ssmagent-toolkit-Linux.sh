@@ -172,7 +172,7 @@ echo "
       fi
      fi
     else
-     Results6="Unable to determine OS"
+     Result6="Unable to determine OS"
      Note6="$SSMAGENTISSUE"
     fi 
     printf "$Test6|$Result6|$Note6\n" >> /tmp/ssmtoolkitscript-output.txt
