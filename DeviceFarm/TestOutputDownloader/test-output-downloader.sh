@@ -13,7 +13,6 @@ JOB_ID=""
 SUITE_ID=""
 TEST_ID=""
 declare URL_TYPE=1 # 1:RUN, 2:JOB, 3:SUITE, 4:TEST;
-declare RUN_TYPE=1 # 1:Mobile 2. Browser
 
 verify_input() {
     if [ -z "$1" ]; then
@@ -39,6 +38,10 @@ parse_input_url_app() {
     echo 'Details retrieved from URL:'
     PRJECT_ID="$(echo $1 | cut -d/ -f7)"
     echo ' 1. ProjectID: ' $PRJECT_ID
+    if [ -z "$PRJECT_ID" ]; then
+        echo "!ERROR: cannot find the project ID in the URL, please check your input and try again."
+        exit 1
+    fi
 
     # Read and parse the URL, decide the URL type
     RUN_ID="$(echo $1 | cut -d/ -f9)"
@@ -84,7 +87,7 @@ parse_input_url_app() {
 }
 
 check_awscli_cred() {
-    if [ -z $(which aws) ]; then
+    if [ -z "$(which aws)" ]; then
         echo
         echo "!ERROR: need to install AWSCLI tool to use this script."
         echo
@@ -220,6 +223,10 @@ handle_browser_url() {
     echo
     PRJECT_ID="$(echo $1 | cut -d/ -f7)"
     echo ' 1. ProjectID: ' $PRJECT_ID
+    if [ -z "$PRJECT_ID" ]; then
+        echo "!ERROR: cannot find the project ID in the URL, please check your input and try again."
+        exit 1
+    fi
     RUN_ID="$(echo $1 | cut -d/ -f10)"
     if ! [ $RUN_ID ]; then
         echo "   No valid ID of runs, jobs, suites or test found in the URL."
@@ -285,19 +292,15 @@ main() {
 
         case $URL_TYPE in
         1)
-            Message="get_jobs_from_run"
             get_jobs_from_run "$1"
             ;;
         2)
-            Message="get_suites_from_job"
             get_suites_from_job "$1"
             ;;
         3)
-            Message="get_tests_from_suite"
             get_tests_from_suite "$1"
             ;;
         4)
-            Message="get_test_artifacts"
             get_test_artifacts "$1"
             ;;
         *)
@@ -312,7 +315,7 @@ main() {
     echo
     echo "Done, all logs downloaded into this file: ./aws-df-$PRJECT_ID.tgz"
     echo
-    rm -fr "$DOWNLDROOT/$PRJECT_ID"
+    rm -fr "${DOWNLDROOT:?}/${PRJECT_ID:?}"
 }
 
 main "$@"
