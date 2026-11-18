@@ -257,7 +257,6 @@ class NetworkingVerifier:
         account_id = get_account_id(self.env)
         bucket_arn = self.env['SourceBucketArn']
         bucket_name = bucket_arn.split(':')[-1]
-        public_access_block = None
 
         if any([self._check_access_blocked('bucket', self.s3, Bucket=bucket_name),
                 self._check_access_blocked('account', self.s3control, AccountId=account_id)]):
@@ -283,8 +282,15 @@ class NetworkingVerifier:
             self.report.write_all_locations('⚠️ Unexpected error while checking public access block config:', client_error.response)
             return False
 
-        # If we successfully got a config, check if public access is blocked or not
-        return public_access_block['PublicAccessBlockConfiguration']['BlockPublicAcls']
+        # If we successfully got a config, public access is only fully blocked
+        # when all four Block Public Access settings are enabled
+        config = public_access_block['PublicAccessBlockConfiguration']
+        return all(config.get(setting, False) for setting in (
+            'BlockPublicAcls',
+            'IgnorePublicAcls',
+            'BlockPublicPolicy',
+            'RestrictPublicBuckets',
+        ))
 
     def get_mwaa_utilized_services(self, vpc):
         '''return an array objects for the services checking for ecr.dks and if it exists add it to the array'''
