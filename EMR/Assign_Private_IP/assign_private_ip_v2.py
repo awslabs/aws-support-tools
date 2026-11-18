@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #Copyright 2023-2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
