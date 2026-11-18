@@ -116,7 +116,8 @@ log_debug() {
 # ---------------------------------------------------------------------------
 
 check_platform() {
-    local platform=$(uname -s)
+    local platform
+    platform=$(uname -s)
     
     if [[ "$platform" != "Linux" ]]; then
         log_error "This script is intended to run on Linux clients only"
@@ -207,7 +208,8 @@ get_install_command() {
 check_optional_dependencies() {
     log_info "Checking optional dependencies..."
     
-    local distro=$(detect_distro)
+    local distro
+    distro=$(detect_distro)
     local missing_tools=()
     
     local nfs_tools=("nfsstat" "showmount" "rpcinfo")
@@ -257,7 +259,8 @@ check_optional_dependencies() {
         echo "For more comprehensive diagnostics, you can install:"
         echo ""
         for tool in "${missing_tools[@]}"; do
-            local install_cmd=$(get_install_command "$distro" "$tool")
+            local install_cmd
+            install_cmd=$(get_install_command "$distro" "$tool")
             echo "  • $tool:  sudo $install_cmd"
         done
         echo ""
@@ -343,7 +346,8 @@ cleanup_ssh_control_master() {
         [[ -S "$SSH_CONTROL_PATH" ]] && rm -f "$SSH_CONTROL_PATH" 2>/dev/null || true
     fi
     
-    local control_dir=$(dirname "$SSH_CONTROL_PATH" 2>/dev/null)
+    local control_dir
+    control_dir=$(dirname "$SSH_CONTROL_PATH" 2>/dev/null)
     if [[ -d "$control_dir" && "$control_dir" == "/tmp/ssh_fsx_"* ]]; then
         rm -rf "$control_dir" 2>/dev/null || true
     fi
@@ -370,9 +374,12 @@ cleanup_temp_files() {
 cleanup_old_temp_files() {
     log_debug "Cleaning up orphaned temp files..."
     
-    local ssh_dirs=$(find /tmp -maxdepth 1 -type d -name "ssh_fsx_*" -mmin +10 2>/dev/null | wc -l)
-    local mount_scripts=$(find /tmp -maxdepth 1 -type f -name "*_mount_test_*.sh" -mmin +10 2>/dev/null | wc -l)
-    local cred_files=$(find /tmp -maxdepth 1 -type f -name "smb_creds_*.conf" -mmin +10 2>/dev/null | wc -l)
+    local ssh_dirs
+    ssh_dirs=$(find /tmp -maxdepth 1 -type d -name "ssh_fsx_*" -mmin +10 2>/dev/null | wc -l)
+    local mount_scripts
+    mount_scripts=$(find /tmp -maxdepth 1 -type f -name "*_mount_test_*.sh" -mmin +10 2>/dev/null | wc -l)
+    local cred_files
+    cred_files=$(find /tmp -maxdepth 1 -type f -name "smb_creds_*.conf" -mmin +10 2>/dev/null | wc -l)
     
     find /tmp -maxdepth 1 -type d -name "ssh_fsx_*" -mmin +10 -exec rm -rf {} \; 2>/dev/null || true
     find /tmp -maxdepth 1 -type f -name "*_mount_test_*.sh" -mmin +10 -delete 2>/dev/null || true
@@ -393,7 +400,8 @@ emergency_cleanup() {
     cleanup_temp_files
     
     if [[ -n "$SSH_CONTROL_PATH" ]]; then
-        local control_dir=$(dirname "$SSH_CONTROL_PATH" 2>/dev/null)
+        local control_dir
+        control_dir=$(dirname "$SSH_CONTROL_PATH" 2>/dev/null)
         [[ -d "$control_dir" ]] && rm -rf "$control_dir" 2>/dev/null || true
     fi
 }
@@ -413,7 +421,8 @@ create_safe_filename() {
         cmd="empty_command"
     fi
     
-    local safe=$(echo "$cmd" | tr -cs '[:alnum:]' '_')
+    local safe
+    safe=$(echo "$cmd" | tr -cs '[:alnum:]' '_')
     safe=$(echo "$safe" | sed 's/^_*//' | sed 's/_*$//')
     
     if [[ ${#safe} -gt 60 ]]; then
@@ -1113,7 +1122,8 @@ add_smb_mount_test() {
     
     log_info "Adding SMB mount test: //${endpoint}/${path}"
     
-    local share=$(echo "$path" | sed 's|^/||' | cut -d'/' -f1)
+    local share
+    share=$(echo "$path" | sed 's|^/||' | cut -d'/' -f1)
     
     CLIENT_COMMANDS+=(
         "# ===== SMB MOUNT TEST: //${endpoint}/${share} ====="
@@ -1265,8 +1275,10 @@ run_fsx_commands() {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
     
-    local control_info=$(setup_ssh_control_master "$host" "$username" "$port" "$key_file")
-    local ssh_opts=$(echo "$control_info" | cut -d'|' -f2-)
+    local control_info
+    control_info=$(setup_ssh_control_master "$host" "$username" "$port" "$key_file")
+    local ssh_opts
+    ssh_opts=$(echo "$control_info" | cut -d'|' -f2-)
     
     [[ -z "$key_file" ]] && echo "You will be prompted for password ONCE" && echo ""
     
@@ -1285,7 +1297,8 @@ run_fsx_commands() {
         [[ -z "$cmd" || "$cmd" =~ ^[[:space:]]*# ]] && continue
         ((FSX_CMD_COUNTER++))
         
-        local filename=$(create_safe_filename "$cmd" "fsx" "$FSX_CMD_COUNTER")
+        local filename
+        filename=$(create_safe_filename "$cmd" "fsx" "$FSX_CMD_COUNTER")
         local output="$OUTPUT_DIR/$filename"
         
         echo -n "[$FSX_CMD_COUNTER/${#FSX_COMMANDS[@]}] ${cmd:0:50}... "
@@ -1333,14 +1346,16 @@ run_client_commands() {
         
         if [[ "$cmd" =~ ^[[:space:]]*# ]]; then
             ((CLIENT_CMD_COUNTER++))
-            local filename=$(create_safe_filename "$cmd" "client" "$CLIENT_CMD_COUNTER")
+            local filename
+            filename=$(create_safe_filename "$cmd" "client" "$CLIENT_CMD_COUNTER")
             echo "$cmd" > "$OUTPUT_DIR/$filename"
             echo -e "${CYAN}$cmd${NC}"
             continue
         fi
         
         ((CLIENT_CMD_COUNTER++))
-        local filename=$(create_safe_filename "$cmd" "client" "$CLIENT_CMD_COUNTER")
+        local filename
+        filename=$(create_safe_filename "$cmd" "client" "$CLIENT_CMD_COUNTER")
         
         echo -n "[$CLIENT_CMD_COUNTER] ${cmd:0:60}... "
         
@@ -1398,8 +1413,10 @@ create_command_index() {
 create_bundle() {
     local tar="${OUTPUT_DIR}.tar.gz"
     if tar -czf "$tar" "$OUTPUT_DIR" 2>/dev/null; then
-        local size=$(stat -c%s "$tar" 2>/dev/null || stat -f%z "$tar" 2>/dev/null)
-        local size_mb=$(awk "BEGIN {printf \"%.2f\", $size/1024/1024}")
+        local size
+        size=$(stat -c%s "$tar" 2>/dev/null || stat -f%z "$tar" 2>/dev/null)
+        local size_mb
+        size_mb=$(awk "BEGIN {printf \"%.2f\", $size/1024/1024}")
         log_success "Bundle: $tar ($size_mb MB)"
     fi
 }
@@ -1495,7 +1512,8 @@ main() {
     
     [[ "$TEST_MOUNT" == true && "$INCLUDE_CLIENT" == true ]] && setup_mount_testing
     
-    local timestamp=$(date -u '+%Y%m%dT%H%M%SZ')
+    local timestamp
+    timestamp=$(date -u '+%Y%m%dT%H%M%SZ')
     OUTPUT_DIR="fsx_ontap_collect_${PROFILE}_${timestamp}"
     mkdir -p "$OUTPUT_DIR"
     mv "$LOG_FILE" "$OUTPUT_DIR/"
