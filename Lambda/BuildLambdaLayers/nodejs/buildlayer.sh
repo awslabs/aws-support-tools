@@ -65,7 +65,7 @@ fi
 dateofbackup=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 # Backup previous layer built
 if [ -f layer.zip ]; then
-    echo "Copy layer.zip to layer-"$dateofbackup".zip"
+    echo "Copy layer.zip to layer-${dateofbackup}.zip"
     cp layer.zip layer-backup-$dateofbackup.zip
     rm layer.zip
 else 
