@@ -143,7 +143,7 @@ class NetworkingVerifier:
             if not has_nat:
                 self.report.write_full_report('Route Table:', route_table['RouteTableId'], 'does not have a route to a NAT Gateway')
                 self.report.write_full_report('Checking for VPC endpoints to airflow, s3, sqs, kms, ecr, and monitoring...')
-                endpoint_issue_detected = check_service_vpc_endpoints(input_subnets)
+                endpoint_issue_detected = self.check_service_vpc_endpoints(input_subnets)
                 if endpoint_issue_detected:
                     route_issue_detected = True
         if route_issue_detected:
