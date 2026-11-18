@@ -1,7 +1,19 @@
-## [Unreleased]
+# Changelog
+
+All notable changes to this repository will be documented in this file.
+
+## [v1.7.0] - 2026-11-18
+
+### Added
+- **EKS/eks-addon-upgrade-check**: Single-file bash pre-upgrade check for Amazon Elastic Kubernetes Service (Amazon EKS) managed add-ons. Grades a proposed add-on upgrade on API compatibility, configuration schema changes, current install health, IAM posture, the upstream changelog and a known-issue registry, then writes a Markdown or JSON report with a CI-gate exit code (#267, #268)
+- **MWAA/log_retrieval**: Python script that collects Amazon Managed Workflows for Apache Airflow (MWAA) logs from Amazon CloudWatch Logs for a given time range and uploads the consolidated result to Amazon S3 (#266)
+
+### Changed
+- **MWAA**: README points users to the AWSSupport-TroubleshootMWAAEnvironmentCreation and AWSSupport-ValidateMWAADependencies AWS Systems Manager Automation runbooks before `verify_env.py` (#265)
+- Top-level README lists EKS/eks-addon-upgrade-check (#268)
 
 ### Fixed
-- **EC2/NitroInstanceChecks**: Read and set the NVMe `io_timeout` on the boot entries the system actually boots from (BLS entries via `grubby`, grubenv `kernelopts`, or `grub.cfg`). Previously the script edited `/etc/default/grub` and regenerated `grub.cfg`, which on RHEL 9.3+, RHEL 10 and Rocky 9 leaves the Boot Loader Specification entries untouched while the script reported success; it also reported "not set" on stock RHEL 8/9/10 AMIs that already set it. Detect a built-in NVMe driver via `modules.builtin` instead of `grep nvme System.map`, which matched the unrelated `nvmem` subsystem and skipped the initramfs check on every modular-NVMe kernel (#181). Resolve udev symlinks and match fstab fields exactly when converting device names to UUIDs (#63, #126). Treat an empty `lsinitrd` listing as "could not inspect" rather than "module missing" (#98). Never run a bare redirection as the grub command, which truncated `grub.cfg` when no generator was found. Add `-y`/`-n` flags, check-only mode when stdin is not a terminal, and a non-zero exit status when issues remain.
+- **EC2/NitroInstanceChecks**: Read and set the NVMe `io_timeout` on the boot entries the system actually boots from (BLS entries via `grubby`, grubenv `kernelopts`, or `grub.cfg`). Previously the script edited `/etc/default/grub` and regenerated `grub.cfg`, which on RHEL 9.3+, RHEL 10 and Rocky 9 leaves the Boot Loader Specification entries untouched while the script reported success; it also reported "not set" on stock RHEL 8/9/10 AMIs that already set it. Detect a built-in NVMe driver via `modules.builtin` instead of `grep nvme System.map`, which matched the unrelated `nvmem` subsystem and skipped the initramfs check on every modular-NVMe kernel (#181). Resolve udev symlinks and match fstab fields exactly when converting device names to UUIDs (#63, #126). Treat an empty `lsinitrd` listing as "could not inspect" rather than "module missing" (#98). Never run a bare redirection as the grub command, which truncated `grub.cfg` when no generator was found. Add `-y`/`-n` flags, check-only mode when stdin is not a terminal, and a non-zero exit status when issues remain. (#269)
 
 ## [v1.6.0] - 2026-07-10
 
@@ -18,11 +30,6 @@
 
 ### Added
 - **Lambda/FindEniMappings**: `--profile` flag for named AWS CLI profiles; fix infinite loop on unknown arguments; document CloudTrail permission requirement (#166)
-
-
-# Changelog
-
-All notable changes to this repository will be documented in this file.
 
 ## [v1.4.0] - 2026-07-08
 
