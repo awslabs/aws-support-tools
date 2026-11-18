@@ -29,11 +29,11 @@ def get_indices():
         indicesList.append(line.split()[2])
 
 
-    # remove the .kibana4 (or ".kibana" in ES 5.1) index from the list as it is a required/default index in ES.
-    if ".kibana-4" in indicesList:
-        indicesList.remove(".kibana-4")
-    elif ".kibana" in indicesList:
-        indicesList.remove(".kibana")
+    # never offer system/hidden indices (names starting with ".") for deletion. This covers
+    # .kibana, .kibana-4, .kibana_1, .kibana_task_manager_*, .opendistro_security, .tasks, etc.
+    # Their creation date is usually the domain's creation date, so they would otherwise
+    # always fall past the age threshold and be deleted along with the user's indices.
+    indicesList = [index for index in indicesList if not index.startswith(".")]
 
 
 
