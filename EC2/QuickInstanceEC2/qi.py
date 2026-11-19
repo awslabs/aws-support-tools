@@ -25,7 +25,7 @@ import datetime
 try:
     import boto3
     from botocore.exceptions import NoCredentialsError
-except:
+except ImportError:
     print('Python module \'boto3\' missing. Install by running \'sudo pip install boto3\'')
     print('If pip is not installed, please install from https://pip.pypa.io/en/latest/installing.html')
     exit(2)
@@ -41,7 +41,7 @@ def main():
     option_list = 'region= type= role= key= volume= ami= bootstrap='.split()
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], '', option_list)
-    except:
+    except getopt.GetoptError:
         usage()
         sys.exit(2)
     if len(args) > 0:
@@ -52,7 +52,7 @@ def main():
                 launch(opts, args[0])
             except NoCredentialsError:
                 advise_credentials()
-            except:
+            except Exception:
                 troubleshoot()
         elif args[0] == 'help':
             usage()
@@ -170,7 +170,7 @@ def configure():
 def load_conf():
     try:
         saved_conf = json.load(open(conf_file))
-    except:
+    except Exception:
         print('Quick instance not configured. Please run \'./%s configure\'.' % script_name)
         sys.exit(2)
     return saved_conf
@@ -237,7 +237,7 @@ def create_stack(stack_name, template, region):
     try:
         cf = boto3.client('cloudformation', region_name=region)
         response = cf.create_stack(StackName=stack_name, TemplateBody=template)
-    except:
+    except Exception:
         return 'STACK_ALREADY_EXISTS'
     if 'StackId' in response:
         return response['StackId']
@@ -246,11 +246,12 @@ def create_stack(stack_name, template, region):
 
 
 def delete_stack(stack_name, region):
+    response = None
     try:
         cf = boto3.client('cloudformation', region_name=region)
         print('Terminating %s...' % stack_name)
         response = cf.delete_stack(StackName=stack_name)
-    except:
+    except Exception:
         print('Failed to terminate %s.' % stack_name)
         get_stack_events(stack_name, region)
         return response
@@ -261,7 +262,7 @@ def get_stack_state(stack_name, region):
     try:
         cf = boto3.resource('cloudformation', region_name=region)
         stack = cf.Stack(stack_name)
-    except:
+    except Exception:
         print('Failed to get stack state.')
         return
     return stack
@@ -275,7 +276,7 @@ def get_stack_events(stack_name, region):
             if event.resource_status in ['CREATE_FAILED', 'ROLLBACK_IN_PROGRESS'] and event.resource_status_reason:
                 print(event.resource_status_reason)
         print('For more detail please review error in CloudFormation console.')
-    except:
+    except Exception:
         print('Failed to get stack events.')
 
 
@@ -292,7 +293,7 @@ def get_instance_ip(instance_id, region):
     try:
         ec2 = boto3.resource('ec2', region_name=region)
         instance = ec2.Instance(instance_id)
-    except:
+    except Exception:
         print("Failed to get instance ip address.")
         return
     return instance.public_ip_address
@@ -366,7 +367,7 @@ def get_regions():
         client = boto3.client('ec2')
         regions = client.describe_regions()
         return regions['Regions']
-    except:
+    except Exception:
         return
 
 
@@ -375,7 +376,7 @@ def get_roles():
         iam = boto3.client('iam')
         roles = iam.list_roles()
         return roles['Roles']
-    except:
+    except Exception:
         return
 
 
@@ -384,7 +385,7 @@ def get_key_pairs(region):
         client = boto3.client('ec2', region_name=region)
         keys = client.describe_key_pairs()
         return keys['KeyPairs']
-    except:
+    except Exception:
         return
 
 
@@ -413,7 +414,7 @@ def get_images(region, owners=[], windows=False):
                 image_list.append(image)
         image_list.sort(key=lambda x: datetime.datetime.strptime(x['CreationDate'], '%Y-%m-%dT%H:%M:%S.000Z'))
         return image_list
-    except:
+    except Exception:
         return
 
 
