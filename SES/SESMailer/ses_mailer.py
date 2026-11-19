@@ -9,8 +9,6 @@
 # BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under the License.
 
-from __future__ import print_function
-
 import StringIO
 import csv
 import json
@@ -79,8 +77,8 @@ def send_mail(from_address, to_address, message):
         send_errors.append('%s, %s, %s, %s' %
                            (current_time(),
                                to_address,
-                               ', '.join("%s=%r" % (k, v) for (k, v) in e.response['ResponseMetadata'].iteritems()),
-                               e.message))
+                               ', '.join("%s=%r" % (k, v) for (k, v) in e.response['ResponseMetadata'].items()),
+                               str(e)))
 
 
 def lambda_handler(event, context):
@@ -122,7 +120,7 @@ def lambda_handler(event, context):
                 message = mime_email(subject, from_address, to_address, mime_message_text, mime_message_html)
                 e.submit(send_mail, from_address, to_address, message)
     except Exception as e:
-        print(e.message + ' Aborting...')
+        print(str(e) + ' Aborting...')
         raise e
 
     print('Send email complete.')
