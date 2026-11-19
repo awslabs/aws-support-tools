@@ -115,7 +115,7 @@ while : ; do
         Functions+=(${row})
     done
     [[ -n "$NextToken" ]] || break
-    Response="$(aws lambda list-functions --function-version ALL --max-items 1000 --starting-token "$NextToken"--region ${REGION} "${PROFILE_ARGS[@]}" --output json --query '{"NextToken": NextToken, "VpcConfigsByFunction": Functions[?VpcConfig!=`null` && VpcConfig.SubnetIds!=`[]`] | [].{Arn:FunctionArn, Subnets:VpcConfig.SubnetIds, SecurityGroups: VpcConfig.SecurityGroupIds} | [?contains(Subnets, `'$Subnet'`) == `true`] }')"
+    Response="$(aws lambda list-functions --function-version ALL --max-items 1000 --starting-token "$NextToken" --region ${REGION} "${PROFILE_ARGS[@]}" --output json --query '{"NextToken": NextToken, "VpcConfigsByFunction": Functions[?VpcConfig!=`null` && VpcConfig.SubnetIds!=`[]`] | [].{Arn:FunctionArn, Subnets:VpcConfig.SubnetIds, SecurityGroups: VpcConfig.SecurityGroupIds} | [?contains(Subnets, `'$Subnet'`) == `true`] }')"
 done
 # check if we got any functions with this subnet at all
 if [ $(echo "${#Functions[@]}") -eq 0 ]
