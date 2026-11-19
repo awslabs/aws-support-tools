@@ -10,7 +10,8 @@ def replication_settings_obj_builder_for_csv(info):
     return replication_settings_obj
 
 def pit_policy_obj_builder_for_csv(info):
-    for policy in info:
+    pit_policy_obj = None
+    for policy in info or []:
         if policy['units'] == 'DAY':
             pit_policy_obj = PitPolicy(**policy)
     return pit_policy_obj
@@ -23,7 +24,7 @@ def replication_settings_obj_builder(row):
 
     replication_settings_obj.associateDefaultSecurityGroup = str2bool(row[18])
     replication_settings_obj.autoReplicateNewDisks = None
-    if row[19].upper != "":
+    if row[19] != "":
         replication_settings_obj.autoReplicateNewDisks = str2bool(row[19])
     replication_settings_obj.bandwidthThrottling = ast.literal_eval(row[20])
     replication_settings_obj.createPublicIP = str2bool(row[21])
@@ -36,7 +37,7 @@ def replication_settings_obj_builder(row):
     replication_settings_obj.ebsEncryption = row[27]
     replication_settings_obj.ebsEncryptionKeyArn = row[28]
     if row[29] != "":
-        replication_settings_obj.replicationServersSecurityGroupsIDs = row[29].split(', ')
+        replication_settings_obj.replicationServersSecurityGroupsIDs = [group.strip() for group in row[29].split(',') if group.strip()]
     replication_settings_obj.stagingAreaSubnetId = row[30]
     replication_settings_obj.useDedicatedReplicationServer = str2bool(row[31])
     replication_settings_obj.stagingAreaTags = ast.literal_eval(row[32])

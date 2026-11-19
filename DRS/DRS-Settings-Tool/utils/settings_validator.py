@@ -3,7 +3,6 @@ import botocore
 import sys
 from utils.logger import get_logger
 from utils.clients import ec2_client, kms_client, iam_client
-from utils.logger import path
 
 ec2 = ec2_client()
 kms = kms_client()
@@ -11,6 +10,21 @@ iam = iam_client()
 
 
 logger = get_logger('VALIDATE')
+
+_valid_instance_types = None
+
+
+def get_valid_instance_types():
+    # Instance type offerings are paginated, and are the same for every
+    # server, so collect all pages once and reuse the result.
+    global _valid_instance_types
+    if _valid_instance_types is None:
+        _valid_instance_types = set()
+        paginator = ec2.client.get_paginator('describe_instance_type_offerings')
+        for page in paginator.paginate():
+            for offering in page['InstanceTypeOfferings']:
+                _valid_instance_types.add(offering['InstanceType'])
+    return _valid_instance_types
 
 def validate_settings(source_server_info_obj, drs_launch_settings_obj, launch_template_obj, replication_settings_obj):
 
@@ -28,12 +42,7 @@ def validate_settings(source_server_info_obj, drs_launch_settings_obj, launch_te
         valid_default_staging_disk_type = ['GP2', 'GP3', 'ST1', 'AUTO']
         valid_staging_disk_encryption = ['DEFAULT', 'CUSTOM', 'NONE']
 
-        #Create a dictionary of instance type offerings so we can check if the key(instance type) exists, instead of interating through a list.
-        valid_instance_types = {}
-        instance_offerings = ec2.client.describe_instance_type_offerings()
-        instance_offerings.pop('ResponseMetadata')
-        for type in instance_offerings['InstanceTypeOfferings']:
-            valid_instance_types[type['InstanceType']] = None 
+        valid_instance_types = get_valid_instance_types()
 
 
 
@@ -97,7 +106,7 @@ def validate_settings(source_server_info_obj, drs_launch_settings_obj, launch_te
             logger.error("[ERROR] Invalid 'Auto Replicate New Disks' setting for " + source_server_info_obj.sourceServerID + ". Valid options are TRUE or FALSE.")
             sys.exit()
 
-        if replication_settings_obj.bandwidthThrottling > 10000:
+        if not 0 <= replication_settings_obj.bandwidthThrottling <= 10000:
             logger.error("[ERROR] Invalid 'Bandwidth Throttling' setting for " + source_server_info_obj.sourceServerID + ". Valid setting is a number between 0 and 10000 (0 is to disable Bandwidth Throttling)")
             sys.exit()
 
@@ -127,9 +136,9 @@ def validate_settings(source_server_info_obj, drs_launch_settings_obj, launch_te
             sys.exit()
 
         if replication_settings_obj.ebsEncryptionKeyArn not in (None, ''):
-            key_id = replication_settings_obj.ebsEncryptionKeyArn.split('/')
             try:
-                kms.client.describe_key(KeyId=key_id[1])
+                # describe_key accepts the full key or alias ARN directly.
+                kms.client.describe_key(KeyId=replication_settings_obj.ebsEncryptionKeyArn)
             except botocore.exceptions.ClientError as error:
                 logger.error('[ERROR] Could not validate KMS ID: ' + str(error))
                 sys.exit()

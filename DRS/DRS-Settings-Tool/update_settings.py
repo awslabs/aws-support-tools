@@ -7,7 +7,7 @@ from object_builders.replication_settings_obj_builder import replication_setting
 from object_builders.source_server_info_obj_builder import source_server_info_obj_builder
 from utils.settings_validator import validate_settings
 from utils.logger import get_logger
-from utils.logger import path
+from utils.csv_settings import SETTINGS_CSV, ORIGINAL_SETTINGS_CSV
 
 
 rows1 = []
@@ -23,9 +23,12 @@ def update_settings(file1, file2):
                 rows1.append(row)
         with open(file2, 'r') as file2:
             csvreader = csv.reader(file2)
-            header = next(csvreader)
+            next(csvreader)
             for row2 in csvreader:
                 rows2.append(row2)
+        if len(rows1) != len(rows2):
+            logger.error("[ERROR] The two CSV files have a different number of rows. Please do not add or remove rows, and re-run the get_settings.py script to recreate the CSV files.")
+            return
         for changes, original in zip(rows1, rows2):
             #build objects from CSV with possible changes made
             new_source_server_info_obj = source_server_info_obj_builder(changes)
@@ -46,7 +49,7 @@ def update_settings(file1, file2):
             if new_source_server_info_obj.sourceServerID == old_source_server_info_obj.sourceServerID:
                 logger1.info("[REVIEW] Reviewing changes made for Source Server - " + new_source_server_info_obj.sourceServerID + "...")
             else:
-                logger.info("Source Server ID's are mismatching when comparing CSV files. Please verify you did not remove, add, or change the Source Server ID in any rows. Please re-run the get_settings.py script to recreate the CSV files.")
+                logger.error("Source Server ID's are mismatching when comparing CSV files. Please verify you did not remove, add, or change the Source Server ID in any rows. Please re-run the get_settings.py script to recreate the CSV files.")
                 break
 
             if new_drs_launch_settings_obj != old_drs_launch_settings_obj:
@@ -71,4 +74,5 @@ def update_settings(file1, file2):
         logger.info("Updates have been completed. If changes were made, please re-run the get_settings.py script to create the new CSV files with the updated settings")
     except botocore.exceptions.ClientError as error:
         logger.error(error)
-update_settings(path + "\\DRS_Settings.csv", path + "\\DRS_Settings-DO_NOT_EDIT.csv")
+if __name__ == '__main__':
+    update_settings(SETTINGS_CSV, ORIGINAL_SETTINGS_CSV)
