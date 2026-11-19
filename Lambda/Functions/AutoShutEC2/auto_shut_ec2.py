@@ -52,13 +52,9 @@ def look_for_instances():
         for instance in get_instances(ec2_client):
             instance_id = instance['InstanceId']
             if instance['State']['Name'] == 'running':
-                shutdown = False
-                for tag in instance['Tags']:
-                    if any(no_shut_keyword in value for value in tag.itervalues()):
-                        shutdown = False
-                        break
-                    else:
-                        shutdown = True
+                # Instances with no tags have no 'Tags' key at all
+                tags = instance.get('Tags', [])
+                shutdown = not any(no_shut_keyword in value for tag in tags for value in tag.values())
                 if shutdown:
                     output += 'Shutting down running instance {}\n'.format(instance_id)
                     output += shutdown_instance(region_name, instance_id)
