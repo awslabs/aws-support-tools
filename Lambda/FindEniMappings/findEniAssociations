@@ -109,13 +109,13 @@ Functions=()
 Response="$(aws lambda list-functions --function-version ALL --max-items 1000 --region ${REGION} "${PROFILE_ARGS[@]}" --output json --query '{"NextToken": NextToken, "VpcConfigsByFunction": Functions[?VpcConfig!=`null` && VpcConfig.SubnetIds!=`[]`] | [].{Arn:FunctionArn, Subnets:VpcConfig.SubnetIds, SecurityGroups: VpcConfig.SecurityGroupIds} | [?contains(Subnets, `'$Subnet'`) == `true`] }')"
 # Find functions using the same subnet and security group as target ENI. Use paginated calls to enumerate all functions.
 while : ; do
-    NextToken=$(echo $Response | jq '.NextToken')
+    NextToken=$(jq -r '.NextToken // empty' <<< "$Response")
     for row in $(echo $Response | jq -c -r '.VpcConfigsByFunction[]')
     do
         Functions+=(${row})
     done
-    [[ $NextToken != "null" ]] || break
-    Response="$(aws lambda list-functions --function-version ALL --max-items 1000 --starting-token $NextToken --region ${REGION} "${PROFILE_ARGS[@]}" --output json --query '{"NextToken": NextToken, "VpcConfigsByFunction": Functions[?VpcConfig!=`null` && VpcConfig.SubnetIds!=`[]`] | [].{Arn:FunctionArn, Subnets:VpcConfig.SubnetIds, SecurityGroups: VpcConfig.SecurityGroupIds} | [?contains(Subnets, `'$Subnet'`) == `true`] }')"
+    [[ -n "$NextToken" ]] || break
+    Response="$(aws lambda list-functions --function-version ALL --max-items 1000 --starting-token "$NextToken"--region ${REGION} "${PROFILE_ARGS[@]}" --output json --query '{"NextToken": NextToken, "VpcConfigsByFunction": Functions[?VpcConfig!=`null` && VpcConfig.SubnetIds!=`[]`] | [].{Arn:FunctionArn, Subnets:VpcConfig.SubnetIds, SecurityGroups: VpcConfig.SecurityGroupIds} | [?contains(Subnets, `'$Subnet'`) == `true`] }')"
 done
 # check if we got any functions with this subnet at all
 if [ $(echo "${#Functions[@]}") -eq 0 ]
