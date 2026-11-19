@@ -9,11 +9,11 @@
 # BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under the License.
 
-import StringIO
 import csv
+import io
 import json
 import os
-import urllib
+import urllib.parse
 import zlib
 
 from time import strftime, gmtime
@@ -30,7 +30,7 @@ __version__ = '1.0'
 
 # Get Lambda environment variables
 region = os.environ['REGION']
-max_threads = os.environ['MAX_THREADS']
+max_threads = int(os.environ['MAX_THREADS'])
 text_message_file = os.environ['TEXT_MESSAGE_FILE']
 html_message_file = os.environ['HTML_MESSAGE_FILE']
 
@@ -88,22 +88,22 @@ def lambda_handler(event, context):
     try:
         # Read the uploaded csv file from the bucket into python dictionary list
         bucket = event['Records'][0]['s3']['bucket']['name']
-        key = urllib.unquote_plus(event['Records'][0]['s3']['object']['key']).decode('utf8')
+        key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'])
         response = s3.get_object(Bucket=bucket, Key=key)
         body = zlib.decompress(response['Body'].read(), 16+zlib.MAX_WBITS)
-        reader = csv.DictReader(StringIO.StringIO(body),
+        reader = csv.DictReader(io.StringIO(body.decode('utf-8')),
                                 fieldnames=['from_address', 'to_address', 'subject', 'message'])
 
         # Read the message files
         try:
             response = s3.get_object(Bucket=bucket, Key=text_message_file)
-            mime_message_text = response['Body'].read()
+            mime_message_text = response['Body'].read().decode('utf-8')
         except:
             mime_message_text = None
             print('Failed to read text message file. Did you upload %s?' % text_message_file)
         try:
             response = s3.get_object(Bucket=bucket, Key=html_message_file)
-            mime_message_html = response['Body'].read()
+            mime_message_html = response['Body'].read().decode('utf-8')
         except:
             mime_message_html = None
             print('Failed to read html message file. Did you upload %s?' % html_message_file)
