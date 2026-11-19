@@ -1,6 +1,9 @@
 #Convert string of "true" or "false" to boolean
 def str2bool(string): 
-    if string.lower() in ('true'):
+    # ('true') is a plain string, not a tuple, so "in" would do a substring
+    # match ("", "t", "rue" all counted as true). Compare exactly instead.
+    value = string.strip().lower()
+    if value == 'true':
         return True
-    elif string.lower() in ('false'):
+    elif value == 'false':
         return False
