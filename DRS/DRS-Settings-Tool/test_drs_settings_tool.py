@@ -130,7 +130,8 @@ def test_launch_template_update_keeps_settings_not_in_the_csv():
     ec2 = module.ec2.client
     ec2.describe_launch_template_versions.return_value = {'LaunchTemplateVersions': [{'LaunchTemplateData': {
         'UserData': 'IyEvYmluL2Jhc2g=',
-        'MetadataOptions': {'HttpTokens': 'required'},
+        'MetadataOptions': {'HttpTokens': 'required', 'HttpEndpoint': 'enabled', 'State': 'applied'},
+        'Operator': {'Managed': False},
         'InstanceType': 't3.micro',
         'KeyName': 'old-key',
     }}]}
@@ -141,7 +142,9 @@ def test_launch_template_update_keeps_settings_not_in_the_csv():
 
     data = ec2.create_launch_template_version.call_args.kwargs['LaunchTemplateData']
     assert data['UserData'] == 'IyEvYmluL2Jhc2g='
-    assert data['MetadataOptions'] == {'HttpTokens': 'required'}
+    # Response-only keys are dropped; create_launch_template_version rejects them
+    assert data['MetadataOptions'] == {'HttpTokens': 'required', 'HttpEndpoint': 'enabled'}
+    assert 'Operator' not in data
     assert data['InstanceType'] == 'm5.large'
     assert data['ImageId'] == 'ami-123'
     assert 'KeyName' not in data  # cleared in the CSV, so removed

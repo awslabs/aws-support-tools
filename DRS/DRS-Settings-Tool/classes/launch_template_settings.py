@@ -28,6 +28,26 @@ class LaunchTemplateSettings(object):
     # Launch template fields that are managed through the CSV file.
     CSV_MANAGED_FIELDS = ('IamInstanceProfile', 'BlockDeviceMappings', 'NetworkInterfaces', 'ImageId', 'InstanceType', 'KeyName', 'TagSpecifications')
 
+    # Read-only keys that describe_launch_template_versions returns but
+    # create_launch_template_version rejects (ParamValidationError).
+    RESPONSE_ONLY_KEYS = {
+        'MetadataOptions': ('State',),
+        'Operator': ('Managed', 'HiddenByDefault'),
+    }
+
+    @classmethod
+    def remove_response_only_keys(cls, launch_template_data):
+        for field, keys in cls.RESPONSE_ONLY_KEYS.items():
+            value = launch_template_data.get(field)
+            if not isinstance(value, dict):
+                continue
+            value = {key: item for key, item in value.items() if key not in keys}
+            if value:
+                launch_template_data[field] = value
+            else:
+                del launch_template_data[field]
+        return launch_template_data
+
     def update_launch_template(self, launch_template_id, object):
         launch_template_settings = delete_none(obj_to_dict(object))
 
@@ -37,6 +57,7 @@ class LaunchTemplateSettings(object):
         # cleared in the CSV is removed.
         current_version = ec2.client.describe_launch_template_versions(LaunchTemplateId=launch_template_id, Versions=['$Default'])['LaunchTemplateVersions'][0]
         launch_template_data = {key: value for key, value in current_version.get('LaunchTemplateData', {}).items() if key not in self.CSV_MANAGED_FIELDS}
+        self.remove_response_only_keys(launch_template_data)
         for key in self.CSV_MANAGED_FIELDS:
             if launch_template_settings.get(key) not in (None, {}, []):
                 launch_template_data[key] = launch_template_settings[key]
