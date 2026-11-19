@@ -26,4 +26,4 @@ Steps to execute this script:
 
 - Use script `assign_private_ip_v2.py` if you have security configuration enabled to support IMDSv2 only. 
 
-- `assign_private_ip.py` requires Python 3 (`/usr/bin/python3`), which is available on current Amazon EMR releases.
+- `assign_private_ip.py` and `assign_private_ip_v2.py` require Python 3 (`/usr/bin/python3`), which is available on current Amazon EMR releases.

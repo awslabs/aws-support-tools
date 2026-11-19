@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #Copyright 2023-2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
@@ -18,17 +18,17 @@ is_master = subprocess.check_output(['cat /emr/instance-controller/lib/info/inst
 if is_master == "true":
     private_ip = str(sys.argv[1])
     region = str(sys.argv[2])
-    instance_id = subprocess.check_output(['TOKEN=`/usr/bin/curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` &&  /usr/bin/curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/instance-id'], shell=True)
+    instance_id = subprocess.check_output(['TOKEN=`/usr/bin/curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` &&  /usr/bin/curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/instance-id'], shell=True, universal_newlines=True)
     print(instance_id)
-    interface_id = subprocess.check_output(['aws ec2 describe-instances --region %s --instance-ids %s | jq .Reservations[].Instances[].NetworkInterfaces[].NetworkInterfaceId' % (region, instance_id)], shell=True).strip().strip('"')
+    interface_id = subprocess.check_output(['aws ec2 describe-instances --region %s --instance-ids %s | jq .Reservations[].Instances[].NetworkInterfaces[].NetworkInterfaceId' % (region, instance_id)], shell=True, universal_newlines=True).strip().strip('"')
     print(interface_id)
 
     #Assign private IP to the master instance:
     subprocess.check_call(['aws ec2 assign-private-ip-addresses --region %s --network-interface-id %s --private-ip-addresses %s' % (region, interface_id, private_ip)], shell=True)
 
-    subnet_id = subprocess.check_output(['aws ec2 describe-instances --region %s --instance-ids %s | jq .Reservations[].Instances[].NetworkInterfaces[].SubnetId' % (region, instance_id)], shell=True).strip().strip('"').strip().strip('"')
+    subnet_id = subprocess.check_output(['aws ec2 describe-instances --region %s --instance-ids %s | jq .Reservations[].Instances[].NetworkInterfaces[].SubnetId' % (region, instance_id)], shell=True, universal_newlines=True).strip().strip('"').strip().strip('"')
         
-    subnet_cidr = subprocess.check_output(['aws ec2 describe-subnets --region %s --subnet-ids %s | jq .Subnets[].CidrBlock' % (region, subnet_id)], shell=True).strip().strip('"')
+    subnet_cidr = subprocess.check_output(['aws ec2 describe-subnets --region %s --subnet-ids %s | jq .Subnets[].CidrBlock' % (region, subnet_id)], shell=True, universal_newlines=True).strip().strip('"')
     cidr_prefix = subnet_cidr.split("/")[1]
 
     #Add the private IP address to the default network interface:
