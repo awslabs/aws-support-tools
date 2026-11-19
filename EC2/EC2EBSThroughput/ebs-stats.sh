@@ -2,13 +2,12 @@
 # Install Sysstat package.
 yum install sysstat -y 
 #Validate that First argument is a number
-if [ $1 -ge 0 2>/dev/null ] ; then
+if [ "$1" -ge 0 ] 2>/dev/null ; then
 
 #Fetch the instance-id to use it as a dimension while pushing the CloudWatch metrics
 Instanceid=`curl http://169.254.169.254/latest/meta-data/instance-id/`
 EC2_AVAIL_ZONE=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
 EC2_REGION="`echo \"$EC2_AVAIL_ZONE\" | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
-Time=$1
 while read line; do  
   ARRAY[$c]="$line"
   c=$((c+1))  
@@ -26,7 +25,7 @@ function contains() {
     return 1
 }
 
-if [ $(contains "${ARRAY[@]}" "ephemeral") == "y" ]; then
+if [[ "$(contains "${ARRAY[@]}" "ephemeral")" == "y" ]]; then
     echo "The instance has Instance Store Volumes, Please consider DiskReadBytes, DiskWriteBytes instance metrics"
 while true; 
 do 
@@ -36,7 +35,7 @@ SumKB=$(( ( ${Sum%.*} * 512) / 1024 ))
 aws cloudwatch put-metric-data --metric-name EBSThroughputKB --namespace EBS  --dimensions InstanceId=$Instanceid --value $SumKB --unit Kilobytes/Second --region $EC2_REGION 
 SumMB=$(( SumKB / 1024 ))
 aws cloudwatch put-metric-data --metric-name EBSThroughputMB --namespace EBS  --dimensions InstanceId=$Instanceid --value $SumMB --unit Megabytes/Second  --region $EC2_REGION
-echo At $(date) Total EBS Throughput = $SumKB    KBytes/sec = $SumMB MBytes/sec
+echo "At $(date) Total EBS Throughput = $SumKB KBytes/sec = $SumMB MBytes/sec"
 done
  
 else 
@@ -51,7 +50,7 @@ SumKB=$(( ( ${Sum%.*} * 512) / 1024 ))
 aws cloudwatch put-metric-data --metric-name EBSThroughputKB --namespace EBS  --dimensions InstanceId=$Instanceid --value $SumKB --unit Kilobytes/Second --region $EC2_REGION 
 SumMB=$(( SumKB / 1024 ))
 aws cloudwatch put-metric-data --metric-name EBSThroughputMB --namespace EBS  --dimensions InstanceId=$Instanceid --value $SumMB --unit Megabytes/Second  --region $EC2_REGION
-echo At $(date) Total EBS Throughput = $SumKB    KBytes/sec = $SumMB MBytes/sec
+echo "At $(date) Total EBS Throughput = $SumKB KBytes/sec = $SumMB MBytes/sec"
 done
 
 else 
