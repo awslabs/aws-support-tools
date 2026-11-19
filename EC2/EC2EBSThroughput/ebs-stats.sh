@@ -2,7 +2,7 @@
 # Install Sysstat package.
 yum install sysstat -y 
 #Validate that First argument is a number
-if [ $1 -ge 0 2>/dev/null ] ; then
+if [ "$1" -ge 0 ] 2>/dev/null ; then
 
 #Fetch the instance-id to use it as a dimension while pushing the CloudWatch metrics
 Instanceid=`curl http://169.254.169.254/latest/meta-data/instance-id/`
