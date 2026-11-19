@@ -12,14 +12,18 @@ def launch_template_obj_builder_for_csv(info):
     return launch_template_settings_obj
 
 def instance_role_obj_builder_for_csv(info):
-    if info == None:
+    if info is None:
         instance_role_settings_obj = InstanceRoleSettings()
     else:     
         instance_role_settings_obj = InstanceRoleSettings(**info)
     return instance_role_settings_obj
 
 def tag_obj_builder_for_csv(info):
-    for tags in info:
+    # Templates without instance or volume tags get an empty tag list instead
+    # of crashing the export.
+    target_instance_tags_obj = TargetTags(ResourceType='instance', Tags=[])
+    target_volume_tags_obj = TargetTags(ResourceType='volume', Tags=[])
+    for tags in info or []:
         if tags['ResourceType'] == 'instance':
             target_instance_tags_obj = TargetTags(**tags)
         elif tags['ResourceType'] == 'volume':
