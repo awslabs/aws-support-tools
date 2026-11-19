@@ -62,10 +62,12 @@ class NetworkingVerifier:
                 self.report.write_full_report("✅ nacl:", nacl['NetworkAclId'], "allows port 5432 on egress")
             else:
                 self.report.write_all_locations("🚫 nacl:", nacl['NetworkAclId'], "denied port 5432 on egress")
+                nacl_issue_detected = True
             if src_ingress_check_pass:
                 self.report.write_full_report("✅ nacl:", nacl['NetworkAclId'], "allows port 5432 on ingress")
             else:
                 self.report.write_all_locations("🚫 nacl:", nacl['NetworkAclId'], "denied port 5432 on ingress")
+                nacl_issue_detected = True
 
         if nacl_issue_detected:
             self.report.write_all_locations("⚠️", "Please investigate the nacl issue.")
@@ -98,7 +100,7 @@ class NetworkingVerifier:
             # check ipv4 acl rule only
             if acl.get('CidrBlock'):
                 # Check Port
-                test_range = range(src_port_from, src_port_to)
+                test_range = range(src_port_from, src_port_to + 1)
                 set_test_range = set(test_range)
                 if ((acl.get('Protocol') == '-1') or
                 set_test_range.issubset(range(acl['PortRange']['From'], acl['PortRange']['To'] + 1))):

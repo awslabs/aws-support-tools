@@ -1,4 +1,6 @@
 import argparse
+from unittest.mock import MagicMock
+
 import pytest
 
 from verify_env import verify_env
@@ -187,3 +189,54 @@ def test_check_egress_acls():
     ]
     result = NetworkingVerifier._check_egress_acls(acls, dest_port)
     assert not result
+
+
+def _port_acl(action, port, egress=False):
+    return {
+        'CidrBlock': '0.0.0.0/0',
+        'Egress': egress,
+        'Protocol': '6',
+        'PortRange': {'From': port, 'To': port},
+        'RuleAction': action,
+        'RuleNumber': 100,
+    }
+
+
+def test_check_ingress_acls_matches_the_requested_port_only():
+    '''
+    A rule for a different port must not be treated as a match for 5432, and a
+    rule for exactly 5432 must be.
+    '''
+    assert NetworkingVerifier._check_ingress_acls([_port_acl('allow', 80)], 5432, 5432) == ''
+    assert NetworkingVerifier._check_ingress_acls([_port_acl('deny', 22)], 5432, 5432) == ''
+    assert NetworkingVerifier._check_ingress_acls([_port_acl('allow', 5432)], 5432, 5432) is True
+    assert NetworkingVerifier._check_ingress_acls([_port_acl('deny', 5432)], 5432, 5432) is False
+
+
+def _check_nacl_report(egress_action, ingress_action):
+    '''Run check_nacl against one NACL and return everything it reported.'''
+    verifier = NetworkingVerifier.__new__(NetworkingVerifier)
+    verifier.report = MagicMock()
+    verifier.ec2 = MagicMock()
+    verifier.ec2.describe_network_acls.return_value = {'NetworkAcls': [{
+        'NetworkAclId': 'acl-1',
+        'Entries': [_port_acl(egress_action, 5432, egress=True),
+                    _port_acl(ingress_action, 5432)],
+    }]}
+    verifier.check_nacl([{'VpcId': 'vpc-1'}], ['subnet-1'])
+    calls = (verifier.report.write_all_locations.call_args_list +
+             verifier.report.write_full_report.call_args_list)
+    return ' '.join(' '.join(str(arg) for arg in call.args) for call in calls)
+
+
+def test_check_nacl_reports_issue_when_port_is_denied():
+    output = _check_nacl_report('allow', 'deny')
+    assert 'denied port 5432 on ingress' in output
+    assert 'Please investigate the nacl issue.' in output
+    assert 'All nacls are as expected.' not in output
+
+
+def test_check_nacl_reports_ok_when_port_is_allowed():
+    output = _check_nacl_report('allow', 'allow')
+    assert 'All nacls are as expected.' in output
+    assert 'Please investigate the nacl issue.' not in output
