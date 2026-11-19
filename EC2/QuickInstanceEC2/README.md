@@ -56,8 +56,8 @@ For installation on Windows, save [this](https://raw.githubusercontent.com/awsla
 To install boto3 on Windows and launching an ec2 instance:
 
 ```bash
-C:\Python27\python.exe -m pip install boto3
-C:\Python27\python.exe qi.py amazon-linux
+python -m pip install boto3
+python qi.py amazon-linux
 ```
 
 Configuration:
@@ -70,7 +70,7 @@ Run `configure` when running for the first time to configure quick instance.
 
 Requirements:
 ------------
-- Python 2.7 or above.
+- Python 3.
 - Boto3 python module.
 - Python pip required to install boto3 module.
 - AWS credentials in ~/.aws/credentials or ec2 instance role with appropriate IAM permissions. Follow this [guide](http://blogs.aws.amazon.com/security/post/Tx3D6U6WSFGOK2H/A-New-and-Standardized-Way-to-Manage-Credentials-in-the-AWS-SDKs) to set up AWS credentials.
