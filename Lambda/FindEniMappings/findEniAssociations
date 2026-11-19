@@ -20,6 +20,15 @@ while [[ $# -gt 0 ]]
 do
 key="$1"
 
+case "$key" in
+  --eni|--region|--profile)
+    if [[ $# -lt 2 || -z "$2" || "$2" == --* ]]; then
+      printf 'Error: %s requires a value.\n' "$key" >&2
+      exit 1
+    fi
+    ;;
+esac
+
 case $key in
   --eni)
   ENI="$2"
