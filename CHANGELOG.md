@@ -2,6 +2,26 @@
 
 All notable changes to this repository will be documented in this file.
 
+## [v1.8.0] - 2026-11-27
+
+### Removed
+- Python 2 support (**breaking**). Every Python tool in the repository now needs Python 3 (#320).
+
+### Fixed
+- `Connect/DynamicOutboundCallerID` now runs its E.164 validation (#307)
+- `DeviceFarm/TestOutputDownloader` refuses to run `rm -fr` when the project ID is empty
+- `DRS/DRS-Settings-Tool` updates no longer wipe existing settings (#348)
+- `EC2 Auto Scaling/Multiple ENI` stops after abandoning the lifecycle action (#330)
+- `EC2/QuickInstanceEC2` exits on Ctrl+C instead of printing troubleshooting advice (#351)
+- `Elasticsearch Service/DeleteIndices` never deletes dot-prefixed system indices (#309)
+- `EMR/Get_EMR_CLI_Export` handles unset fields, emits `--no-auto-terminate` and keeps step order (#331)
+- `Lambda/FindEniMappings` follows pagination tokens correctly (#345)
+- `Lambda/Functions/AutoShutEC2` stops untagged instances, as its README describes (#326)
+- `MWAA/verify_env` requires all four S3 Block Public Access settings (#305) and checks network ACLs for the right port (#353)
+- `S3/S3_Transfer_Acceleration` uses HTTPS and reports the right throughput (#310)
+- `S3/Setup_Replication` now creates buckets in us-east-1 and always versions the destination (#321)
+- `SES/CheckSESQuota` compares `ALERT_THRESHOLD` as a number (#323)
+
 ## [v1.7.0] - 2026-11-18
 
 ### Added
