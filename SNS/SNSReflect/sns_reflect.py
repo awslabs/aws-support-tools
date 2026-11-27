@@ -11,8 +11,6 @@
 # BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under the License.
 
-from __future__ import print_function
-
 import json
 import os
 
@@ -44,8 +42,8 @@ def sns_publish(topic_arn, subject, message):
     except botocore.exceptions.ClientError as e:
         print('%s, %s, %s' % (
             topic_arn,
-            ', '.join("%s=%r" % (k, v) for (k, v) in e.response['ResponseMetadata'].iteritems()),
-            e.message))
+            ', '.join("%s=%r" % (k, v) for (k, v) in e.response['ResponseMetadata'].items()),
+            e))
 
 
 # Entry point for lambda execution
@@ -58,7 +56,7 @@ def lambda_handler(event, context):
             if type == 'Notification':
                 sns_publish(topic, subject, message)
     except Exception as e:
-        print(e.message + ' Aborting...')
+        print(str(e) + ' Aborting...')
         raise e
 
 
