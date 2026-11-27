@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
@@ -16,8 +16,6 @@
 # Time logging to s3. Creates a file with time information for each uploaded file
 # Get total publish time by calculating difference between earliest and the latest logged time across all files
 
-
-from __future__ import print_function
 
 import json
 import os
