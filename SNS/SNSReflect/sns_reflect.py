@@ -42,8 +42,8 @@ def sns_publish(topic_arn, subject, message):
     except botocore.exceptions.ClientError as e:
         print('%s, %s, %s' % (
             topic_arn,
-            ', '.join("%s=%r" % (k, v) for (k, v) in e.response['ResponseMetadata'].items()),
-            e))
+            ', '.join("%s=%r" % (k, v) for (k, v) in e.response['ResponseMetadata'].iteritems()),
+            e.message))
 
 
 # Entry point for lambda execution
@@ -56,7 +56,7 @@ def lambda_handler(event, context):
             if type == 'Notification':
                 sns_publish(topic, subject, message)
     except Exception as e:
-        print(str(e) + ' Aborting...')
+        print(e.message + ' Aborting...')
         raise e
 
 
