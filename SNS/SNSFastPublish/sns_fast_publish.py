@@ -19,7 +19,7 @@
 
 import json
 import os
-import urllib.parse
+import urllib
 import zlib
 
 from time import strftime, gmtime
@@ -38,8 +38,8 @@ __updated__ = '02/06/2016'
 
 # Get Lambda environment variables
 region = os.environ['REGION']
-max_threads = int(os.environ['THREADS'])
-log_time = os.environ['LOG_TIME'].strip().lower() in ('1', 'true', 'yes')
+max_threads = os.environ['THREADS']
+log_time = os.environ['LOG_TIME']
 
 # Initialize clients
 s3 = boto3.client('s3', region_name=region)
@@ -100,8 +100,8 @@ def publish(endpoint, message=None):
         publish_errors.append('%s, %s, %s, %s' %
                               (current_time(),
                                target_arn,
-                               ', '.join("%s=%r" % (k, v) for (k, v) in e.response['ResponseMetadata'].items()),
-                               e))
+                               ', '.join("%s=%r" % (k, v) for (k, v) in e.response['ResponseMetadata'].iteritems()),
+                               e.message))
 
 
 def lambda_handler(event, context):
@@ -113,7 +113,7 @@ def lambda_handler(event, context):
     try:
         # Read the uploaded object from bucket
         bucket = event['Records'][0]['s3']['bucket']['name']
-        key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'])
+        key = urllib.unquote_plus(event['Records'][0]['s3']['object']['key']).decode('utf8')
         response = s3.get_object(Bucket=bucket, Key=key)
         body = json.loads(zlib.decompress(response['Body'].read(), 16+zlib.MAX_WBITS))
 
@@ -131,7 +131,7 @@ def lambda_handler(event, context):
             e.submit(publish, endpoint, message)
         e.shutdown()
     except Exception as e:
-        print(str(e) + ' Aborting...')
+        print(e.message + ' Aborting...')
         raise e
 
     print('Publish complete.')
